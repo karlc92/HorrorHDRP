@@ -2508,7 +2508,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923b8e88f37c0a04b8b3042dd1996026, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmbientAudio
-  Volume: 0.1
+  Volume: 0.05
 --- !u!1 &2013410473
 GameObject:
   m_ObjectHideFlags: 1
