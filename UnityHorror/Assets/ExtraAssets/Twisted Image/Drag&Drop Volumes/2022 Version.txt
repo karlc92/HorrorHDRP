@@ -1,0 +1,7 @@
+Support for Unity 2022 ended with the Drag&Drop Volumes update version 8.1. 
+
+However, you can still download "Drag&Drop Volumes" version 8.1 for Unity 2022 here:
+https://drive.google.com/file/d/1yDzUlUpdOH4K9STES8gbpEI9ORK_Z1NB/view?usp=sharing
+
+I encourage you to switch to Unity 6 and enjoy the new Volumes with each new update, which will no longer be available for the 2022 version.
+

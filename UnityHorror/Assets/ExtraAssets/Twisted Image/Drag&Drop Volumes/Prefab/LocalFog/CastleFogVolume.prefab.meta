@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8e72a472bff0dab46af7cfa22535a2e2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 257600
+  packageName: Drag&Drop Volumes
+  packageVersion: 9.0
+  assetPath: Assets/Twisted Image/Drag&Drop Volumes/Prefab/LocalFog/CastleFogVolume.prefab
+  uploadId: 852578
