@@ -1,4 +1,5 @@
 using System.Transactions;
+using UnityEngine.SceneManagement;
 
 public static class Game
 {
@@ -24,6 +25,13 @@ public static class Game
     public static void FixedUpdate()
     {
 
+    }
+
+    public static void StartNewGame()
+    {
+        State = new GameState();
+
+        SceneManager.LoadScene("GameScene");
     }
     
 }
