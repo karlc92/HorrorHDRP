@@ -3,24 +3,33 @@ using UnityEngine;
 
 public class InspectableItem : Interactable
 {
+    [Header("Inspection")]
     public GameObject InspectPrefab;
-    public bool Inspecting;
 
+    [TextArea(2, 8)]
+    public string Description;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    // Optional: tweak how big it appears in the inspect view
+    public float InspectScaleMultiplier = 1.0f;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public bool Inspecting { get; private set; }
 
     public override void Interact()
     {
         Debug.Log("Inspected item AT " + DateTime.Now);
+
+        if (InspectPrefab == null)
+        {
+            Debug.LogWarning($"{name}: No InspectPrefab assigned.");
+            return;
+        }
+
+        Inspecting = true;
+        InspectionManager.Instance?.Open(this);
+    }
+
+    public void NotifyInspectionClosed()
+    {
+        Inspecting = false;
     }
 }

@@ -200,7 +200,7 @@ public sealed class PlayerController : MonoBehaviour
 
     bool PreventInput()
     {
-        return Console.IsShowing() || isInDeathSequence;
+        return Console.IsShowing() || isInDeathSequence || (InspectionManager.Instance && InspectionManager.Instance.IsOpen);
     }
 
     void Look()
