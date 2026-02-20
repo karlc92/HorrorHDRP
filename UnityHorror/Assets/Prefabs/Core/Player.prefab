@@ -537,7 +537,9 @@ MonoBehaviour:
   playerLayerToIgnore:
     serializedVersion: 2
     m_Bits: 256
-  interactRange: 3
+  interactRange: 1.5
+  enableInteractOutline: 1
+  outlineManager: {fileID: 0}
   isInDeathSequence: 0
 --- !u!82 &7255525911103242788
 AudioSource:

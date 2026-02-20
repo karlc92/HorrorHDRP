@@ -16,11 +16,10 @@ public class InspectableItem : Interactable
 
     public override void Interact()
     {
-        Debug.Log("Inspected item AT " + DateTime.Now);
-
         if (InspectPrefab == null)
         {
             Debug.LogWarning($"{name}: No InspectPrefab assigned.");
+            Console.Print($"{name}: No InspectPrefab assigned.");
             return;
         }
 

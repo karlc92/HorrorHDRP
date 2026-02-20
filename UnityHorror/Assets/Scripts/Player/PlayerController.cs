@@ -382,8 +382,6 @@ public sealed class PlayerController : MonoBehaviour
         Vector3 origin = t.position;
         Vector3 dir = t.forward;
 
-        Debug.DrawLine(origin, origin + dir * interactRange, Color.yellow);
-
         int mask = interactLayer.value & ~playerLayerToIgnore.value;
 
         if (Physics.Raycast(origin, dir, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
