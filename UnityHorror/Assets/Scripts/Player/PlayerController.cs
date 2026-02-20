@@ -46,6 +46,11 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField] LayerMask playerLayerToIgnore = 1 << 8;
     [SerializeField, Min(0f)] float interactRange = 1.5f;
 
+    [Header("Interact - Outline")]
+    [SerializeField] bool enableInteractOutline = true;
+    [Tooltip("Optional. If left empty, PlayerController will use OutlineManager.Instance.")]
+    [SerializeField] OutlineManager outlineManager;
+
     public bool isInDeathSequence = false;
 
     AudioSource footstepsAudioSource;
@@ -57,6 +62,7 @@ public sealed class PlayerController : MonoBehaviour
     float prevBobCos;
     Vector3 bobBaseLocalPos;
     float planarSpeed01;
+    float outlineUpdateTime = 0f;
 
     InputAction moveAction;   // Vector2
     InputAction lookAction;   // Vector2
@@ -69,6 +75,8 @@ public sealed class PlayerController : MonoBehaviour
 
     Vector3 ccCenterBase;
     Vector3 headPivotBaseLocalPos;
+
+    Interactable hoveredInteractable;
 
     void Awake()
     {
@@ -182,6 +190,12 @@ public sealed class PlayerController : MonoBehaviour
     {
         Game.State.PlayerPos = this.transform.position;
         Game.State.PlayerRot = this.transform.rotation;
+
+        if (outlineUpdateTime < Time.time)
+        {
+            outlineUpdateTime = Time.time + Random.Range(0.03f, 0.07f);
+            UpdateInteractOutline();
+        }
     }
 
     bool PreventInput()
@@ -355,6 +369,14 @@ public sealed class PlayerController : MonoBehaviour
 
     void TryInteract()
     {
+        // Prefer the last FixedUpdate hover result to avoid doing another raycast on key press.
+        // (Fallback raycast remains in place for safety.)
+        if (hoveredInteractable != null)
+        {
+            hoveredInteractable.Interact();
+            return;
+        }
+
         // Always cast from the center of the player camera (bobTarget).
         Transform t = bobTarget ? bobTarget : (headPivot ? headPivot : transform);
         Vector3 origin = t.position;
@@ -370,6 +392,45 @@ public sealed class PlayerController : MonoBehaviour
             if (interactable != null)
                 interactable.Interact();
         }
+    }
+
+    void UpdateInteractOutline()
+    {
+        // Never do per-frame raycasts in Update; we keep this in FixedUpdate for the requested performance pattern.
+        // This uses the same origin/dir/mask/range criteria as TryInteract().
+
+        OutlineManager om = outlineManager != null ? outlineManager : OutlineManager.Instance;
+
+        if (!enableInteractOutline || PreventInput())
+        {
+            hoveredInteractable = null;
+            if (om != null) om.ClearTarget();
+            return;
+        }
+
+        Transform t = bobTarget ? bobTarget : (headPivot ? headPivot : transform);
+        Vector3 origin = t.position;
+        Vector3 dir = t.forward;
+
+        int mask = interactLayer.value & ~playerLayerToIgnore.value;
+
+        Interactable next = null;
+        if (Physics.Raycast(origin, dir, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
+            next = hit.collider.GetComponentInParent<Interactable>();
+
+        // Only update the outline system when the hovered interactable changes.
+        if (next == hoveredInteractable)
+            return;
+
+        hoveredInteractable = next;
+
+        if (om == null)
+            return;
+
+        if (hoveredInteractable != null)
+            om.SetTarget(hoveredInteractable);
+        else
+            om.ClearTarget();
     }
 
     void PlayFootstep()
