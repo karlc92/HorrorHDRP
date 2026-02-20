@@ -186,7 +186,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 439
+    m_Bits: 951
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -531,6 +531,13 @@ MonoBehaviour:
   sprintBobFreqMultiplier: 1.5
   defaultFootstep: {fileID: 8300000, guid: f928e4120378b1d4b97d8cd6cc0baf6d, type: 3}
   woodFootstep: {fileID: 8300000, guid: a135dc219fb0b3f43a1def7a4a8c79aa, type: 3}
+  interactLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  playerLayerToIgnore:
+    serializedVersion: 2
+    m_Bits: 256
+  interactRange: 3
   isInDeathSequence: 0
 --- !u!82 &7255525911103242788
 AudioSource:

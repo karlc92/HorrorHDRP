@@ -610,7 +610,7 @@ MonoBehaviour:
   killingSfxAt: 0
   killingSfxVolume: 0.5
   killingSfxRandomPitch: 1
-  debug: 1
+  debug: 0
   debugInterval: 0.5
 --- !u!143 &1437131996811636474
 CharacterController:
@@ -1258,7 +1258,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 439
+    m_Bits: 951
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0

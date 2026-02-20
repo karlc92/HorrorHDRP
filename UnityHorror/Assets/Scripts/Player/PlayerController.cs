@@ -41,6 +41,11 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField] AudioClip defaultFootstep;
     [SerializeField] AudioClip woodFootstep;
 
+    [Header("Interact")]
+    [SerializeField] LayerMask interactLayer = 1 << 9;
+    [SerializeField] LayerMask playerLayerToIgnore = 1 << 8;
+    [SerializeField, Min(0f)] float interactRange = 1.5f;
+
     public bool isInDeathSequence = false;
 
     AudioSource footstepsAudioSource;
@@ -57,6 +62,7 @@ public sealed class PlayerController : MonoBehaviour
     InputAction lookAction;   // Vector2
     InputAction sprintAction; // Button
     InputAction crouchAction; // Button
+    InputAction interactAction; // Button
 
     bool isCrouched;
     Vector3 crouchOffsetLocal;
@@ -99,6 +105,7 @@ public sealed class PlayerController : MonoBehaviour
         lookAction?.Enable();
         sprintAction?.Enable();
         crouchAction?.Enable();
+        interactAction?.Enable();
     }
 
     void OnDisable()
@@ -107,6 +114,7 @@ public sealed class PlayerController : MonoBehaviour
         lookAction?.Disable();
         sprintAction?.Disable();
         crouchAction?.Disable();
+        interactAction?.Disable();
     }
 
     void SetupInput()
@@ -133,6 +141,10 @@ public sealed class PlayerController : MonoBehaviour
         // Crouch: C
         crouchAction = new InputAction("Crouch", InputActionType.Button);
         crouchAction.AddBinding("<Keyboard>/c");
+
+        // Interact: E
+        interactAction = new InputAction("Interact", InputActionType.Button);
+        interactAction.AddBinding("<Keyboard>/e");
     }
 
     void Update()
@@ -161,6 +173,9 @@ public sealed class PlayerController : MonoBehaviour
         UpdateCrouch();
         MoveAndGravity();
         CameraBob();
+
+        if (interactAction != null && interactAction.WasPressedThisFrame())
+            TryInteract();
     }
 
     private void FixedUpdate()
@@ -335,6 +350,25 @@ public sealed class PlayerController : MonoBehaviour
             bobTime = 0f;
             prevBobCos = 1f;
             bobTarget.localPosition = SmoothTo(bobTarget.localPosition, basePos, bobReturnSharpness);
+        }
+    }
+
+    void TryInteract()
+    {
+        // Always cast from the center of the player camera (bobTarget).
+        Transform t = bobTarget ? bobTarget : (headPivot ? headPivot : transform);
+        Vector3 origin = t.position;
+        Vector3 dir = t.forward;
+
+        Debug.DrawLine(origin, origin + dir * interactRange, Color.yellow);
+
+        int mask = interactLayer.value & ~playerLayerToIgnore.value;
+
+        if (Physics.Raycast(origin, dir, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
+        {
+            Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
+            if (interactable != null)
+                interactable.Interact();
         }
     }
 
