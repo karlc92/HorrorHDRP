@@ -487,6 +487,7 @@ MonoBehaviour:
   m_Script: {fileID: 466722074}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.SceneObjectIDMapSceneAsset
+  m_Entries: []
 --- !u!4 &120422616
 Transform:
   m_ObjectHideFlags: 19
@@ -4287,7 +4288,7 @@ GameObject:
   - component: {fileID: 93034068983210796}
   - component: {fileID: 93034068984308204}
   m_Layer: 9
-  m_Name: Lactarius_pergamenus_03_LOD0
+  m_Name: MushroomModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4358,6 +4359,7 @@ MonoBehaviour:
   Description: 'It''s a mushroom...
 
     I think I should eat the poison.'
+  WorldModel: {fileID: 93034068986511148}
   InspectScaleMultiplier: 1
 --- !u!135 &93034068986602256
 SphereCollider:

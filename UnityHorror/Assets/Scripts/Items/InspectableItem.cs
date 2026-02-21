@@ -6,8 +6,12 @@ public class InspectableItem : Interactable
     [Header("Inspection")]
     public GameObject InspectPrefab;
 
+    [Header("World")]
+    public GameObject WorldModel;
+
     [TextArea(2, 8)]
     public string Description;
+
 
     // Optional: tweak how big it appears in the inspect view
     public float InspectScaleMultiplier = 1.0f;
@@ -25,10 +29,14 @@ public class InspectableItem : Interactable
 
         Inspecting = true;
         InspectionManager.Instance?.Open(this);
+        WorldModel.SetActive(!Inspecting);
+
     }
 
     public void NotifyInspectionClosed()
     {
         Inspecting = false;
+        WorldModel.SetActive(!Inspecting);
     }
+
 }
