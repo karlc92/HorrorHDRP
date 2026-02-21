@@ -816,14 +816,14 @@ Transform:
   m_GameObject: {fileID: 246147895}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4459.597, y: 4994.2607, z: 5975.2686}
+  m_LocalPosition: {x: 10014.598, y: 10549.261, z: 11530.269}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2130907355}
   - {fileID: 35554527}
   - {fileID: 456422808}
-  m_Father: {fileID: 1956495391}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &456422807
 GameObject:
@@ -2309,12 +2309,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1382767846}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5555, y: -5555, z: -5555}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1526296471}
+  m_Father: {fileID: 1956495391}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1382767848
 MonoBehaviour:
@@ -2893,11 +2893,11 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1382767847}
   - {fileID: 1343874817}
   - {fileID: 532955192}
   - {fileID: 135207640}
   - {fileID: 1023118592}
+  - {fileID: 1767761026}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1566542314
@@ -3437,12 +3437,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1767761023}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -500, y: 0, z: -500}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1526296471}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &1837404033 stripped
 Camera:
@@ -3717,7 +3717,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1876318013}
-  - {fileID: 246147896}
+  - {fileID: 1382767847}
+  - {fileID: 2049280216}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1973990206
@@ -4041,12 +4042,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2049280214}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.82865, y: 0.705, z: 51.7585}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5557.8286, y: -5554.295, z: -5503.2417}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1956495391}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2076211351
 GameObject:
@@ -4356,10 +4357,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InspectableItem
   InspectPrefab: {fileID: 2356806772915877532, guid: 2a80f14ed5cfeb8419f5bda4491633c2, type: 3}
+  WorldModel: {fileID: 93034068986511148}
   Description: 'It''s a mushroom...
 
     I think I should eat the poison.'
-  WorldModel: {fileID: 93034068986511148}
   InspectScaleMultiplier: 1
 --- !u!135 &93034068986602256
 SphereCollider:
@@ -4509,10 +4510,10 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 869020538}
-  - {fileID: 2049280216}
-  - {fileID: 1956495391}
   - {fileID: 27029690}
   - {fileID: 1933652861}
+  - {fileID: 246147896}
+  - {fileID: 1956495391}
   - {fileID: 2013410475}
   - {fileID: 8952715985026553968}
   - {fileID: 2612044178891355004}
@@ -4520,7 +4521,6 @@ SceneRoots:
   - {fileID: 1973990208}
   - {fileID: 120422616}
   - {fileID: 1396397668}
-  - {fileID: 1767761026}
   - {fileID: 1953650053}
   - {fileID: 564890447}
   - {fileID: 1251067117}
