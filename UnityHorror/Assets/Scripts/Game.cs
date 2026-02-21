@@ -27,9 +27,12 @@ public static class Game
 
     }
 
-    public static void StartNewGame()
+    public static void StartNewGame(int slot)
     {
-        State = new GameState();
+        State = new GameState()
+        {
+            Slot = slot,
+        };
 
         SceneManager.LoadScene("GameScene");
     }
