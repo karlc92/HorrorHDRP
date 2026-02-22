@@ -8,7 +8,6 @@ public class MonsterController : MonoBehaviour
 {
     public enum MonsterActionState { Idle, Roaming, Hunting, Emote, Killing, BackstageTravel, BackstageIdle }
     public MonsterActionState state = MonsterActionState.Roaming;
-    [SerializeField] GameObject deadBg;
     AnimancerComponent animancer;
     public AnimationClip idleClip;
     public AnimationClip runningClip;
@@ -711,9 +710,11 @@ public class MonsterController : MonoBehaviour
 
         if (t > killingEndTime)
         {
-            if (deadBg != null)
+            var gameUI = FindFirstObjectByType<GameUI>();
+
+            if (gameUI != null)
             {
-                deadBg.SetActive(true);
+                gameUI.ShowDeadUI();
             }
         }
     }

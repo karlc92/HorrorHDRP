@@ -144,9 +144,6 @@ public class MonsterManager : MonoBehaviour
 
         if (Keyboard.current != null && Keyboard.current[Key.P].wasPressedThisFrame)
             AddThreat(10f);
-
-        if (Keyboard.current != null && Keyboard.current[Key.L].wasPressedThisFrame)
-            Game.SaveGame(Game.State.Slot);
     }
 
     /// <summary>

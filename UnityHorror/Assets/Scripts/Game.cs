@@ -1,11 +1,14 @@
 using System;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public static class Game
 {
     public const string GameSceneName = "GameScene";
+    public const string MenuSceneName = "MenuScene";
+    public const string LoadingSceneName = "LoadingScene";
     public const string SaveFilePrefix = "save_slot_";
 
     public static GameSettings Settings = new GameSettings();
@@ -43,6 +46,11 @@ public static class Game
     public static void FixedUpdate()
     {
 
+    }
+
+    public static void ReturnToMainMenu()
+    {
+        SceneManager.LoadScene(MenuSceneName);
     }
 
     public static void StartNewGame(int slot)
@@ -128,17 +136,8 @@ public static class Game
             return false;
         }
 
-        // If we're not already in the gameplay scene, load it AFTER state is set.
-        if (SceneManager.GetActiveScene().name != GameSceneName)
-        {
-            pendingApplyLoadedState = true;
-            SceneManager.LoadScene(GameSceneName);
-        }
-        else
-        {
-            // Already in the gameplay scene, apply immediately.
-            ApplyLoadedStateToScene();
-        }
+        pendingApplyLoadedState = true;
+        SceneManager.LoadScene(GameSceneName, LoadSceneMode.Single);
 
         return true;
     }
@@ -207,5 +206,14 @@ public static class Game
     {
         return Path.Combine(Application.persistentDataPath, $"{SaveFilePrefix}{slot}.json");
     }
-    
+
+    public static bool HasSaveFile(int slot)
+    {
+        if (slot < 1 || slot > 3)
+            return false;
+
+        string path = Path.Combine(Application.persistentDataPath, $"{Game.SaveFilePrefix}{slot}.json");
+        return File.Exists(path);
+    }
+
 }

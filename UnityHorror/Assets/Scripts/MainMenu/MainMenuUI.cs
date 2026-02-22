@@ -59,7 +59,7 @@ public class MainMenuUI : MonoBehaviour
 
     public string GetSavedDataDisplay(int slot)
     {
-        if (!HasSaveFile(slot))
+        if (!Game.HasSaveFile(slot))
             return $"NEW GAME";
 
         if (TryReadSaveState(slot, out var state))
@@ -74,7 +74,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void SlotButtonClick(int slot)
     {
-        if (HasSaveFile(slot))
+        if (Game.HasSaveFile(slot))
         {
             Game.LoadGame(slot);
         }
@@ -82,15 +82,6 @@ public class MainMenuUI : MonoBehaviour
         {
             Game.StartNewGame(slot);
         }
-    }
-
-    bool HasSaveFile(int slot)
-    {
-        if (slot < 1 || slot > 3)
-            return false;
-
-        string path = Path.Combine(Application.persistentDataPath, $"{Game.SaveFilePrefix}{slot}.json");
-        return File.Exists(path);
     }
 
     bool TryReadSaveState(int slot, out GameState state)
