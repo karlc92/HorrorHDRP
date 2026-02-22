@@ -490,7 +490,6 @@ MonoBehaviour:
   m_Script: {fileID: 466722074}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.SceneObjectIDMapSceneAsset
-  m_Entries: []
 --- !u!4 &120422616
 Transform:
   m_ObjectHideFlags: 19
@@ -2331,13 +2330,25 @@ MonoBehaviour:
   m_IsGlobal: 1
   fadeRadius: 0
   priority: 0
-  customPasses: []
+  customPasses:
+  - rid: 4354182001967497332
   injectionPoint: 2
   m_TargetCamera: {fileID: 0}
   useTargetCamera: 0
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 4354182001967497332
+      type: {class: SilhouetteOutlineCustomPass, ns: , asm: Assembly-CSharp}
+      data:
+        m_Name: Custom Pass
+        enabled: 1
+        targetColorBuffer: 0
+        targetDepthBuffer: 0
+        clearFlags: 0
+        passFoldout: 0
+        m_Version: 0
+        outlineMaterial: {fileID: 2100000, guid: 721b39f4c5fa9c442b3ec58ccff00b60, type: 2}
 --- !u!1 &1382767846
 GameObject:
   m_ObjectHideFlags: 0
@@ -2383,7 +2394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OutlineManager
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineThickness: 0.003
+  outlineThickness: 0.006
 --- !u!1 &1396397666
 GameObject:
   m_ObjectHideFlags: 19
