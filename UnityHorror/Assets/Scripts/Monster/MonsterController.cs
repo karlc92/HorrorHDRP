@@ -6,7 +6,7 @@ using Pathfinding;
 [RequireComponent(typeof(CharacterController), typeof(Seeker))]
 public class MonsterController : MonoBehaviour
 {
-    public enum MonsterState { Idle, Roaming, Hunting, Emote, Killing }
+    public enum MonsterState { Idle, Roaming, Hunting, Emote, Killing, BackstageTravel, BackstageIdle }
     public MonsterState state = MonsterState.Roaming;
     [SerializeField] GameObject deadBg;
     AnimancerComponent animancer;
@@ -20,6 +20,51 @@ public class MonsterController : MonoBehaviour
     public float speed = 3.5f;
     public float roamRadius = 12f;
     public float minRoamDistance = 3f;
+
+    [Header("Director / Stage")]
+    [Tooltip("When not Hunting, Roaming destinations will be picked around this point (typically the PlayerLocationHint).")]
+    public Vector3 roamCenter;
+
+    [Tooltip("If true, the monster will resume BackstageTravel after giving up a hunt.")]
+    [SerializeField] private bool wantsBackstage = false;
+    public bool WantsBackstage => wantsBackstage;
+
+
+    [Header("Backstage Presentation")]
+    [Tooltip("When the monster is backstage, all SkinnedMeshRenderer children are disabled so the player cannot see it.")]
+    [SerializeField] private bool hideMeshesWhileBackstage = true;
+
+    [Tooltip("If the monster is within this distance (XZ) of the player when going Backstage -> Frontstage, it teleports to a new navmesh point ~this far away before revealing.")]
+    public float frontstageRevealDistance = 60f;
+
+    [Tooltip("Teleport distance jitter as a fraction of frontstageRevealDistance (e.g. 0.15 = +/-15%).")]
+    [Range(0f, 0.5f)]
+    public float frontstageRevealDistanceJitter = 0.15f;
+
+    [Tooltip("Attempts to find a valid navmesh point at reveal distance when coming frontstage.")]
+    public int frontstageTeleportAttempts = 20;
+
+    [Tooltip("If true, the re-entry teleport point must be on the same navmesh area as the player.")]
+    public bool frontstageTeleportRequireSameNavAreaAsPlayer = true;
+
+    private SkinnedMeshRenderer[] backstageSkinnedMeshes;
+
+
+    [Tooltip("Disable the CharacterController while BackstageIdle so the player cannot bump into an invisible monster.")]
+    [SerializeField] private bool disableCharacterControllerWhileBackstageIdle = true;
+
+    [Tooltip("Minimum distance (XZ) from the player required before the monster will enter BackstageIdle (hide + no collision). If <= 0, uses frontstageRevealDistance.")]
+    public float backstageMinDistanceFromPlayer = 0f;
+
+    [Tooltip("If the requested backstage target is too close / invalid, the controller will try to pick a better one automatically.")]
+    [SerializeField] private bool enforceBackstageDistance = true;
+
+    [Tooltip("Attempts used when auto-picking a safer backstage destination.")]
+    public int backstagePickAttempts = 20;
+
+    float nextBackstageRepickAt;
+    const float BackstageRepickCooldown = 0.25f;
+
 
     public float chaseDistance = 6f;
     public float killDistance = 1.5f;
@@ -90,6 +135,7 @@ public class MonsterController : MonoBehaviour
 
     Vector3 destination;
     Vector3 lastSeenPos;
+    Vector3 backstageDestination;
 
     Path path;
     int waypoint;
@@ -140,7 +186,11 @@ public class MonsterController : MonoBehaviour
 
         destination = transform.position;
         lastSeenPos = destination;
+        roamCenter = destination;
+        backstageDestination = destination;
         lastState = state;
+
+        ApplyBackstagePresentationForState(state);
     }
 
     static float SqrXZ(Vector3 a, Vector3 b)
@@ -156,6 +206,234 @@ public class MonsterController : MonoBehaviour
         var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
         return nn.position;
     }
+
+    bool IsBackstageState(MonsterState s) => s == MonsterState.BackstageTravel || s == MonsterState.BackstageIdle;
+
+    // Only hide visuals once the monster is parked and idle backstage (so you can still see it leaving).
+    bool ShouldHideMeshesInState(MonsterState s) => s == MonsterState.BackstageIdle;
+
+
+    float GetBackstageRequiredDistance()
+    {
+        float d = backstageMinDistanceFromPlayer > 0.01f ? backstageMinDistanceFromPlayer : frontstageRevealDistance;
+        return Mathf.Max(0f, d);
+    }
+
+    void ApplyBackstagePresentationForState(MonsterState s)
+    {
+        bool hide = ShouldHideMeshesInState(s);
+
+        // Visuals (only hidden in BackstageIdle).
+        if (hideMeshesWhileBackstage)
+            SetBackstageMeshesEnabled(!hide);
+
+        // Collision: disable CharacterController only when hidden.
+        if (disableCharacterControllerWhileBackstageIdle)
+        {
+            if (controller == null) controller = GetComponent<CharacterController>();
+            if (controller != null && controller.enabled == hide)
+                controller.enabled = !hide;
+        }
+    }
+
+    bool TryPickBackstageDestination(Vector3 monsterPos, Vector3 playerPos, float requiredDist, out Vector3 picked)
+    {
+        picked = monsterPos;
+
+        requiredDist = Mathf.Max(0f, requiredDist);
+        if (requiredDist <= 0.01f) return false;
+
+        // Fallback if we have no A* graph.
+        if (!AstarPath.active)
+        {
+            Vector3 away = monsterPos - playerPos;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
+            away.Normalize();
+
+            picked = playerPos + away * requiredDist;
+            return true;
+        }
+
+        var start = AstarPath.active.GetNearest(monsterPos, NNConstraint.Walkable);
+        if (start.node == null || !start.node.Walkable) return false;
+
+        uint startArea = start.node.Area;
+
+        float jitter = Mathf.Clamp(frontstageRevealDistanceJitter, 0f, 0.5f);
+        int attempts = Mathf.Max(1, backstagePickAttempts);
+
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector2 dir2 = Random.insideUnitCircle;
+            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
+            dir2.Normalize();
+
+            float d = requiredDist * Random.Range(1f - jitter, 1f + jitter);
+            Vector3 candidate = playerPos + new Vector3(dir2.x, 0f, dir2.y) * d;
+
+            var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
+            if (nn.node == null || !nn.node.Walkable) continue;
+
+            if (nn.node.Area != startArea) continue;
+
+            if (SqrXZ(nn.position, playerPos) < requiredDist * requiredDist)
+                continue;
+
+            // Must be reachable from the monster.
+            if (!IsTargetPathableFrom(monsterPos, nn.position))
+                continue;
+
+            picked = nn.position;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool RepickBackstageDestination(Vector3 monsterPos, Vector3 playerPos)
+    {
+        float required = GetBackstageRequiredDistance();
+        if (required <= 0.01f) return false;
+
+        if (!TryPickBackstageDestination(monsterPos, playerPos, required, out var picked))
+            return false;
+
+        backstageDestination = picked;
+        destination = picked;
+
+        if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
+
+        path = null;
+        waypoint = 0;
+        repathAt = 0f;
+        pathFails = 0;
+
+        return true;
+    }
+
+    void CacheBackstageMeshes()
+    {
+        if (!hideMeshesWhileBackstage) return;
+        if (backstageSkinnedMeshes == null || backstageSkinnedMeshes.Length == 0)
+            backstageSkinnedMeshes = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+    }
+
+    void SetBackstageMeshesEnabled(bool enabled)
+    {
+        if (!hideMeshesWhileBackstage) return;
+
+        CacheBackstageMeshes();
+        if (backstageSkinnedMeshes == null) return;
+
+        for (int i = 0; i < backstageSkinnedMeshes.Length; i++)
+        {
+            var r = backstageSkinnedMeshes[i];
+            if (r) r.enabled = enabled;
+        }
+    }
+
+    void TeleportTo(Vector3 p)
+    {
+        // CharacterController doesn't like being moved while enabled.
+        if (controller == null) controller = GetComponent<CharacterController>();
+
+        bool ccWasEnabled = controller != null && controller.enabled;
+        if (controller != null) controller.enabled = false;
+
+        transform.position = p;
+
+        if (controller != null)
+        {
+            controller.enabled = ccWasEnabled;
+            if (controller.enabled) controller.Move(Vector3.zero); // flush internal state
+        }
+
+        destination = p;
+        lastSeenPos = p;
+
+        if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
+
+        path = null;
+        waypoint = 0;
+        repathAt = 0f;
+    }
+
+    bool TryPickFrontstageTeleportPoint(Vector3 playerPos, out Vector3 picked)
+    {
+        picked = transform.position;
+
+        float dist = Mathf.Max(0f, frontstageRevealDistance);
+        if (dist <= 0.01f) return false;
+
+        // Fallback if we have no A* graph.
+        if (!AstarPath.active)
+        {
+            Vector2 dir2 = Random.insideUnitCircle;
+            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
+            dir2.Normalize();
+
+            picked = playerPos + new Vector3(dir2.x, 0f, dir2.y) * dist;
+            return true;
+        }
+
+        var playerNN = AstarPath.active.GetNearest(playerPos, NNConstraint.Walkable);
+        if (playerNN.node == null || !playerNN.node.Walkable) return false;
+
+        uint requiredArea = playerNN.node.Area;
+
+        float minSqr = dist * dist;
+        float jitter = Mathf.Clamp(frontstageRevealDistanceJitter, 0f, 0.5f);
+
+        for (int i = 0; i < Mathf.Max(1, frontstageTeleportAttempts); i++)
+        {
+            Vector2 dir2 = Random.insideUnitCircle;
+            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
+            dir2.Normalize();
+
+            float d = dist * Random.Range(1f - jitter, 1f + jitter);
+            Vector3 candidate = playerPos + new Vector3(dir2.x, 0f, dir2.y) * d;
+
+            var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
+            if (nn.node == null || !nn.node.Walkable) continue;
+
+            if (frontstageTeleportRequireSameNavAreaAsPlayer && nn.node.Area != requiredArea)
+                continue;
+
+            if (SqrXZ(nn.position, playerPos) < minSqr)
+                continue;
+
+            // Ensure the monster can actually reach the player from there.
+            if (!IsTargetPathableFrom(nn.position, playerPos))
+                continue;
+
+            picked = nn.position;
+            return true;
+        }
+
+        // Worst-case fallback: directly away from player.
+        Vector3 away = transform.position - playerPos;
+        away.y = 0f;
+        if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
+        away.Normalize();
+
+        Vector3 fallback = ProjectToWalkable(playerPos + away * dist);
+
+        var fallbackNN = AstarPath.active.GetNearest(fallback, NNConstraint.Walkable);
+        if (fallbackNN.node != null && fallbackNN.node.Walkable)
+        {
+            if (!frontstageTeleportRequireSameNavAreaAsPlayer || fallbackNN.node.Area == requiredArea)
+            {
+                picked = fallbackNN.position;
+                return IsTargetPathableFrom(picked, playerPos);
+            }
+        }
+
+        return false;
+    }
+
 
     bool IsTargetPathableFrom(Vector3 from, Vector3 target)
     {
@@ -176,33 +454,36 @@ public class MonsterController : MonoBehaviour
         return true;
     }
 
-    bool TryPickRoamDestination(Vector3 fromPos, out Vector3 picked)
+    bool TryPickRoamDestination(Vector3 startPos, Vector3 center, out Vector3 picked)
     {
-        picked = fromPos;
+        picked = startPos;
+
+        float radius = Mathf.Max(0f, roamRadius);
+        float minDist = Mathf.Clamp(minRoamDistance, 0f, radius);
 
         if (!AstarPath.active)
         {
-            var r = Random.insideUnitSphere * roamRadius;
+            var r = Random.insideUnitSphere * radius;
             r.y = 0f;
-            if (r.sqrMagnitude < minRoamDistance * minRoamDistance)
-                r = r.normalized * minRoamDistance;
+            if (r.sqrMagnitude < minDist * minDist)
+                r = r.sqrMagnitude > 0.0001f ? r.normalized * minDist : Vector3.forward * minDist;
 
-            picked = fromPos + r;
+            picked = center + r;
             return true;
         }
 
-        var start = AstarPath.active.GetNearest(fromPos, NNConstraint.Walkable);
+        var start = AstarPath.active.GetNearest(startPos, NNConstraint.Walkable);
         if (start.node == null || !start.node.Walkable) return false;
 
         for (int i = 0; i < Mathf.Max(1, roamPickAttempts); i++)
         {
-            var r = Random.insideUnitSphere * roamRadius;
+            var r = Random.insideUnitSphere * radius;
             r.y = 0f;
 
-            if (r.sqrMagnitude < minRoamDistance * minRoamDistance)
-                r = r.normalized * minRoamDistance;
+            if (r.sqrMagnitude < minDist * minDist)
+                r = r.sqrMagnitude > 0.0001f ? r.normalized * minDist : Vector3.forward * minDist;
 
-            var candidate = fromPos + r;
+            var candidate = center + r;
             var end = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
 
             if (end.node == null || !end.node.Walkable) continue;
@@ -216,20 +497,22 @@ public class MonsterController : MonoBehaviour
         return true;
     }
 
-    void PickNewRoamDestination(Vector3 fromPos)
+    void PickNewRoamDestination(Vector3 startPos, Vector3 center)
     {
-        if (TryPickRoamDestination(fromPos, out var picked))
+        if (TryPickRoamDestination(startPos, center, out var picked))
         {
             destination = picked;
-            seeker.CancelCurrentPathRequest();
+            if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
             path = null;
             waypoint = 0;
             repathAt = 0f;
         }
         else
         {
-            destination = fromPos;
-            seeker.CancelCurrentPathRequest();
+            destination = startPos;
+            if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
             path = null;
             waypoint = 0;
             repathAt = 0f;
@@ -246,8 +529,18 @@ public class MonsterController : MonoBehaviour
     void EnterPostHuntIdle(Vector3 playerPos)
     {
         gaveUpAt = Time.time;
-        forceRoamPick = true;
-        EnterIdle(idleTimeAfterHunting, MonsterState.Roaming, playerPos);
+
+        // If the director currently wants the monster backstage, a failed hunt should resume BackstageTravel
+        // (after the same post-hunt idle). Otherwise, return to normal roaming.
+        if (wantsBackstage)
+        {
+            EnterIdle(idleTimeAfterHunting, MonsterState.BackstageTravel, playerPos);
+        }
+        else
+        {
+            forceRoamPick = true;
+            EnterIdle(idleTimeAfterHunting, MonsterState.Roaming, playerPos);
+        }
     }
 
     void ClearDetour()
@@ -276,7 +569,8 @@ public class MonsterController : MonoBehaviour
             player.isInDeathSequence = false;
         }
 
-        seeker.CancelCurrentPathRequest();
+        if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
         path = null;
         waypoint = 0;
         repathAt = 0f;
@@ -288,6 +582,8 @@ public class MonsterController : MonoBehaviour
         ClearDetour();
 
         state = s;
+        ApplyBackstagePresentationForState(state);
+
 
         if (state == MonsterState.Hunting)
         {
@@ -360,7 +656,8 @@ public class MonsterController : MonoBehaviour
                 detourUntil = Time.time + Mathf.Max(0.1f, unstuckDetourDuration);
 
                 destination = walkable;
-                seeker.CancelCurrentPathRequest();
+                if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
                 path = null;
                 waypoint = 0;
                 repathAt = 0f;
@@ -374,7 +671,8 @@ public class MonsterController : MonoBehaviour
             detourUntil = Time.time + Mathf.Max(0.1f, unstuckDetourDuration);
 
             destination = walkable;
-            seeker.CancelCurrentPathRequest();
+            if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
             path = null;
             waypoint = 0;
             repathAt = 0f;
@@ -437,7 +735,8 @@ public class MonsterController : MonoBehaviour
             {
                 destination = resumeDestination;
                 ClearDetour();
-                seeker.CancelCurrentPathRequest();
+                if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
                 path = null;
                 waypoint = 0;
                 repathAt = 0f;
@@ -447,6 +746,71 @@ public class MonsterController : MonoBehaviour
         var toPlayer = playerPos - pos;
         toPlayer.y = 0f;
         var dPlayer = toPlayer.magnitude;
+
+        Transform rt = player.raycastTarget ? player.raycastTarget : player.transform;
+
+
+        // Backstage behaviour: travel to a backstage destination, then idle there.
+        if (state == MonsterState.BackstageIdle)
+        {
+            // Robust: enforce hidden + no-collision every frame while parked backstage.
+            ApplyBackstagePresentationForState(state);
+
+            if (controller != null && controller.enabled)
+                controller.SimpleMove(Vector3.zero);
+
+            if (idleClip) PlayClip(idleClip, 1f);
+            return;
+        }
+        if (state == MonsterState.BackstageTravel)
+        {
+            // Ensure we stay visible/collidable while leaving.
+            ApplyBackstagePresentationForState(state);
+
+            // IMPORTANT: Even while traveling backstage, the monster remains dangerous.
+            // If the player gets within hunt range, enter Hunting using the exact same code path as normal.
+            bool inRange = dPlayer <= chaseDistance && (Time.time - gaveUpAt) >= giveUpCooldown;
+            bool huntable = inRange && IsTargetPathableFrom(pos, rt.position);
+            if (huntable)
+            {
+                SetState(MonsterState.Hunting, playerPos);
+            }
+
+            // If we didn't switch to Hunting, continue traveling backstage.
+            if (state == MonsterState.BackstageTravel)
+            {
+                destination = ProjectToWalkable(backstageDestination);
+
+                // If we've effectively arrived, only park backstage if we're far enough from the player.
+                if (SqrXZ(pos, destination) <= arriveDistance * arriveDistance)
+                {
+                    float required = GetBackstageRequiredDistance();
+
+                    if (enforceBackstageDistance && required > 0.01f && SqrXZ(destination, playerPos) < required * required)
+                    {
+                        // Too close - pick a better backstage point and keep traveling.
+                        if (Time.time >= nextBackstageRepickAt)
+                        {
+                            nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
+                            RepickBackstageDestination(pos, playerPos);
+                        }
+                    }
+                    else
+                    {
+                        SetState(MonsterState.BackstageIdle, playerPos);
+
+                        // Apply immediately (so visuals/collision flip right away on arrival).
+                        ApplyBackstagePresentationForState(state);
+
+                        if (controller != null && controller.enabled)
+                            controller.SimpleMove(Vector3.zero);
+
+                        if (idleClip) PlayClip(idleClip, 1f);
+                        return;
+                    }
+                }
+            }
+        }
 
         if (state != lastState)
         {
@@ -478,8 +842,6 @@ public class MonsterController : MonoBehaviour
             return;
         }
 
-        Transform rt = player.raycastTarget ? player.raycastTarget : player.transform;
-
         // ROAMING logic
         if (state == MonsterState.Roaming)
         {
@@ -495,7 +857,7 @@ public class MonsterController : MonoBehaviour
                 if (forceRoamPick)
                 {
                     forceRoamPick = false;
-                    PickNewRoamDestination(pos);
+                    PickNewRoamDestination(pos, roamCenter);
                 }
                 else if (emoteClips.Count > 0 && Random.value < emoteChancePerSecond * Time.deltaTime)
                 {
@@ -527,7 +889,7 @@ public class MonsterController : MonoBehaviour
                         (destination - pos).sqrMagnitude <= arriveDistance * arriveDistance;
 
                     if (needNew)
-                        PickNewRoamDestination(pos);
+                        PickNewRoamDestination(pos, roamCenter);
                 }
             }
         }
@@ -633,6 +995,7 @@ public class MonsterController : MonoBehaviour
 
                 bool doRepath =
                     state == MonsterState.Roaming ||
+                    state == MonsterState.BackstageTravel ||
                     (state == MonsterState.Hunting && (chasing || path == null || detouring));
 
                 if (doRepath)
@@ -659,6 +1022,17 @@ public class MonsterController : MonoBehaviour
                             if (state == MonsterState.Roaming)
                             {
                                 forceRoamPick = true;
+                            }
+
+                            if (state == MonsterState.BackstageTravel)
+                            {
+                                // If we can't path to the chosen backstage point, pick a new one (otherwise it can appear to "idle" in view).
+                                float required = GetBackstageRequiredDistance();
+                                if (enforceBackstageDistance && required > 0.01f && Time.time >= nextBackstageRepickAt)
+                                {
+                                    nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
+                                    RepickBackstageDestination(transform.position, playerPosNow);
+                                }
                             }
 
                             if (state == MonsterState.Hunting && pathFails >= maxPathFails)
@@ -725,7 +1099,7 @@ public class MonsterController : MonoBehaviour
         }
 
         bool shouldMove =
-            (state == MonsterState.Roaming || state == MonsterState.Hunting) &&
+            (state == MonsterState.Roaming || state == MonsterState.Hunting || state == MonsterState.BackstageTravel) &&
             SqrXZ(pos, destination) > arriveDistance * arriveDistance;
 
         if (shouldMove && controller.velocity.sqrMagnitude < 0.01f) stuckFor += Time.deltaTime;
@@ -751,7 +1125,8 @@ public class MonsterController : MonoBehaviour
             }
             else
             {
-                seeker.CancelCurrentPathRequest();
+                if (seeker == null) seeker = GetComponent<Seeker>();
+        if (seeker != null) seeker.CancelCurrentPathRequest();
                 path = null;
                 waypoint = 0;
                 repathAt = 0f;
@@ -774,6 +1149,96 @@ public class MonsterController : MonoBehaviour
             Debug.Log($"[Monster] state={state} los={los} losPathable={losPathable} chasing={chasing} sprinting={sprinting} detour={detouring} speedMult={speedMult:F1} destDist={Mathf.Sqrt(SqrXZ(pos, destination)):F1} path={(path != null ? path.vectorPath.Count.ToString() : "null")} wp={waypoint} vel={controller.velocity.magnitude:F2}");
         }
     }
+
+    // --- Director API (MonsterManager) ---
+    public void SetRoamCenter(Vector3 center, bool forceNewDestination = false)
+    {
+        roamCenter = center;
+        if (forceNewDestination) forceRoamPick = true;
+    }
+
+    public void ForcePickNewRoamDestination()
+    {
+        forceRoamPick = true;
+    }
+
+    public void SendBackstage(Vector3 target)
+    {
+        wantsBackstage = true;
+
+        // Don't stomp the death cinematic.
+        if (state == MonsterState.Killing) return;
+
+        Vector3 playerPos = player ? player.transform.position : transform.position;
+        float required = GetBackstageRequiredDistance();
+
+        if (enforceBackstageDistance && required > 0.01f)
+        {
+            bool ok = true;
+
+            // Must be far enough from the player.
+            if (SqrXZ(target, playerPos) < required * required)
+                ok = false;
+
+            // Must land on walkable.
+            if (AstarPath.active)
+            {
+                var nn = AstarPath.active.GetNearest(target, NNConstraint.Walkable);
+                if (nn.node == null || !nn.node.Walkable)
+                    ok = false;
+            }
+
+            if (!ok && TryPickBackstageDestination(transform.position, playerPos, required, out var picked))
+                target = picked;
+        }
+
+        backstageDestination = target;
+        nextBackstageRepickAt = 0f;
+
+        SetState(MonsterState.BackstageTravel, playerPos);
+    }
+
+    public void SendFrontstage(Vector3 playerPos)
+    {
+        wantsBackstage = false;
+
+        // If we're currently in a post-hunt idle that was going to resume backstage travel, redirect it to roaming.
+        if (state == MonsterState.Idle && idleNext == MonsterState.BackstageTravel)
+            idleNext = MonsterState.Roaming;
+
+        bool wasBackstage = IsBackstageState(state);
+        if (!wasBackstage) return;
+
+        // Only do the "hidden re-entry" teleport if we were parked backstage and invisible.
+        // If we're still in BackstageTravel, we want to stay visible so the player can see/hear it leaving.
+        bool wasHidden = ShouldHideMeshesInState(state);
+
+        if (wasHidden)
+        {
+            float d = Mathf.Max(0f, frontstageRevealDistance);
+            if (d > 0.01f && SqrXZ(transform.position, playerPos) < d * d)
+            {
+                if (TryPickFrontstageTeleportPoint(playerPos, out var picked))
+                    TeleportTo(picked);
+                else
+                {
+                    // Worst-case: still move it away so it doesn't "pop" right next to the player.
+                    Vector3 away = transform.position - playerPos;
+                    away.y = 0f;
+                    if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
+                    away.Normalize();
+
+                    TeleportTo(ProjectToWalkable(playerPos + away * d));
+                }
+            }
+        }
+
+        SetState(MonsterState.Roaming, playerPos);
+        forceRoamPick = true;
+    }
+
+    public bool IsBackstage => state == MonsterState.BackstageTravel || state == MonsterState.BackstageIdle;
+
 
     void PlayClip(AnimationClip clip, float animSpeed)
     {

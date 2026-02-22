@@ -825,6 +825,72 @@ Transform:
   - {fileID: 456422808}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &258723602
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 258723603}
+  - component: {fileID: 258723604}
+  m_Layer: 0
+  m_Name: MonsterManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &258723603
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258723602}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1956495391}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &258723604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258723602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b7a327ad104d8d4cad6fb3dd9cc3958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterManager
+  controller: {fileID: 1495396693}
+  State:
+    MonsterFrontStage: 0
+    ThreatLevel: 0
+    PlayerLocationHint: {x: 0, y: 0, z: 0}
+  threatDecayPerSecond: 1
+  frontStageThreshold: 40
+  backStageThreshold: 10
+  roamRadiusAtThreat0: 20
+  roamRadiusAtThreat100: 1
+  minRoamDistanceAtThreat0: 6
+  minRoamDistanceAtThreat100: 1.25
+  maxHintErrorDistance: 25
+  minHintErrorDistance: 0
+  hintUpdateInterval: 0.75
+  hintSmoothing: 6
+  backstageDistance: 70
+  backstageMinDistance: 70
+  backstagePickAttempts: 20
+  backstageRequireSameNavArea: 1
+  debugLog: 0
+  debugDraw: 1
 --- !u!1 &456422807
 GameObject:
   m_ObjectHideFlags: 0
@@ -2572,6 +2638,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493552928}
   m_CullTransparentMesh: 1
+--- !u!114 &1495396693 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8499826287805038252, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
+  m_PrefabInstance: {fileID: 2612044178891355004}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23fd3e39198245c4d9e84fad1ea0d06c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterController
 --- !u!1 &1505875080
 GameObject:
   m_ObjectHideFlags: 0
@@ -3716,6 +3793,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 258723603}
   - {fileID: 1876318013}
   - {fileID: 1382767847}
   - {fileID: 2049280216}
