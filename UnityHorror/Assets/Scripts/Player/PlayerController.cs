@@ -457,6 +457,27 @@ public sealed class PlayerController : MonoBehaviour
         footstepsAudioSource.Play();
     }
 
+    public void ApplySavedPose(Vector3 position, Quaternion rotation)
+    {
+        if (!cc) cc = GetComponent<CharacterController>();
+
+        bool ccWasEnabled = cc != null && cc.enabled;
+        if (cc != null) cc.enabled = false;
+
+        transform.SetPositionAndRotation(position, rotation);
+
+        // Keep internal look state aligned so the next Look() call doesn't snap us back.
+        yaw = rotation.eulerAngles.y;
+        pitch = 0f;
+        if (headPivot) headPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+
+        if (cc != null)
+        {
+            cc.enabled = ccWasEnabled;
+            if (cc.enabled) cc.Move(Vector3.zero); // flush internal state
+        }
+    }
+
     static Vector3 SmoothTo(Vector3 current, Vector3 target, float sharpness)
     {
         float t = 1f - Mathf.Exp(-sharpness * Time.deltaTime);

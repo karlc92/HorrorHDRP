@@ -6,8 +6,8 @@ using Pathfinding;
 [RequireComponent(typeof(CharacterController), typeof(Seeker))]
 public class MonsterController : MonoBehaviour
 {
-    public enum MonsterState { Idle, Roaming, Hunting, Emote, Killing, BackstageTravel, BackstageIdle }
-    public MonsterState state = MonsterState.Roaming;
+    public enum MonsterActionState { Idle, Roaming, Hunting, Emote, Killing, BackstageTravel, BackstageIdle }
+    public MonsterActionState state = MonsterActionState.Roaming;
     [SerializeField] GameObject deadBg;
     AnimancerComponent animancer;
     public AnimationClip idleClip;
@@ -142,7 +142,7 @@ public class MonsterController : MonoBehaviour
     float repathAt;
 
     float idleUntil;
-    MonsterState idleNext;
+    MonsterActionState idleNext;
 
     float emoteEndAt;
 
@@ -158,7 +158,7 @@ public class MonsterController : MonoBehaviour
     int stuckDetours;
 
     float nextDebugAt;
-    MonsterState lastState;
+    MonsterActionState lastState;
     bool lastLos;
     int pathFails;
 
@@ -207,10 +207,10 @@ public class MonsterController : MonoBehaviour
         return nn.position;
     }
 
-    bool IsBackstageState(MonsterState s) => s == MonsterState.BackstageTravel || s == MonsterState.BackstageIdle;
+    bool IsBackstageState(MonsterActionState s) => s == MonsterActionState.BackstageTravel || s == MonsterActionState.BackstageIdle;
 
     // Only hide visuals once the monster is parked and idle backstage (so you can still see it leaving).
-    bool ShouldHideMeshesInState(MonsterState s) => s == MonsterState.BackstageIdle;
+    bool ShouldHideMeshesInState(MonsterActionState s) => s == MonsterActionState.BackstageIdle;
 
 
     float GetBackstageRequiredDistance()
@@ -219,7 +219,7 @@ public class MonsterController : MonoBehaviour
         return Mathf.Max(0f, d);
     }
 
-    void ApplyBackstagePresentationForState(MonsterState s)
+    void ApplyBackstagePresentationForState(MonsterActionState s)
     {
         bool hide = ShouldHideMeshesInState(s);
 
@@ -519,9 +519,9 @@ public class MonsterController : MonoBehaviour
         }
     }
 
-    void EnterIdle(float duration, MonsterState nextState, Vector3 playerPos)
+    void EnterIdle(float duration, MonsterActionState nextState, Vector3 playerPos)
     {
-        SetState(MonsterState.Idle, playerPos);
+        SetState(MonsterActionState.Idle, playerPos);
         idleUntil = Time.time + Mathf.Max(0f, duration);
         idleNext = nextState;
     }
@@ -534,12 +534,12 @@ public class MonsterController : MonoBehaviour
         // (after the same post-hunt idle). Otherwise, return to normal roaming.
         if (wantsBackstage)
         {
-            EnterIdle(idleTimeAfterHunting, MonsterState.BackstageTravel, playerPos);
+            EnterIdle(idleTimeAfterHunting, MonsterActionState.BackstageTravel, playerPos);
         }
         else
         {
             forceRoamPick = true;
-            EnterIdle(idleTimeAfterHunting, MonsterState.Roaming, playerPos);
+            EnterIdle(idleTimeAfterHunting, MonsterActionState.Roaming, playerPos);
         }
     }
 
@@ -549,14 +549,14 @@ public class MonsterController : MonoBehaviour
         detourUntil = 0f;
     }
 
-    void SetState(MonsterState s, Vector3 playerPos)
+    void SetState(MonsterActionState s, Vector3 playerPos)
     {
         if (s == state) return;
 
         if (debug) Debug.Log($"[Monster] State {state} -> {s}");
 
         // Leaving Hunting: stop breathe loop if active.
-        if (state == MonsterState.Hunting && s != MonsterState.Hunting &&
+        if (state == MonsterActionState.Hunting && s != MonsterActionState.Hunting &&
             audioSource && audioSource.clip == huntingBreatheAudio)
         {
             audioSource.Stop();
@@ -564,7 +564,7 @@ public class MonsterController : MonoBehaviour
         }
 
         // Leaving Killing: release death sequence flag.
-        if (state == MonsterState.Killing && s != MonsterState.Killing && player != null)
+        if (state == MonsterActionState.Killing && s != MonsterActionState.Killing && player != null)
         {
             player.isInDeathSequence = false;
         }
@@ -585,7 +585,7 @@ public class MonsterController : MonoBehaviour
         ApplyBackstagePresentationForState(state);
 
 
-        if (state == MonsterState.Hunting)
+        if (state == MonsterActionState.Hunting)
         {
             lastSeenPos = playerPos;
             lastLosAt = Time.time;
@@ -598,7 +598,7 @@ public class MonsterController : MonoBehaviour
             lostAt = -1f;
         }
 
-        if (state == MonsterState.Killing)
+        if (state == MonsterActionState.Killing)
         {
             killingStartedAt = Time.time;
             killingSfxPlayed = false;
@@ -751,7 +751,7 @@ public class MonsterController : MonoBehaviour
 
 
         // Backstage behaviour: travel to a backstage destination, then idle there.
-        if (state == MonsterState.BackstageIdle)
+        if (state == MonsterActionState.BackstageIdle)
         {
             // Robust: enforce hidden + no-collision every frame while parked backstage.
             ApplyBackstagePresentationForState(state);
@@ -762,7 +762,7 @@ public class MonsterController : MonoBehaviour
             if (idleClip) PlayClip(idleClip, 1f);
             return;
         }
-        if (state == MonsterState.BackstageTravel)
+        if (state == MonsterActionState.BackstageTravel)
         {
             // Ensure we stay visible/collidable while leaving.
             ApplyBackstagePresentationForState(state);
@@ -773,11 +773,11 @@ public class MonsterController : MonoBehaviour
             bool huntable = inRange && IsTargetPathableFrom(pos, rt.position);
             if (huntable)
             {
-                SetState(MonsterState.Hunting, playerPos);
+                SetState(MonsterActionState.Hunting, playerPos);
             }
 
             // If we didn't switch to Hunting, continue traveling backstage.
-            if (state == MonsterState.BackstageTravel)
+            if (state == MonsterActionState.BackstageTravel)
             {
                 destination = ProjectToWalkable(backstageDestination);
 
@@ -797,7 +797,7 @@ public class MonsterController : MonoBehaviour
                     }
                     else
                     {
-                        SetState(MonsterState.BackstageIdle, playerPos);
+                        SetState(MonsterActionState.BackstageIdle, playerPos);
 
                         // Apply immediately (so visuals/collision flip right away on arrival).
                         ApplyBackstagePresentationForState(state);
@@ -818,16 +818,16 @@ public class MonsterController : MonoBehaviour
             if (debug) Debug.Log($"[Monster] Now {state}");
         }
 
-        if (dPlayer <= killDistance) SetState(MonsterState.Killing, playerPos);
-        else if (state == MonsterState.Killing) SetState(MonsterState.Roaming, playerPos);
+        if (dPlayer <= killDistance) SetState(MonsterActionState.Killing, playerPos);
+        else if (state == MonsterActionState.Killing) SetState(MonsterActionState.Roaming, playerPos);
 
-        if (state == MonsterState.Killing)
+        if (state == MonsterActionState.Killing)
         {
             KillingSequence(pos, playerPos, toPlayer);
             return;
         }
 
-        if (state == MonsterState.Idle)
+        if (state == MonsterActionState.Idle)
         {
             controller.SimpleMove(Vector3.zero);
             if (idleClip) PlayClip(idleClip, 1f);
@@ -835,22 +835,22 @@ public class MonsterController : MonoBehaviour
             return;
         }
 
-        if (state == MonsterState.Emote)
+        if (state == MonsterActionState.Emote)
         {
             controller.SimpleMove(Vector3.zero);
-            if (Time.time >= emoteEndAt) SetState(MonsterState.Roaming, playerPos);
+            if (Time.time >= emoteEndAt) SetState(MonsterActionState.Roaming, playerPos);
             return;
         }
 
         // ROAMING logic
-        if (state == MonsterState.Roaming)
+        if (state == MonsterActionState.Roaming)
         {
             bool inRange = dPlayer <= chaseDistance && (Time.time - gaveUpAt) >= giveUpCooldown;
             bool huntable = inRange && IsTargetPathableFrom(pos, rt.position);
 
             if (huntable)
             {
-                SetState(MonsterState.Hunting, playerPos);
+                SetState(MonsterActionState.Hunting, playerPos);
             }
             else
             {
@@ -861,7 +861,7 @@ public class MonsterController : MonoBehaviour
                 }
                 else if (emoteClips.Count > 0 && Random.value < emoteChancePerSecond * Time.deltaTime)
                 {
-                    SetState(MonsterState.Emote, playerPos);
+                    SetState(MonsterActionState.Emote, playerPos);
 
                     var clip = emoteClips[Random.Range(0, emoteClips.Count)];
                     if (clip)
@@ -899,7 +899,7 @@ public class MonsterController : MonoBehaviour
         bool losPathable = false;
 
         // HUNTING logic
-        if (state == MonsterState.Hunting)
+        if (state == MonsterActionState.Hunting)
         {
             int mask = losMask & ~(1 << monsterLayer);
 
@@ -974,18 +974,18 @@ public class MonsterController : MonoBehaviour
         }
 
         bool searchingToLastKnown =
-            state == MonsterState.Hunting &&
+            state == MonsterActionState.Hunting &&
             !chasing &&
             SqrXZ(pos, destination) > arriveDistance * arriveDistance;
 
         bool sprinting =
-            state == MonsterState.Hunting &&
+            state == MonsterActionState.Hunting &&
             (chasing || searchingToLastKnown);
 
         // Repath
         if (seeker.IsDone() && Time.time >= repathAt)
         {
-            float interval = (state == MonsterState.Hunting && sprinting) ? huntRepathInterval : repathInterval;
+            float interval = (state == MonsterActionState.Hunting && sprinting) ? huntRepathInterval : repathInterval;
             repathAt = Time.time + interval;
 
             if (AstarPath.active)
@@ -994,9 +994,9 @@ public class MonsterController : MonoBehaviour
                 var end = AstarPath.active.GetNearest(destination, NNConstraint.Walkable).position;
 
                 bool doRepath =
-                    state == MonsterState.Roaming ||
-                    state == MonsterState.BackstageTravel ||
-                    (state == MonsterState.Hunting && (chasing || path == null || detouring));
+                    state == MonsterActionState.Roaming ||
+                    state == MonsterActionState.BackstageTravel ||
+                    (state == MonsterActionState.Hunting && (chasing || path == null || detouring));
 
                 if (doRepath)
                 {
@@ -1019,12 +1019,12 @@ public class MonsterController : MonoBehaviour
                             path = null;
                             waypoint = 0;
 
-                            if (state == MonsterState.Roaming)
+                            if (state == MonsterActionState.Roaming)
                             {
                                 forceRoamPick = true;
                             }
 
-                            if (state == MonsterState.BackstageTravel)
+                            if (state == MonsterActionState.BackstageTravel)
                             {
                                 // If we can't path to the chosen backstage point, pick a new one (otherwise it can appear to "idle" in view).
                                 float required = GetBackstageRequiredDistance();
@@ -1035,7 +1035,7 @@ public class MonsterController : MonoBehaviour
                                 }
                             }
 
-                            if (state == MonsterState.Hunting && pathFails >= maxPathFails)
+                            if (state == MonsterActionState.Hunting && pathFails >= maxPathFails)
                             {
                                 if (debug) Debug.Log("[Monster] Too many path fails -> Post-hunt idle");
                                 EnterPostHuntIdle(playerPosNow);
@@ -1049,7 +1049,7 @@ public class MonsterController : MonoBehaviour
         // Movement vector
         Vector3 move = Vector3.zero;
 
-        if (state == MonsterState.Hunting && losPathable)
+        if (state == MonsterActionState.Hunting && losPathable)
         {
             var direct = rt.position - pos;
             direct.y = 0f;
@@ -1075,7 +1075,7 @@ public class MonsterController : MonoBehaviour
 
         if (moving) stuckDetours = 0;
 
-        if (state == MonsterState.Hunting && sprinting && moving)
+        if (state == MonsterActionState.Hunting && sprinting && moving)
             PlayAudio(huntingBreatheAudio, 1f, true);
         else if (audioSource && audioSource.clip == huntingBreatheAudio && audioSource.isPlaying)
         {
@@ -1084,10 +1084,10 @@ public class MonsterController : MonoBehaviour
         }
 
         var clip2 = moving ? runningClip : idleClip;
-        float animSpeed2 = (state == MonsterState.Hunting && sprinting && moving && clip2 == runningClip) ? 1.5f : 1f;
+        float animSpeed2 = (state == MonsterActionState.Hunting && sprinting && moving && clip2 == runningClip) ? 1.5f : 1f;
         if (clip2) PlayClip(clip2, animSpeed2);
 
-        if (state == MonsterState.Hunting && losPathable && (rt.position - pos).sqrMagnitude > 0.001f)
+        if (state == MonsterActionState.Hunting && losPathable && (rt.position - pos).sqrMagnitude > 0.001f)
         {
             var face = rt.position - pos;
             face.y = 0f;
@@ -1099,7 +1099,7 @@ public class MonsterController : MonoBehaviour
         }
 
         bool shouldMove =
-            (state == MonsterState.Roaming || state == MonsterState.Hunting || state == MonsterState.BackstageTravel) &&
+            (state == MonsterActionState.Roaming || state == MonsterActionState.Hunting || state == MonsterActionState.BackstageTravel) &&
             SqrXZ(pos, destination) > arriveDistance * arriveDistance;
 
         if (shouldMove && controller.velocity.sqrMagnitude < 0.01f) stuckFor += Time.deltaTime;
@@ -1110,7 +1110,7 @@ public class MonsterController : MonoBehaviour
             lastUnstuckAt = Time.time;
             stuckFor = 0f;
 
-            if (stuckDetours >= maxStuckDetours && state == MonsterState.Hunting)
+            if (stuckDetours >= maxStuckDetours && state == MonsterActionState.Hunting)
             {
                 if (debug) Debug.Log("[Monster] Too many stuck detours during hunt -> Post-hunt idle");
                 EnterPostHuntIdle(playerPos);
@@ -1135,7 +1135,7 @@ public class MonsterController : MonoBehaviour
             }
         }
 
-        if (state == MonsterState.Hunting && !chasing &&
+        if (state == MonsterActionState.Hunting && !chasing &&
             SqrXZ(pos, destination) <= arriveDistance * arriveDistance &&
             (path == null || waypoint >= path.vectorPath.Count))
         {
@@ -1162,12 +1162,19 @@ public class MonsterController : MonoBehaviour
         forceRoamPick = true;
     }
 
+    public void ApplySavedPose(Vector3 position, Quaternion rotation)
+    {
+        // Use our internal teleport helper so we reset pathing, destinations, etc.
+        TeleportTo(position);
+        transform.rotation = rotation;
+    }
+
     public void SendBackstage(Vector3 target)
     {
         wantsBackstage = true;
 
         // Don't stomp the death cinematic.
-        if (state == MonsterState.Killing) return;
+        if (state == MonsterActionState.Killing) return;
 
         Vector3 playerPos = player ? player.transform.position : transform.position;
         float required = GetBackstageRequiredDistance();
@@ -1195,7 +1202,7 @@ public class MonsterController : MonoBehaviour
         backstageDestination = target;
         nextBackstageRepickAt = 0f;
 
-        SetState(MonsterState.BackstageTravel, playerPos);
+        SetState(MonsterActionState.BackstageTravel, playerPos);
     }
 
     public void SendFrontstage(Vector3 playerPos)
@@ -1203,8 +1210,8 @@ public class MonsterController : MonoBehaviour
         wantsBackstage = false;
 
         // If we're currently in a post-hunt idle that was going to resume backstage travel, redirect it to roaming.
-        if (state == MonsterState.Idle && idleNext == MonsterState.BackstageTravel)
-            idleNext = MonsterState.Roaming;
+        if (state == MonsterActionState.Idle && idleNext == MonsterActionState.BackstageTravel)
+            idleNext = MonsterActionState.Roaming;
 
         bool wasBackstage = IsBackstageState(state);
         if (!wasBackstage) return;
@@ -1233,11 +1240,11 @@ public class MonsterController : MonoBehaviour
             }
         }
 
-        SetState(MonsterState.Roaming, playerPos);
+        SetState(MonsterActionState.Roaming, playerPos);
         forceRoamPick = true;
     }
 
-    public bool IsBackstage => state == MonsterState.BackstageTravel || state == MonsterState.BackstageIdle;
+    public bool IsBackstage => state == MonsterActionState.BackstageTravel || state == MonsterActionState.BackstageIdle;
 
 
     void PlayClip(AnimationClip clip, float animSpeed)

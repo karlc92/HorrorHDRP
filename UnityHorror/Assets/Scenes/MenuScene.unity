@@ -736,6 +736,10 @@ MonoBehaviour:
   MainMenuContent: {fileID: 1846831966}
   SettingsContent: {fileID: 1846831966}
   PlayMenuContent: {fileID: 257034088}
+  SlotButtonLabels:
+  - {fileID: 1974619821}
+  - {fileID: 591214968}
+  - {fileID: 684247844}
 --- !u!1 &399248521
 GameObject:
   m_ObjectHideFlags: 0
@@ -1002,7 +1006,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 391281461}
         m_TargetAssemblyTypeName: MainMenuUI, Assembly-CSharp
-        m_MethodName: NewGame
+        m_MethodName: SlotButtonClick
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1909,7 +1913,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 391281461}
         m_TargetAssemblyTypeName: MainMenuUI, Assembly-CSharp
-        m_MethodName: NewGame
+        m_MethodName: SlotButtonClick
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2179,7 +2183,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 391281461}
         m_TargetAssemblyTypeName: MainMenuUI, Assembly-CSharp
-        m_MethodName: NewGame
+        m_MethodName: SlotButtonClick
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

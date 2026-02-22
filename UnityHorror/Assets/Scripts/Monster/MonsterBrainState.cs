@@ -16,4 +16,8 @@ public class MonsterBrainState
 
     // Where the monster believes the player is (approximation). Used as the roaming "anchor" when not hunting.
     public Vector3 PlayerLocationHint = Vector3.zero;
+
+    // Saved pose. Updated only from MonsterManager.FixedUpdate.
+    public Vector3 MonsterPosition = Vector3.zero;
+    public Quaternion MonsterRotation = Quaternion.identity;
 }
