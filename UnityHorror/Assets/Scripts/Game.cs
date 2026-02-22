@@ -176,12 +176,23 @@ public static class Game
         if (monster && State.MonsterBrainState != null)
         {
             monster.ApplySavedPose(State.MonsterBrainState.MonsterPosition, State.MonsterBrainState.MonsterRotation);
+
+            // If the monster was saved while parked backstage + hidden, force that immediately
+            // so it doesn't briefly appear traveling on load.
+            if (!State.MonsterBrainState.MonsterFrontStage && State.MonsterBrainState.MonsterBackstageIdle && player)
+                monster.ForceBackstageIdle(player.transform.position);
         }
         else if (!monster)
         {
             Debug.LogWarning("[Game] ApplyLoadedStateToScene: No MonsterController found in scene.");
             Console.Print("[Game] ApplyLoadedStateToScene: No MonsterController found in scene.");
         }
+
+        // If we're loading while already in the gameplay scene, resync runtime caches that aren't serialized.
+        // (Threat accumulator, hint timers, etc.)
+        var monsterManager = UnityEngine.Object.FindFirstObjectByType<MonsterManager>();
+        if (monsterManager)
+            monsterManager.ApplyLoadedState();
 
         Physics.SyncTransforms();
     }

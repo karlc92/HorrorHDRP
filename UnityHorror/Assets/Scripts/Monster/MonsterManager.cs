@@ -103,7 +103,17 @@ public class MonsterManager : MonoBehaviour
         nextHintAt = Time.time;
 
         // Apply initial stage.
-        ApplyStage(immediate: true);
+        // If this was loaded while the monster was already parked backstage and hidden,
+        // force that state so it doesn't briefly appear walking.
+        if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.MonsterBackstageIdle)
+        {
+            controller.ForceBackstageIdle(player ? player.transform.position : controller.transform.position);
+            currentBackstageTarget = controller.transform.position;
+        }
+        else
+        {
+            ApplyStage(immediate: true);
+        }
         PushLevers();
     }
 
@@ -120,6 +130,11 @@ public class MonsterManager : MonoBehaviour
         UpdatePlayerLocationHint();
         PushLevers();
 
+        // Persist the monster's *actual* parked backstage state for save/load.
+        // (This is separate from MonsterFrontStage, which is the director's intent.)
+        if (Game.State != null && Game.State.MonsterBrainState != null)
+            Game.State.MonsterBrainState.MonsterBackstageIdle = controller.state == MonsterController.MonsterActionState.BackstageIdle;
+
         if (debugDraw && player)
         {
             Debug.DrawLine(controller.transform.position, Game.State.MonsterBrainState.PlayerLocationHint, Color.yellow);
@@ -132,6 +147,37 @@ public class MonsterManager : MonoBehaviour
 
         if (Keyboard.current != null && Keyboard.current[Key.L].wasPressedThisFrame)
             Game.SaveGame(Game.State.Slot);
+    }
+
+    /// <summary>
+    /// Called after a save has been loaded while already in the gameplay scene.
+    /// Resyncs internal caches (threatValue, hint timers) and applies the loaded stage immediately.
+    /// </summary>
+    public void ApplyLoadedState()
+    {
+        if (Game.State == null || Game.State.MonsterBrainState == null || !controller) return;
+
+        if (!player)
+            player = FindFirstObjectByType<PlayerController>();
+
+        threatValue = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0f, 100f);
+        Game.State.MonsterBrainState.ThreatLevel = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0, 100);
+
+        hintTarget = Game.State.MonsterBrainState.PlayerLocationHint;
+        nextHintAt = Time.time;
+
+        // Restore stage.
+        if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.MonsterBackstageIdle)
+        {
+            controller.ForceBackstageIdle(player ? player.transform.position : controller.transform.position);
+            currentBackstageTarget = controller.transform.position;
+        }
+        else
+        {
+            ApplyStage(immediate: true);
+        }
+
+        PushLevers();
     }
 
     void FixedUpdate()

@@ -1169,6 +1169,27 @@ public class MonsterController : MonoBehaviour
         transform.rotation = rotation;
     }
 
+    /// <summary>
+    /// Forces the monster into BackstageIdle immediately (hidden + no collision), without requiring travel.
+    /// Used by save/load so a monster saved while parked backstage doesn't briefly appear walking on load.
+    /// </summary>
+    public void ForceBackstageIdle(Vector3 playerPos)
+    {
+        wantsBackstage = true;
+
+        // Don't stomp the death cinematic.
+        if (state == MonsterActionState.Killing) return;
+
+        backstageDestination = transform.position;
+        nextBackstageRepickAt = 0f;
+
+        SetState(MonsterActionState.BackstageIdle, playerPos);
+
+        destination = transform.position;
+
+        if (idleClip) PlayClip(idleClip, 1f);
+    }
+
     public void SendBackstage(Vector3 target)
     {
         wantsBackstage = true;

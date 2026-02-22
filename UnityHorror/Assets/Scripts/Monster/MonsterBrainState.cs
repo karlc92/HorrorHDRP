@@ -20,4 +20,8 @@ public class MonsterBrainState
     // Saved pose. Updated only from MonsterManager.FixedUpdate.
     public Vector3 MonsterPosition = Vector3.zero;
     public Quaternion MonsterRotation = Quaternion.identity;
+
+    // If true, the monster was parked backstage and fully hidden (meshes off / CC disabled) at the time of saving.
+    // This allows a load to restore the monster without briefly showing it traveling.
+    public bool MonsterBackstageIdle = false;
 }

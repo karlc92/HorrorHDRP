@@ -60,16 +60,16 @@ public class MainMenuUI : MonoBehaviour
     public string GetSavedDataDisplay(int slot)
     {
         if (!HasSaveFile(slot))
-            return $"SLOT {slot}\nNEW GAME";
+            return $"NEW GAME";
 
         if (TryReadSaveState(slot, out var state))
         {
             string playTime = FormatPlayTimeHHmm(state.TotalPlayTimeSeconds);
-            return $"SLOT {slot}\nCONTINUE\nNIGHT {state.Night}\n{playTime}";
+            return $"CONTINUE\nNIGHT {state.Night}\n{playTime}";
         }
 
         // Save exists but couldn't be read (corrupt / partial write etc).
-        return $"SLOT {slot}\nCONTINUE";
+        return $"CONTINUE";
     }
 
     public void SlotButtonClick(int slot)
