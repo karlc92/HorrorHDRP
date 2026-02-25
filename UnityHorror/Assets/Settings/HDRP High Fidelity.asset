@@ -229,7 +229,7 @@ MonoBehaviour:
       - 0.75
       - 2
       LimitManualRangeNearBlur: 000000
-      MotionBlurSampleCount: 04000000080000000c000000
+      MotionBlurSampleCount: 020000000200000002000000
       BloomRes: 040000000200000002000000
       BloomHighQualityFiltering: 000101
       BloomHighQualityPrefiltering: 000001
