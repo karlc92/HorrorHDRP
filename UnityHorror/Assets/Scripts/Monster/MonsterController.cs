@@ -102,6 +102,13 @@ public class MonsterController : MonoBehaviour
     public float unstuckCooldown = 0.5f;
     public int maxStuckDetours = 3;
 
+    [Header("Navigation Robustness")]
+    [Tooltip("When Hunting with LOS, the monster prefers a direct chase. If an obstacle is detected in the immediate forward direction, it will follow the computed path instead.")]
+    public bool avoidDirectChaseIntoObstacles = true;
+
+    [Tooltip("Minimum progress (meters) toward the current destination required per frame to avoid being considered stuck.")]
+    public float minProgressPerFrame = 0.02f;
+
     // How far we probe for immediate obstructions and how far we try to step away for the detour.
     public float unstuckRayDistance = 1.2f;
     public float unstuckDetourDistance = 3.0f;
@@ -156,6 +163,14 @@ public class MonsterController : MonoBehaviour
     float lastUnstuckAt = -999f;
     int stuckDetours;
 
+    // Navmesh safety: when the monster drifts off the navmesh, A*'s GetNearest() can snap to a
+    // disconnected island through a thin wall (e.g. interior nodes inside a building). If we then
+    // use that snapped node as our start, the resulting path can be "valid" but physically unreachable,
+    // causing the monster to run into the wall forever.
+    bool hasNavAreaAnchor;
+    uint navAreaAnchor;
+    Vector3 navAreaAnchorPos;
+
     float nextDebugAt;
     MonsterActionState lastState;
     bool lastLos;
@@ -189,6 +204,9 @@ public class MonsterController : MonoBehaviour
         backstageDestination = destination;
         lastState = state;
 
+        UpdateNavAreaAnchor(destination, true);
+
+
         ApplyBackstagePresentationForState(state);
     }
 
@@ -199,11 +217,126 @@ public class MonsterController : MonoBehaviour
         return dx * dx + dz * dz;
     }
 
-    Vector3 ProjectToWalkable(Vector3 p)
+    void UpdateNavAreaAnchor(Vector3 p, bool force = false)
+    {
+        if (!AstarPath.active)
+        {
+            hasNavAreaAnchor = false;
+            return;
+        }
+
+        var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
+        if (nn.node == null || !nn.node.Walkable) return;
+
+        if (!hasNavAreaAnchor || force)
+        {
+            hasNavAreaAnchor = true;
+            navAreaAnchor = nn.node.Area;
+            navAreaAnchorPos = nn.position;
+            return;
+        }
+
+        // Never switch the anchored connected component based on proximity.
+        // If we're slightly off-mesh next to a wall, GetNearest can return a node on a disconnected island
+        // (like an interior navmesh), even though it's physically unreachable.
+        if (nn.node.Area != navAreaAnchor) return;
+
+        // Only update the anchor position when we're close enough to the navmesh.
+        float tol = offMeshTolerance;
+        if (SqrXZ(p, nn.position) <= tol * tol)
+            navAreaAnchorPos = nn.position;
+    }
+
+    bool TryProjectToWalkableOnArea(Vector3 p, uint area, out Vector3 projected)
+    {
+        projected = p;
+        if (!AstarPath.active) return false;
+
+        var best = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
+        if (best.node != null && best.node.Walkable && best.node.Area == area)
+        {
+            projected = best.position;
+            return true;
+        }
+
+        // Sampling search to find a node on the desired connected component.
+        // This avoids relying on NNConstraint.constrainArea fields (which vary between A* versions).
+        float baseStep = Mathf.Max(0.5f, offMeshTolerance * 0.75f);
+        int rings = 3;
+        int dirs = 16;
+
+        float bestSqr = float.PositiveInfinity;
+        Vector3 bestPos = Vector3.zero;
+        bool found = false;
+
+        for (int r = 1; r <= rings; r++)
+        {
+            float radius = baseStep * r;
+            for (int i = 0; i < dirs; i++)
+            {
+                float a = (i / (float)dirs) * 360f;
+                var q = Quaternion.Euler(0f, a, 0f);
+                Vector3 sample = p + q * (Vector3.forward * radius);
+
+                var nn = AstarPath.active.GetNearest(sample, NNConstraint.Walkable);
+                if (nn.node == null || !nn.node.Walkable) continue;
+                if (nn.node.Area != area) continue;
+
+                float sqr = SqrXZ(p, nn.position);
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    bestPos = nn.position;
+                    found = true;
+                }
+            }
+        }
+
+        if (found)
+        {
+            projected = bestPos;
+            return true;
+        }
+
+        return false;
+    }
+
+    Vector3 ProjectToWalkableAny(Vector3 p)
     {
         if (!AstarPath.active) return p;
         var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
         return nn.position;
+    }
+
+    Vector3 ProjectToWalkable(Vector3 p)
+    {
+        if (!AstarPath.active) return p;
+
+        if (hasNavAreaAnchor && TryProjectToWalkableOnArea(p, navAreaAnchor, out var projected))
+            return projected;
+
+        return ProjectToWalkableAny(p);
+    }
+
+    Vector3 GetSafeNavPosition(Vector3 p)
+    {
+        if (!AstarPath.active) return p;
+
+        if (hasNavAreaAnchor)
+        {
+            if (TryProjectToWalkableOnArea(p, navAreaAnchor, out var projected))
+                return projected;
+
+            return navAreaAnchorPos;
+        }
+
+        return ProjectToWalkableAny(p);
+    }
+
+    public bool TryGetNavAreaAnchor(out uint area)
+    {
+        area = navAreaAnchor;
+        return hasNavAreaAnchor;
     }
 
     bool IsBackstageState(MonsterActionState s) => s == MonsterActionState.BackstageTravel || s == MonsterActionState.BackstageIdle;
@@ -254,7 +387,8 @@ public class MonsterController : MonoBehaviour
             return true;
         }
 
-        var start = AstarPath.active.GetNearest(monsterPos, NNConstraint.Walkable);
+        var startPos = ProjectToWalkable(monsterPos);
+        var start = AstarPath.active.GetNearest(startPos, NNConstraint.Walkable);
         if (start.node == null || !start.node.Walkable) return false;
 
         uint startArea = start.node.Area;
@@ -300,6 +434,7 @@ public class MonsterController : MonoBehaviour
 
         backstageDestination = picked;
         destination = picked;
+
 
         if (seeker == null) seeker = GetComponent<Seeker>();
         if (seeker != null) seeker.CancelCurrentPathRequest();
@@ -351,6 +486,8 @@ public class MonsterController : MonoBehaviour
 
         destination = p;
         lastSeenPos = p;
+
+        UpdateNavAreaAnchor(p, true);
 
         if (seeker == null) seeker = GetComponent<Seeker>();
         if (seeker != null) seeker.CancelCurrentPathRequest();
@@ -418,7 +555,7 @@ public class MonsterController : MonoBehaviour
         if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
         away.Normalize();
 
-        Vector3 fallback = ProjectToWalkable(playerPos + away * dist);
+        Vector3 fallback = ProjectToWalkableAny(playerPos + away * dist);
 
         var fallbackNN = AstarPath.active.GetNearest(fallback, NNConstraint.Walkable);
         if (fallbackNN.node != null && fallbackNN.node.Walkable)
@@ -439,6 +576,15 @@ public class MonsterController : MonoBehaviour
         if (!AstarPath.active) return true;
 
         var start = AstarPath.active.GetNearest(from, NNConstraint.Walkable);
+
+        // If we're asking "from" the monster's current position, ensure we don't accidentally snap through
+        // a wall to a disconnected island when the monster is slightly off-mesh.
+        if (hasNavAreaAnchor && SqrXZ(from, transform.position) <= 4f)
+        {
+            if (TryProjectToWalkableOnArea(from, navAreaAnchor, out var projectedStart))
+                start = AstarPath.active.GetNearest(projectedStart, NNConstraint.Walkable);
+        }
+
         var end = AstarPath.active.GetNearest(target, NNConstraint.Walkable);
 
         if (start.node == null || end.node == null) return false;
@@ -471,7 +617,8 @@ public class MonsterController : MonoBehaviour
             return true;
         }
 
-        var start = AstarPath.active.GetNearest(startPos, NNConstraint.Walkable);
+        var startOnNav = ProjectToWalkable(startPos);
+        var start = AstarPath.active.GetNearest(startOnNav, NNConstraint.Walkable);
         if (start.node == null || !start.node.Walkable) return false;
 
         for (int i = 0; i < Mathf.Max(1, roamPickAttempts); i++)
@@ -577,6 +724,7 @@ public class MonsterController : MonoBehaviour
 
         stuckFor = 0f;
         stuckDetours = 0;
+
 
         ClearDetour();
 
@@ -742,6 +890,27 @@ public class MonsterController : MonoBehaviour
                 waypoint = 0;
                 repathAt = 0f;
             }
+        }
+
+        UpdateNavAreaAnchor(pos);
+        var safeNavPos = GetSafeNavPosition(pos);
+        bool offNav = AstarPath.active && hasNavAreaAnchor && SqrXZ(pos, safeNavPos) > offMeshTolerance * offMeshTolerance;
+
+        if (offNav && !detouring && (state == MonsterActionState.Roaming || state == MonsterActionState.Hunting || state == MonsterActionState.BackstageTravel))
+        {
+            // Force a recovery destination on our anchored nav area.
+            destination = safeNavPos;
+
+            if (seeker == null) seeker = GetComponent<Seeker>();
+            if (seeker != null) seeker.CancelCurrentPathRequest();
+
+            path = null;
+            waypoint = 0;
+            repathAt = 0f;
+            pathFails = 0;
+
+            if (debug && Time.time >= nextDebugAt)
+                Debug.Log($"[Monster] Off-nav recovery: pos={pos} safe={safeNavPos} area={navAreaAnchor}");
         }
 
         var toPlayer = playerPos - pos;
@@ -966,6 +1135,15 @@ public class MonsterController : MonoBehaviour
             Vector3 desired = chasing ? targetPos : lastSeenPos;
             destination = ProjectToWalkable(desired);
 
+            // If we're searching last seen but it isn't actually reachable from our current nav area,
+            // don't sit at a wall forever.
+            if (!chasing && AstarPath.active && !IsTargetPathableFrom(pos, destination))
+            {
+                if (debug) Debug.Log("[Monster] Last seen destination is not pathable from current position -> Post-hunt idle");
+                EnterPostHuntIdle(playerPos);
+                return;
+            }
+
             if (lostAt >= 0f && Time.time - lostAt >= lostHuntTimeout)
             {
                 if (debug) Debug.Log("[Monster] Lost too long -> Post-hunt idle");
@@ -991,7 +1169,8 @@ public class MonsterController : MonoBehaviour
 
             if (AstarPath.active)
             {
-                var start = AstarPath.active.GetNearest(pos, NNConstraint.Walkable).position;
+                var safeStartPos = GetSafeNavPosition(pos);
+                var start = AstarPath.active.GetNearest(safeStartPos, NNConstraint.Walkable).position;
                 var end = AstarPath.active.GetNearest(destination, NNConstraint.Walkable).position;
 
                 bool doRepath =
@@ -1050,11 +1229,29 @@ public class MonsterController : MonoBehaviour
         // Movement vector
         Vector3 move = Vector3.zero;
 
-        if (state == MonsterActionState.Hunting && losPathable)
+        if (offNav)
+        {
+            var backToNav = destination - pos;
+            backToNav.y = 0f;
+            move = backToNav.sqrMagnitude > 0.001f ? backToNav.normalized : Vector3.zero;
+        }
+        else if (state == MonsterActionState.Hunting && losPathable)
         {
             var direct = rt.position - pos;
             direct.y = 0f;
-            move = direct.sqrMagnitude > 0.001f ? direct.normalized : Vector3.zero;
+
+            if (direct.sqrMagnitude > 0.001f)
+            {
+                bool blocked = false;
+                if (avoidDirectChaseIntoObstacles)
+                {
+                    float dist = Mathf.Min(unstuckRayDistance, direct.magnitude);
+                    blocked = IsDirectionBlocked(pos, direct.normalized, dist);
+                }
+
+                if (!blocked)
+                    move = direct.normalized;
+            }
         }
         else if (path != null && waypoint < path.vectorPath.Count)
         {
@@ -1072,9 +1269,16 @@ public class MonsterController : MonoBehaviour
         float speedMult = sprinting ? 2f : 1f;
         controller.SimpleMove(move * (speed * speedMult));
 
+        // For stuck checks we need to look at actual transform movement after SimpleMove.
+        var posAfterMove = transform.position;
+
         bool moving = controller.velocity.sqrMagnitude > 0.01f;
 
-        if (moving) stuckDetours = 0;
+        float movedXZ = Mathf.Sqrt(SqrXZ(posAfterMove, pos));
+        bool madeMove = movedXZ >= Mathf.Max(0f, minProgressPerFrame);
+
+        if (madeMove)
+            stuckDetours = 0;
 
         if (state == MonsterActionState.Hunting && sprinting && moving)
             PlayAudio(huntingBreatheAudio, 1f, true);
@@ -1101,9 +1305,9 @@ public class MonsterController : MonoBehaviour
 
         bool shouldMove =
             (state == MonsterActionState.Roaming || state == MonsterActionState.Hunting || state == MonsterActionState.BackstageTravel) &&
-            SqrXZ(pos, destination) > arriveDistance * arriveDistance;
+            SqrXZ(posAfterMove, destination) > arriveDistance * arriveDistance;
 
-        if (shouldMove && controller.velocity.sqrMagnitude < 0.01f) stuckFor += Time.deltaTime;
+        if (shouldMove && !madeMove) stuckFor += Time.deltaTime;
         else stuckFor = 0f;
 
         if (stuckFor >= stuckTime && Time.time - lastUnstuckAt >= unstuckCooldown)
@@ -1111,14 +1315,33 @@ public class MonsterController : MonoBehaviour
             lastUnstuckAt = Time.time;
             stuckFor = 0f;
 
-            if (stuckDetours >= maxStuckDetours && state == MonsterActionState.Hunting)
+            if (stuckDetours >= maxStuckDetours)
             {
-                if (debug) Debug.Log("[Monster] Too many stuck detours during hunt -> Post-hunt idle");
-                EnterPostHuntIdle(playerPos);
-                return;
+                if (state == MonsterActionState.Hunting)
+                {
+                    if (debug) Debug.Log("[Monster] Too many stuck detours during hunt -> Post-hunt idle");
+                    EnterPostHuntIdle(playerPos);
+                    return;
+                }
+                else if (state == MonsterActionState.Roaming)
+                {
+                    if (debug) Debug.Log("[Monster] Too many stuck detours while roaming -> new roam destination");
+                    PickNewRoamDestination(posAfterMove, roamCenter);
+                    return;
+                }
+                else if (state == MonsterActionState.BackstageTravel)
+                {
+                    if (debug) Debug.Log("[Monster] Too many stuck detours while traveling backstage -> repick backstage destination");
+                    if (Time.time >= nextBackstageRepickAt)
+                    {
+                        nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
+                        RepickBackstageDestination(posAfterMove, playerPos);
+                    }
+                    return;
+                }
             }
 
-            bool startedDetour = TryStartDetour(pos);
+            bool startedDetour = TryStartDetour(posAfterMove);
             if (startedDetour)
             {
                 stuckDetours++;
@@ -1137,7 +1360,7 @@ public class MonsterController : MonoBehaviour
         }
 
         if (state == MonsterActionState.Hunting && !chasing &&
-            SqrXZ(pos, destination) <= arriveDistance * arriveDistance &&
+            SqrXZ(posAfterMove, destination) <= arriveDistance * arriveDistance &&
             (path == null || waypoint >= path.vectorPath.Count))
         {
             EnterPostHuntIdle(playerPos);
@@ -1147,7 +1370,7 @@ public class MonsterController : MonoBehaviour
         if (debug && Time.time >= nextDebugAt)
         {
             nextDebugAt = Time.time + debugInterval;
-            Debug.Log($"[Monster] state={state} los={los} losPathable={losPathable} chasing={chasing} sprinting={sprinting} detour={detouring} speedMult={speedMult:F1} destDist={Mathf.Sqrt(SqrXZ(pos, destination)):F1} path={(path != null ? path.vectorPath.Count.ToString() : "null")} wp={waypoint} vel={controller.velocity.magnitude:F2}");
+            Debug.Log($"[Monster] state={state} los={los} losPathable={losPathable} chasing={chasing} sprinting={sprinting} detour={detouring} speedMult={speedMult:F1} destDist={Mathf.Sqrt(SqrXZ(posAfterMove, destination)):F1} path={(path != null ? path.vectorPath.Count.ToString() : "null")} wp={waypoint} vel={controller.velocity.magnitude:F2}");
         }
     }
 
@@ -1257,7 +1480,7 @@ public class MonsterController : MonoBehaviour
                     if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
                     away.Normalize();
 
-                    TeleportTo(ProjectToWalkable(playerPos + away * d));
+                    TeleportTo(ProjectToWalkableAny(playerPos + away * d));
                 }
             }
         }

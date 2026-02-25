@@ -264,8 +264,25 @@ public class MonsterManager : MonoBehaviour
             Vector2 off2 = Random.insideUnitCircle * error;
             Vector3 noisy = playerPos + new Vector3(off2.x, 0f, off2.y);
 
-            // Keep the hint on walkable space if possible (helps roaming).
-            hintTarget = ProjectToWalkable(noisy);
+            // Keep the hint on walkable space on the player's connected navmesh area.
+            // This avoids snapping to disconnected interior islands through thin walls.
+            if (AstarPath.active)
+            {
+                var playerNN = AstarPath.active.GetNearest(playerPos, NNConstraint.Walkable);
+                if (playerNN.node != null && playerNN.node.Walkable)
+                {
+                    if (!TryProjectToWalkableOnArea(noisy, playerNN.node.Area, out hintTarget))
+                        hintTarget = playerNN.position;
+                }
+                else
+                {
+                    hintTarget = ProjectToWalkable(noisy);
+                }
+            }
+            else
+            {
+                hintTarget = noisy;
+            }
         }
 
         if (hintSmoothing <= 0f)
@@ -345,6 +362,61 @@ public class MonsterManager : MonoBehaviour
     // Helpers
     // -----------------------------
 
+    private bool TryProjectToWalkableOnArea(Vector3 p, uint area, out Vector3 projected)
+    {
+        projected = p;
+        if (!AstarPath.active) return false;
+
+        var best = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
+        if (best.node != null && best.node.Walkable && best.node.Area == area)
+        {
+            projected = best.position;
+            return true;
+        }
+
+        float baseStep = 1.0f;
+        int rings = 3;
+        int dirs = 16;
+
+        float bestSqr = float.PositiveInfinity;
+        Vector3 bestPos = Vector3.zero;
+        bool found = false;
+
+        for (int r = 1; r <= rings; r++)
+        {
+            float radius = baseStep * r;
+            for (int i = 0; i < dirs; i++)
+            {
+                float a = (i / (float)dirs) * 360f;
+                var q = Quaternion.Euler(0f, a, 0f);
+                Vector3 sample = p + q * (Vector3.forward * radius);
+
+                var nn = AstarPath.active.GetNearest(sample, NNConstraint.Walkable);
+                if (nn.node == null || !nn.node.Walkable) continue;
+                if (nn.node.Area != area) continue;
+
+                float dx = p.x - nn.position.x;
+                float dz = p.z - nn.position.z;
+                float sqr = dx * dx + dz * dz;
+
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    bestPos = nn.position;
+                    found = true;
+                }
+            }
+        }
+
+        if (found)
+        {
+            projected = bestPos;
+            return true;
+        }
+
+        return false;
+    }
+
     private Vector3 ProjectToWalkable(Vector3 p)
     {
         if (!AstarPath.active) return p;
@@ -363,9 +435,19 @@ public class MonsterManager : MonoBehaviour
             return playerPos + new Vector3(dir2.x, 0f, dir2.y) * backstageDistance;
         }
 
-        var start = AstarPath.active.GetNearest(monsterPos, NNConstraint.Walkable);
+        uint requiredArea = uint.MaxValue;
 
-        uint requiredArea = start.node != null ? start.node.Area : uint.MaxValue;
+        // Prefer the controller's anchored nav area so we don't accidentally treat a nearby disconnected
+        // island (e.g. inside a building) as the monster's "current" area while it's slightly off-mesh.
+        if (controller != null && controller.TryGetNavAreaAnchor(out var anchoredArea))
+        {
+            requiredArea = anchoredArea;
+        }
+        else
+        {
+            var start = AstarPath.active.GetNearest(monsterPos, NNConstraint.Walkable);
+            requiredArea = start.node != null ? start.node.Area : uint.MaxValue;
+        }
 
         for (int i = 0; i < Mathf.Max(1, backstagePickAttempts); i++)
         {
@@ -380,7 +462,7 @@ public class MonsterManager : MonoBehaviour
             var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
             if (nn.node == null || !nn.node.Walkable) continue;
 
-            if (backstageRequireSameNavArea && start.node != null && nn.node.Area != requiredArea)
+            if (backstageRequireSameNavArea && requiredArea != uint.MaxValue && nn.node.Area != requiredArea)
                 continue;
 
             float d = Vector3.Distance(new Vector3(nn.position.x, 0f, nn.position.z), new Vector3(playerPos.x, 0f, playerPos.z));
