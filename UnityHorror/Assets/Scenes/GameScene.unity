@@ -4812,12 +4812,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3252586342981795104, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
-      propertyPath: m_Acceleration
-      value: 8
+      propertyPath: m_AngularSpeed
+      value: 1080
       objectReference: {fileID: 0}
     - target: {fileID: 3252586342981795104, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
       propertyPath: m_StoppingDistance
-      value: 2
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 8499826287805038252, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
       propertyPath: state

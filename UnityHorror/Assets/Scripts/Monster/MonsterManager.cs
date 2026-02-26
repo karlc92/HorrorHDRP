@@ -3,12 +3,13 @@ using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// "Director" / brain driver for the monster.
-/// Owns a serializable monster brain state (saveable as JSON) and pushes levers on MonsterController.
+/// Monster "director".
+/// Owns the saveable MonsterBrainState and pushes high-level intent into MonsterController.
 ///
-/// Behavior fix:
-/// - While the monster is actively engaged (Investigating/Hunting/Killing), threat does NOT decay
-///   and the director will NOT send the monster backstage. This prevents "gives up even with LOS".
+/// Refactor goals:
+/// - Descriptive update passes (ThreatUpdate, StageUpdate, HintUpdate, ControllerSync).
+/// - Keep monster front-stage while engaged (Investigating/Hunting/Killing).
+/// - Keep roaming radius/min distance threat-driven.
 /// </summary>
 public class MonsterManager : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class MonsterManager : MonoBehaviour
     [SerializeField] private MonsterController controller;
 
     [Header("Threat")]
-    [Tooltip("Threat decreases by this many points per second (converted into an int 0..100).")]
+    [Tooltip("Threat decreases by this many points per second (0..100 scale).")]
     [SerializeField] private float threatDecayPerSecond = 2f;
 
     [Tooltip("If ThreatLevel reaches this value (or above), the monster is automatically sent Front Stage.")]
@@ -30,14 +31,12 @@ public class MonsterManager : MonoBehaviour
     [Header("Roaming Scaling (Threat -> Roam)")]
     [SerializeField] private float roamRadiusAtThreat0 = 18f;
     [SerializeField] private float roamRadiusAtThreat100 = 6f;
-
     [SerializeField] private float minRoamDistanceAtThreat0 = 4f;
     [SerializeField] private float minRoamDistanceAtThreat100 = 1.25f;
 
     [Header("Player Location Hint (Threat -> Accuracy)")]
     [SerializeField] private float maxHintErrorDistance = 25f;
     [SerializeField] private float minHintErrorDistance = 0f;
-
     [SerializeField] private float hintUpdateInterval = 0.75f;
     [SerializeField] private float hintSmoothing = 6f;
 
@@ -54,15 +53,17 @@ public class MonsterManager : MonoBehaviour
     [SerializeField] private bool debugDraw = true;
 
     private PlayerController player;
+
+    // Smooth accumulator, persisted as int 0..100.
     private float threatValue;
+
     private float nextHintAt;
     private Vector3 hintTarget;
     private Vector3 currentBackstageTarget;
 
-    void Awake()
+    private void Awake()
     {
-        if (Game.State != null && Game.State.MonsterBrainState == null)
-            Game.State.MonsterBrainState = new MonsterBrainState();
+        EnsureBrainState();
 
         if (!controller)
             controller = GetComponent<MonsterController>() ?? GetComponentInChildren<MonsterController>() ?? GetComponentInParent<MonsterController>();
@@ -79,6 +80,7 @@ public class MonsterManager : MonoBehaviour
         threatValue = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0f, 100f);
         Game.State.MonsterBrainState.ThreatLevel = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0, 100);
 
+        // NOTE: Vector3.zero sentinel kept for compatibility.
         if (Game.State.MonsterBrainState.PlayerLocationHint == Vector3.zero)
             Game.State.MonsterBrainState.PlayerLocationHint = player ? player.transform.position : controller.transform.position;
 
@@ -95,10 +97,10 @@ public class MonsterManager : MonoBehaviour
             ApplyStage(immediate: true);
         }
 
-        PushLevers();
+        ControllerSync();
     }
 
-    void Update()
+    private void Update()
     {
         if (!player)
         {
@@ -106,40 +108,29 @@ public class MonsterManager : MonoBehaviour
             if (!player) return;
         }
 
-        bool engaged =
-            controller.state == MonsterController.MonsterActionState.Investigating ||
-            controller.state == MonsterController.MonsterActionState.Hunting ||
-            controller.state == MonsterController.MonsterActionState.Killing;
+        bool engaged = IsMonsterEngaged();
 
-        if (engaged)
-        {
-            // Stay front-stage while engaged and keep threat from decaying under the back-stage threshold.
-            Game.State.MonsterBrainState.MonsterFrontStage = true;
+        ThreatUpdate(engaged);
+        StageUpdate(engaged);
+        HintUpdate();
+        ControllerSync();
 
-            threatValue = Mathf.Max(threatValue, frontStageThreshold);
-            Game.State.MonsterBrainState.ThreatLevel = Mathf.Max(Game.State.MonsterBrainState.ThreatLevel, frontStageThreshold);
-        }
-        else
-        {
-            DecayThreat();
-            AutoStageTransitions();
-        }
+        Game.State.MonsterBrainState.MonsterBackstageIdle = controller.state == MonsterController.MonsterActionState.BackstageIdle;
 
-        UpdatePlayerLocationHint();
-        PushLevers();
-
-        if (Game.State != null && Game.State.MonsterBrainState != null)
-            Game.State.MonsterBrainState.MonsterBackstageIdle = controller.state == MonsterController.MonsterActionState.BackstageIdle;
-
-        if (debugDraw && player)
-        {
-            Debug.DrawLine(controller.transform.position, Game.State.MonsterBrainState.PlayerLocationHint, Color.yellow);
-            if (!Game.State.MonsterBrainState.MonsterFrontStage)
-                Debug.DrawLine(controller.transform.position, currentBackstageTarget, Color.cyan);
-        }
+        if (debugDraw)
+            DebugDraw();
 
         if (Keyboard.current != null && Keyboard.current[Key.P].wasPressedThisFrame)
             AddThreat(10f);
+    }
+
+    private void FixedUpdate()
+    {
+        if (!controller) return;
+        EnsureBrainState();
+
+        Game.State.MonsterBrainState.MonsterPosition = controller.transform.position;
+        Game.State.MonsterBrainState.MonsterRotation = controller.transform.rotation;
     }
 
     public void ApplyLoadedState()
@@ -165,20 +156,7 @@ public class MonsterManager : MonoBehaviour
             ApplyStage(immediate: true);
         }
 
-        PushLevers();
-    }
-
-    void FixedUpdate()
-    {
-        if (!controller) return;
-
-        if (Game.State != null && Game.State.MonsterBrainState == null)
-            Game.State.MonsterBrainState = new MonsterBrainState();
-
-        if (Game.State == null || Game.State.MonsterBrainState == null) return;
-
-        Game.State.MonsterBrainState.MonsterPosition = controller.transform.position;
-        Game.State.MonsterBrainState.MonsterRotation = controller.transform.rotation;
+        ControllerSync();
     }
 
     public void AddThreat(float amount)
@@ -205,8 +183,25 @@ public class MonsterManager : MonoBehaviour
         ApplyStage(immediate: false);
     }
 
-    private void DecayThreat()
+    // -----------------------------
+    // Update passes
+    // -----------------------------
+    private bool IsMonsterEngaged()
     {
+        return controller.state == MonsterController.MonsterActionState.Investigating
+            || controller.state == MonsterController.MonsterActionState.Hunting
+            || controller.state == MonsterController.MonsterActionState.Killing;
+    }
+
+    private void ThreatUpdate(bool engaged)
+    {
+        if (engaged)
+        {
+            threatValue = Mathf.Max(threatValue, frontStageThreshold);
+            Game.State.MonsterBrainState.ThreatLevel = Mathf.Max(Game.State.MonsterBrainState.ThreatLevel, frontStageThreshold);
+            return;
+        }
+
         if (threatDecayPerSecond <= 0f) return;
 
         threatValue = Mathf.Clamp(threatValue - threatDecayPerSecond * Time.deltaTime, 0f, 100f);
@@ -216,8 +211,18 @@ public class MonsterManager : MonoBehaviour
             Game.State.MonsterBrainState.ThreatLevel = asInt;
     }
 
-    private void AutoStageTransitions()
+    private void StageUpdate(bool engaged)
     {
+        if (engaged)
+        {
+            if (!Game.State.MonsterBrainState.MonsterFrontStage)
+            {
+                Game.State.MonsterBrainState.MonsterFrontStage = true;
+                if (debugLog) Debug.Log("[MonsterManager] Engaged => forcing Front Stage");
+            }
+            return;
+        }
+
         if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.ThreatLevel >= frontStageThreshold)
         {
             if (debugLog) Debug.Log($"[MonsterManager] Threat {Game.State.MonsterBrainState.ThreatLevel} >= {frontStageThreshold} => Front Stage");
@@ -230,17 +235,18 @@ public class MonsterManager : MonoBehaviour
         }
     }
 
-    private void UpdatePlayerLocationHint()
+    private void HintUpdate()
     {
-        float t = Mathf.Clamp01(Game.State.MonsterBrainState.ThreatLevel / 100f);
-        float error = Mathf.Lerp(maxHintErrorDistance, minHintErrorDistance, t);
+        if (!player) return;
+
+        float threat01 = Mathf.Clamp01(Game.State.MonsterBrainState.ThreatLevel / 100f);
+        float error = Mathf.Lerp(maxHintErrorDistance, minHintErrorDistance, threat01);
 
         if (Time.time >= nextHintAt)
         {
             nextHintAt = Time.time + Mathf.Max(0.05f, hintUpdateInterval);
 
             Vector3 playerPos = player.transform.position;
-
             Vector2 off2 = Random.insideUnitCircle * error;
             Vector3 noisy = playerPos + new Vector3(off2.x, 0f, off2.y);
 
@@ -258,8 +264,10 @@ public class MonsterManager : MonoBehaviour
         }
     }
 
-    private void PushLevers()
+    private void ControllerSync()
     {
+        if (!controller || !player) return;
+
         float t = Mathf.Clamp01(Game.State.MonsterBrainState.ThreatLevel / 100f);
 
         float radius = Mathf.Lerp(roamRadiusAtThreat0, roamRadiusAtThreat100, t);
@@ -293,7 +301,7 @@ public class MonsterManager : MonoBehaviour
 
     private void ApplyStage(bool immediate)
     {
-        if (!player) return;
+        if (!player || !controller) return;
 
         controller.frontstageRevealDistance = backstageDistance;
         controller.backstageMinDistanceFromPlayer = backstageMinDistance;
@@ -312,6 +320,25 @@ public class MonsterManager : MonoBehaviour
             controller.ForcePickNewRoamDestination();
     }
 
+    private void DebugDraw()
+    {
+        if (!player || !controller) return;
+
+        Debug.DrawLine(controller.transform.position, Game.State.MonsterBrainState.PlayerLocationHint, Color.yellow);
+
+        if (!Game.State.MonsterBrainState.MonsterFrontStage)
+            Debug.DrawLine(controller.transform.position, currentBackstageTarget, Color.cyan);
+    }
+
+    private static void EnsureBrainState()
+    {
+        if (Game.State != null && Game.State.MonsterBrainState == null)
+            Game.State.MonsterBrainState = new MonsterBrainState();
+    }
+
+    // -----------------------------
+    // Nav helpers (hint + backstage picking)
+    // -----------------------------
     private static bool TryGetNavPoint(Vector3 p, float maxDistance, out Vector3 navPoint)
     {
         if (NavMesh.SamplePosition(p, out var hit, Mathf.Max(0.01f, maxDistance), NavMesh.AllAreas))
@@ -382,7 +409,11 @@ public class MonsterManager : MonoBehaviour
             if (!TryGetNavPoint(candidate, 12f, out var navCandidate))
                 continue;
 
-            if (Vector3.Distance(new Vector3(navCandidate.x, 0f, navCandidate.z), new Vector3(playerPos.x, 0f, playerPos.z)) < backstageMinDistance)
+            float flatDist = Vector3.Distance(
+                new Vector3(navCandidate.x, 0f, navCandidate.z),
+                new Vector3(playerPos.x, 0f, playerPos.z));
+
+            if (flatDist < backstageMinDistance)
                 continue;
 
             if (backstageRequireConnected && !IsPathComplete(monsterNav, navCandidate))
