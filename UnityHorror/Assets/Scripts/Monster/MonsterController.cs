@@ -98,7 +98,7 @@ public class MonsterController : MonoBehaviour
     public float losGrace = 0.2f;
 
     [Header("Investigating")]
-    [Tooltip("How long we will keep investigating when we don't have LOS while roaming.\n(Hunting -> Investigating ignores this and continues until reaching the last known point.)")]
+    [Tooltip("How long we will keep moving to the last known position after LOS breaks.")]
     public float investigateTimeout = 4f;
 
     [Header("Emotes")]
@@ -155,13 +155,14 @@ public class MonsterController : MonoBehaviour
     private Vector3 roamDestination;
     private Vector3 investigateTarget;
     private float investigateEndsAt;
-    private bool investigateHasTimeout;
-    private MonsterActionState investigateReturnState = MonsterActionState.Roaming;
     private float emoteEndsAt;
     private Vector3 backstageDestination;
 
-    // When hunting is entered while heading backstage, we want to resume backstage travel if the hunt fizzles.
+    // When Hunting starts from BackstageTravel, losing LOS enters Investigating but will return to BackstageTravel if LOS is not regained.
     private MonsterActionState huntingReturnState = MonsterActionState.Roaming;
+
+    // When Investigating ends (or we reacquire LOS and resume hunting), this is the state we should return to when the hunt finishes.
+    private MonsterActionState investigateReturnState = MonsterActionState.Roaming;
 
     // Destination throttling.
     private float nextDestinationUpdateAt;
@@ -179,6 +180,9 @@ public class MonsterController : MonoBehaviour
     // Killing runtime.
     private float killingStartedAt;
     private bool killingSfxPlayed;
+
+    // Game-over latch (after killing sequence finishes).
+    private bool gameOver;
 
     // Animancer cache.
     private AnimationClip lastClip;
@@ -226,6 +230,10 @@ public class MonsterController : MonoBehaviour
             if (!player) return;
         }
 
+        // After the killing sequence completes, the game is over and the monster should do nothing.
+        if (gameOver)
+            return;
+
         EnsureOnNavMesh();
 
         var perception = PerceptionUpdate();
@@ -271,9 +279,16 @@ public class MonsterController : MonoBehaviour
 
     public void ForcePickNewRoamDestination()
     {
-        roamDestination = transform.position;
+        if (gameOver) return;
         nextDestinationUpdateAt = 0f;
-        agent.ResetPath();
+        if (agent && agent.enabled)
+            agent.ResetPath();
+
+        // Pick a new roam destination immediately to avoid "idle forever" edge cases after transitions.
+        if (TryPickRoamDestination(transform.position, roamCenter, out var picked))
+            roamDestination = picked;
+        else
+            roamDestination = ProjectToNavmesh(transform.position);
     }
 
     public void ApplySavedPose(Vector3 position, Quaternion rotation)
@@ -347,7 +362,7 @@ public class MonsterController : MonoBehaviour
         {
             nextPerceptionAt = Time.time + Mathf.Max(0.01f, perceptionInterval);
             bool losNow = HasLineOfSight(monsterPos);
-            Debug.Log("Has LOS? " + losNow);
+            if (debug) Debug.Log("Has LOS? " + losNow);
 
             if (losNow)
             {
@@ -454,7 +469,7 @@ public class MonsterController : MonoBehaviour
                 if (p.InChaseRange && !p.HasLOS)
                 {
                     // No LOS but within chase range: investigate current hint center (treated as last known position).
-                    EnterInvestigating(target: roamCenter, timeout: investigateTimeout);
+                    EnterInvestigating(target: roamCenter, timeout: investigateTimeout, returnTo: MonsterActionState.Roaming);
                     break;
                 }
 
@@ -475,17 +490,21 @@ public class MonsterController : MonoBehaviour
                 break;
 
             case MonsterActionState.Investigating:
-                // Re-acquire hunt as soon as we see the player again (ignore chase distance).
+                // If we regain LOS at any distance, resume hunting immediately.
                 if (p.HasLOS)
                 {
                     EnterHunting(returnTo: investigateReturnState);
                     break;
                 }
 
-                // If we reached the last known position (or timed out for non-hunt investigations) without LOS,
-                // fall back to roaming unless we're trying to go backstage.
-                if (HasArrived() || (investigateHasTimeout && Time.time >= investigateEndsAt))
-                    SetState(investigateReturnState);
+                if (Time.time >= investigateEndsAt || HasArrived())
+                {
+                    // If we were (or are) trying to go backstage, return to that travel instead of roaming.
+                    if (WantsBackstage || investigateReturnState == MonsterActionState.BackstageTravel)
+                        SetState(MonsterActionState.BackstageTravel);
+                    else
+                        SetState(MonsterActionState.Roaming);
+                }
                 break;
 
             case MonsterActionState.Hunting:
@@ -495,9 +514,9 @@ public class MonsterController : MonoBehaviour
                 }
                 else
                 {
-                    // LOS broke during a hunt: pursue last known player position and try to re-acquire LOS.
-                    // (No timeout; hunt continues until we reach the last known point.)
-                    EnterInvestigating(target: lastKnownPlayerPos, timeout: 0f);
+                    // Always transition to investigating on LOS break.
+                    // If we were going backstage before the hunt, Investigating will return to BackstageTravel when it ends.
+                    EnterInvestigating(target: lastKnownPlayerPos, timeout: investigateTimeout, returnTo: huntingReturnState);
                 }
                 break;
 
@@ -526,16 +545,11 @@ public class MonsterController : MonoBehaviour
         SetState(MonsterActionState.Hunting);
     }
 
-    private void EnterInvestigating(Vector3 target, float timeout)
+    private void EnterInvestigating(Vector3 target, float timeout, MonsterActionState returnTo)
     {
         investigateTarget = ProjectToNavmesh(target);
-        investigateHasTimeout = timeout > 0.01f;
-        investigateEndsAt = investigateHasTimeout ? (Time.time + timeout) : 0f;
-
-        // After investigating, we either resume roaming or continue backstage travel if that was our prior intent.
-        bool shouldReturnBackstage = WantsBackstage
-                                    || (state == MonsterActionState.Hunting && huntingReturnState == MonsterActionState.BackstageTravel);
-        investigateReturnState = shouldReturnBackstage ? MonsterActionState.BackstageTravel : MonsterActionState.Roaming;
+        investigateEndsAt = Time.time + Mathf.Max(0.1f, timeout);
+        investigateReturnState = returnTo;
         SetState(MonsterActionState.Investigating);
     }
 
@@ -569,6 +583,9 @@ public class MonsterController : MonoBehaviour
         killingSfxPlayed = false;
         StopAgent();
 
+        // Ensure hunt breathing does not carry into the kill sequence.
+        StopAllAudio();
+
         if (player != null)
             player.isInDeathSequence = true;
     }
@@ -584,7 +601,13 @@ public class MonsterController : MonoBehaviour
         nextDestinationUpdateAt = 0f;
 
         if (state == MonsterActionState.Roaming)
-            agent.ResetPath();
+        {
+            if (agent && agent.enabled)
+            {
+                agent.isStopped = false;
+                agent.ResetPath();
+            }
+        }
 
         PresentationUpdate();
     }
@@ -613,7 +636,7 @@ public class MonsterController : MonoBehaviour
                 break;
 
             case MonsterActionState.Investigating:
-                // Treat investigating as a contiguous hunt (same speed boost as Hunting).
+                // Investigating should feel like a contiguous hunt: use sprint speed bonus.
                 MoveAgentTo(investigateTarget, speed * sprintMultiplier);
                 break;
 
@@ -659,7 +682,16 @@ public class MonsterController : MonoBehaviour
             return;
         nextDestinationUpdateAt = Time.time + Mathf.Max(0.02f, interval);
 
-        agent.SetDestination(ProjectToNavmesh(dest));
+        Vector3 destNav = ProjectToNavmesh(dest);
+
+        // If we're in a hunt-like mode and the target is not reachable (disconnected navmesh), abort back to roaming/backstage.
+        if (huntingLike && !IsPathComplete(transform.position, destNav))
+        {
+            AbortEngagementDueToUnreachableTarget();
+            return;
+        }
+
+        agent.SetDestination(destNav);
     }
 
     private void StopAgent()
@@ -667,6 +699,56 @@ public class MonsterController : MonoBehaviour
         if (!agent.enabled) return;
         agent.isStopped = true;
         agent.ResetPath();
+    }
+
+    private void ResumeAgent()
+    {
+        if (!agent) return;
+        if (!agent.enabled) agent.enabled = true;
+        agent.isStopped = false;
+    }
+
+    private void AbortEngagementDueToUnreachableTarget()
+    {
+        // Hunting/Investigating target is not reachable. Break off and resume Roaming or BackstageTravel.
+        MonsterActionState returnState = MonsterActionState.Roaming;
+
+        if (WantsBackstage)
+            returnState = MonsterActionState.BackstageTravel;
+
+        // If we were going backstage before the hunt, resume that.
+        if (state == MonsterActionState.Hunting && huntingReturnState == MonsterActionState.BackstageTravel)
+            returnState = MonsterActionState.BackstageTravel;
+
+        // If the investigation was already configured to return backstage, preserve that.
+        if (state == MonsterActionState.Investigating && investigateReturnState == MonsterActionState.BackstageTravel)
+            returnState = MonsterActionState.BackstageTravel;
+
+        nextDestinationUpdateAt = 0f;
+        if (agent && agent.enabled)
+            agent.ResetPath();
+
+        if (returnState == MonsterActionState.BackstageTravel)
+        {
+            SetState(MonsterActionState.BackstageTravel);
+            ResumeAgent();
+
+            // Kick movement immediately (avoids an edge case where we appear "idle forever").
+            MoveAgentTo(backstageDestination, speed * 0.9f);
+        }
+        else
+        {
+            SetState(MonsterActionState.Roaming);
+            ResumeAgent();
+
+            // Force a fresh roam destination immediately (and ensure it's reachable from our current navmesh island).
+            if (TryPickRoamDestination(transform.position, roamCenter, out var picked))
+                roamDestination = picked;
+            else
+                roamDestination = ProjectToNavmesh(transform.position);
+
+            MoveAgentTo(roamDestination, speed);
+        }
     }
 
     private bool HasArrived()
@@ -700,6 +782,7 @@ public class MonsterController : MonoBehaviour
 
     private void AudioUpdate(Perception _p)
     {
+        // Breathing should ONLY play during Hunting/Investigating.
         bool shouldBreathe = state == MonsterActionState.Hunting || state == MonsterActionState.Investigating;
         PlayHuntBreathing(loop: shouldBreathe);
     }
@@ -762,6 +845,8 @@ public class MonsterController : MonoBehaviour
             var gameUI = FindFirstObjectByType<GameUI>();
             if (gameUI != null)
                 gameUI.ShowDeadUI();
+
+            EnterGameOverIdle();
         }
     }
 
@@ -841,7 +926,27 @@ public class MonsterController : MonoBehaviour
             return true;
         }
 
-        picked = centerNav;
+        // If we couldn't find a reachable point around the roam center (eg. center is on a disconnected navmesh island),
+        // fall back to roaming around our current position so we don't "idle forever".
+        Vector3 currentNav = ProjectToNavmesh(currentPos);
+
+        for (int i = 0; i < Mathf.Max(1, roamPickAttempts); i++)
+        {
+            Vector2 off2 = Random.insideUnitCircle * radius;
+            Vector3 candidate = currentNav + new Vector3(off2.x, 0f, off2.y);
+            candidate = ProjectToNavmesh(candidate);
+
+            float d = Mathf.Sqrt(SqrXZ(candidate, currentPos));
+            if (d < minD) continue;
+
+            if (!IsPathComplete(currentPos, candidate))
+                continue;
+
+            picked = candidate;
+            return true;
+        }
+
+        picked = currentNav;
         return true;
     }
 
@@ -934,6 +1039,28 @@ public class MonsterController : MonoBehaviour
         audioSource.spatialBlend = 1f;
         audioSource.pitch = Random.Range(0.95f, 1.05f);
         audioSource.Play();
+    }
+
+    private void StopAllAudio()
+    {
+        if (!audioSource) return;
+        audioSource.Stop();
+        audioSource.loop = false;
+        audioSource.clip = null;
+    }
+
+    private void EnterGameOverIdle()
+    {
+        if (gameOver) return;
+        gameOver = true;
+
+        // Hard stop everything.
+        SetState(MonsterActionState.Idle);
+        StopAgent();
+        StopAllAudio();
+
+        // Optional: prevent any stray future one-shots.
+        if (audioSource) audioSource.enabled = false;
     }
 
     private void PlayClip(AnimationClip clip, float animSpeed)
