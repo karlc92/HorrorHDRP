@@ -889,7 +889,7 @@ MonoBehaviour:
   backstageDistance: 70
   backstageMinDistance: 70
   backstagePickAttempts: 20
-  backstageRequireSameNavArea: 1
+  backstageRequireConnected: 1
   debugLog: 0
   debugDraw: 1
 --- !u!1 &456422807
@@ -2143,6 +2143,70 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8950500157497028666, guid: dac275a26291c404db843f95e1b79076, type: 3}
   m_PrefabInstance: {fileID: 1255819035}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1055470800
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1055470801}
+  - component: {fileID: 1055470802}
+  m_Layer: 0
+  m_Name: NavMesh Surface
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1055470801
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055470800}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5547.2993, y: -5553.899, z: -5534.1416}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1956495391}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1055470802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055470800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 1719
+  m_UseGeometry: 1
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: bb0c5dac769f7a2498880582223c037b, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1001 &1129204568
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3964,10 +4028,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1055470801}
   - {fileID: 258723603}
   - {fileID: 1876318013}
   - {fileID: 1382767847}
-  - {fileID: 2049280216}
   - {fileID: 2076211352}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4212,92 +4276,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2049280214
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2049280216}
-  - component: {fileID: 2049280215}
-  m_Layer: 0
-  m_Name: A*
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2049280215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2049280214}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78396926cbbfc4ac3b48fc5fc34a87d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AstarPathfindingProject::AstarPath
-  version: 1073741824
-  data:
-    dataString: UEsDBBQAAAgIAABAIeyyQ+lINwIAAIkEAAALACQAZ3JhcGgwLmpzb24KACAAAAAAAAEAGAAAgD7V3rGdAQCAPtXesZ0BAIA+1d6xnQGVU01v2zAM/SuBz+uQJl639Lik6w79GJICKzrsQEu0LVSWMkpOmhb97yNlO/WwXXYS9MhH8ZFPL5mqgUBFpDVo04bsfHL6/sO7Saa8i76la3i6IPLE+ExQtHZjnpGv05S2B/sIhcWvaKo6MjwfgUtrmuKY2sDTxvqtcOfT7n6hK7xCV8Va6ifQuDVWxrv+FSmH2kRPd8ZiD57OPjEce+D+L+ThiLQBhSeyIrXIyBbpCg5I116b0iiI/JaEf/zkoDYNusAIR+WhbDUA81XG8QLUY0W+dfqOYIcUoDDWxIOkfu9FSx6hxR24eEmwrTctlaDwWNLf+LjGX62hlKu8taikjQ3GaFwl3byM4IGY2g5CsUkAhEfJnGQ7sK1knJxOXmUKUPWxpIkg8HZ5KkuuaLSUOJ+UYAOOg9cY6vGYjoE7JALj/hUhHDNil9gZoYHtyu9dgGZrWdIXdljy0LwXLH2sh0IrjGCs7Iyj3i075ceOXGut6CIf07Y60U/iK0YP/fksZ9JfelKoP8uWwhIdv/E/jN5ifX4+HRj5QGEokULt99LjbRtZIr4NQgI3vLOld67b4HjiA613xRvNIRCGuOFD1bfOHu4fRjR04q0b2DXMXbbJKG/cqjX6Ty9kWGjIF8Wn8mMJMJsuTmZ6kRdalTqfn50t8jxLKowz0YD9xvVtHCbDn3S0cAdNqrhGxRubJE+LCzXB/tI8N35kAuNKv1FsDHfb1TjK5k2D5dnqi/SbR17PXl6z199QSwMEFAAACAgAAEAh7J8psYZuAAAAeQAAAAkAJABtZXRhLmpzb24KACAAAAAAAAEAGAAAgD7V3rGdAQCAPtXesZ0BAIA+1d6xnQGrVipLLSrOzM9TslIw1TPUM9JRUEovSizIKAYKGII4pZkpIHa0UmpSSqKJZZJFmnlaYqKRgaWuUYqlSVJKclqKibGZmaWJiVIsUH1JZUGqX2JuKkRPQGJJRlpmXkpmXrpeUGpyYnGJO8hwpdhaAFBLAQItABQAAAgIAABAIeyyQ+lINwIAAIkEAAALACQAAAAAAAAAAAAAAAAAAABncmFwaDAuanNvbgoAIAAAAAAAAQAYAACAPtXesZ0BAIA+1d6xnQEAgD7V3rGdAVBLAQItABQAAAgIAABAIeyfKbGGbgAAAHkAAAAJACQAAAAAAAAAAAAAAIQCAABtZXRhLmpzb24KACAAAAAAAAEAGAAAgD7V3rGdAQCAPtXesZ0BAIA+1d6xnQFQSwUGAAAAAAIAAgC4AAAAPQMAAAAA
-    file_cachedStartup: {fileID: 0}
-    cacheStartup: 0
-  showNavGraphs: 1
-  showUnwalkableNodes: 1
-  debugMode: 0
-  debugFloor: 0
-  debugRoof: 1
-  manualDebugFloorRoof: 0
-  showSearchTree: 0
-  unwalkableNodeDebugSize: 0.3
-  logPathResults: 1
-  maxNearestNodeDistance: 100
-  scanOnStartup: 1
-  fullGetNearestSearch: 0
-  prioritizeGraphs: 0
-  prioritizeGraphsLimit: 1
-  colorSettings:
-    _SolidColor: {r: 0.11764706, g: 0.4, b: 0.7882353, a: 0.9}
-    _UnwalkableNode: {r: 1, g: 0, b: 0, a: 0.5}
-    _BoundsHandles: {r: 0.29, g: 0.454, b: 0.741, a: 0.9}
-    _ConnectionLowLerp: {r: 0, g: 1, b: 0, a: 0.5}
-    _ConnectionHighLerp: {r: 1, g: 0, b: 0, a: 0.5}
-    _MeshEdgeColor: {r: 0, g: 0, b: 0, a: 0.5}
-    _AreaColors: []
-  tagNames: []
-  heuristic: 2
-  heuristicScale: 1
-  threadCount: 1
-  maxFrameTime: 10
-  batchGraphUpdates: 0
-  graphUpdateBatchingInterval: 0.2
-  navmeshUpdates:
-    updateInterval: 0
-  euclideanEmbedding:
-    mode: 0
-    seed: 0
-    pivotPointRoot: {fileID: 0}
-    spreadOutCount: 1
-  showGraphs: 1
---- !u!4 &2049280216
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2049280214}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5557.8286, y: -5554.295, z: -5503.2417}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1956495391}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2076211351
 GameObject:
@@ -4829,10 +4807,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Monster
       objectReference: {fileID: 0}
+    - target: {fileID: 3252586342981795104, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
+      propertyPath: m_AutoBraking
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3252586342981795104, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
+      propertyPath: m_Acceleration
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3252586342981795104, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
+      propertyPath: m_StoppingDistance
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8499826287805038252, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
-      propertyPath: deadBg
-      value: 
-      objectReference: {fileID: 196322608}
+      propertyPath: state
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8520140278410623513, guid: 62461d86a2277ea48bf7b73edc86663b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.6809449

@@ -1,870 +1,279 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using Animancer;
-using Pathfinding;
 
-[RequireComponent(typeof(CharacterController), typeof(Seeker))]
+/// <summary>
+/// Monster locomotion + behavior controller (Unity AI Navigation / NavMeshAgent).
+///
+/// Key behavior fixes:
+/// - No "Hunt -> Idle" thrash when in range but LOS fails: explicit Investigating state.
+/// - No "path through walls": NavMeshAgent owns all movement (no direct steering).
+/// - Less "slippery" feel: high acceleration + high angular speed + agent-driven rotation, constant-speed chase.
+/// - No "give up while still seeing player": hunting never yields to director/backstage and does not self-abort on stuck if LOS is true.
+/// </summary>
+[RequireComponent(typeof(NavMeshAgent))]
 public class MonsterController : MonoBehaviour
 {
-    public enum MonsterActionState { Idle, Roaming, Hunting, Emote, Killing, BackstageTravel, BackstageIdle }
+    public enum MonsterActionState
+    {
+        Idle,
+        Roaming,
+        Investigating,
+        Hunting,
+        Emote,
+        Killing,
+        BackstageTravel,
+        BackstageIdle
+    }
+
+    [Header("Runtime State")]
     public MonsterActionState state = MonsterActionState.Roaming;
-    AnimancerComponent animancer;
+
+    [Header("References")]
+    public PlayerController player;
+
+    [Tooltip("Optional: overrides which transform is used for LOS + chase destination. If null, uses PlayerController.raycastTarget then player.transform.")]
+    public Transform playerTargetOverride;
+
+    [Header("Animation (Animancer)")]
     public AnimationClip idleClip;
     public AnimationClip runningClip;
     public AnimationClip killingClip;
+
+    [Header("Audio")]
     public AudioClip huntingBreatheAudio;
     public List<AudioClip> emoteAudioSound = new();
     public List<AnimationClip> emoteClips = new();
 
+    [Header("Movement")]
+    [Tooltip("Base speed when roaming.")]
     public float speed = 3.5f;
-    public float roamRadius = 12f;
-    public float minRoamDistance = 3f;
 
-    [Header("Director / Stage")]
-    [Tooltip("When not Hunting, Roaming destinations will be picked around this point (typically the PlayerLocationHint).")]
+    [Tooltip("Speed multiplier during Hunting and certain Investigate modes.")]
+    public float sprintMultiplier = 2.0f;
+
+    [Tooltip("How quickly the monster rotates toward its movement/target direction (only used if useAgentRotation = false).")]
+    public float turnSpeed = 4f;
+
+    [Header("Agent Tuning")]
+    [Tooltip("If true, NavMeshAgent rotates the monster toward its steering target. This feels much less slippery than custom slerp rotation.")]
+    public bool useAgentRotation = true;
+
+    [Tooltip("Higher = reaches desired speed faster (snappier, less sliding).")]
+    public float agentAcceleration = 120f;
+
+    [Tooltip("Degrees/sec. Higher = turns tighter while moving.")]
+    public float agentAngularSpeed = 1080f;
+
+    public ObstacleAvoidanceType agentAvoidance = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
+
+    [Tooltip("If true, the agent brakes near non-hunt destinations (roam/backstage). Hunting/investigating disables braking for constant speed.")]
+    public bool autoBrakingWhenNotHunting = true;
+
+    [Tooltip("Stopping distance during hunting (keep small to avoid slowing too early).")]
+    public float huntingStoppingDistance = 0.1f;
+
+    [Tooltip("If NOT using agent rotation, we only face the player within this distance during hunting to avoid sideways sliding.")]
+    public float faceTargetWithinDistance = 2.5f;
+
+    [Header("Roaming")]
+    [Tooltip("When not Hunting, Roaming destinations are picked around this point (typically the PlayerLocationHint).")]
     public Vector3 roamCenter;
 
+    public float roamRadius = 12f;
+    public float minRoamDistance = 3f;
+    public int roamPickAttempts = 12;
+
+    [Header("Perception / Combat")]
+    public float chaseDistance = 6f;
+    public float killDistance = 1.5f;
+
+    [Header("Navigation")]
+    [Tooltip("Consider ourselves 'arrived' when remainingDistance <= this.")]
+    public float arriveDistance = 1.2f;
+
+    [Tooltip("How often we are allowed to call SetDestination while roaming/backstage (seconds).")]
+    public float destinationUpdateInterval = 0.15f;
+
+    [Tooltip("How often we are allowed to call SetDestination while hunting/investigating (seconds). Lower = tighter tracking, more CPU.")]
+    public float destinationUpdateIntervalHunt = 0.05f;
+
+    [Header("Line of Sight")]
+    public LayerMask losMask = ~0;
+    public int monsterLayer = 7;
+
+    [Tooltip("Sphere radius used for LOS checks. Helps prevent seeing through thin walls / thin geometry.")]
+    public float losProbeRadius = 0.08f;
+
+    [Tooltip("If true, trigger colliders will block LOS checks (useful if walls/doors use triggers).")]
+    public bool losTreatTriggersAsOccluders = true;
+
+    [Tooltip("Grace period after LOS breaks during a chase, to avoid flicker.")]
+    public float losGrace = 0.5f;
+
+    [Header("Investigate / Hunt Memory")]
+    [Tooltip("If we enter Investigating from Roaming (in range but no LOS), we will pursue a best-guess point for up to this long.")]
+    public float investigateFromRoamDuration = 2.0f;
+
+    [Tooltip("If we lose LOS during a hunt, we will investigate last seen position for up to this long.")]
+    public float lostHuntTimeout = 4f;
+
+    [Tooltip("Player considered off-navmesh if nearest nav point is further than this (XZ).")]
+    public float offMeshTolerance = 1.5f;
+
+    [Header("Emotes / Idling")]
+    public float emoteChancePerSecond = 0.03f;
+
+    // If <= 0, falls back to selected emote clip length.
+    public float emoteDuration = 1.5f;
+
+    // When the monster gives up hunting, it idles for this long, then returns to Roaming (or resumes BackstageTravel).
+    public float idleTimeAfterHunting = 1.0f;
+
+    [Header("Cooldowns")]
+    [Tooltip("Prevent immediate re-hunt ping-pong after giving up a hunt where the player was actually seen.")]
+    public float giveUpCooldown = 0.75f;
+
+    [Tooltip("Longer cooldown when we gave up without ever acquiring LOS (e.g., baiting behind a wall).")]
+    public float giveUpCooldownNoLos = 2.0f;
+
+    [Header("Stuck Handling")]
+    [Tooltip("Seconds of near-zero progress before attempting an unstuck.")]
+    public float stuckTime = 0.8f;
+
+    [Tooltip("Cooldown between unstuck attempts (seconds).")]
+    public float unstuckCooldown = 0.5f;
+
+    [Tooltip("How far we probe to detect an obstacle for detour selection.")]
+    public float unstuckProbeDistance = 1.2f;
+
+    [Tooltip("How far we try to step away for a detour.")]
+    public float unstuckDetourDistance = 3.0f;
+
+    public int maxStuckDetours = 3;
+
+    [Header("Director / Stage")]
     [Tooltip("If true, the monster will resume BackstageTravel after giving up a hunt.")]
     [SerializeField] private bool wantsBackstage = false;
     public bool WantsBackstage => wantsBackstage;
 
-
     [Header("Backstage Presentation")]
-    [Tooltip("When the monster is backstage, all SkinnedMeshRenderer children are disabled so the player cannot see it.")]
     [SerializeField] private bool hideMeshesWhileBackstage = true;
 
-    [Tooltip("If the monster is within this distance (XZ) of the player when going Backstage -> Frontstage, it teleports to a new navmesh point ~this far away before revealing.")]
+    [Tooltip("When coming frontstage while too close to the player, teleport to ~this distance before revealing.")]
     public float frontstageRevealDistance = 60f;
 
-    [Tooltip("Teleport distance jitter as a fraction of frontstageRevealDistance (e.g. 0.15 = +/-15%).")]
     [Range(0f, 0.5f)]
     public float frontstageRevealDistanceJitter = 0.15f;
 
-    [Tooltip("Attempts to find a valid navmesh point at reveal distance when coming frontstage.")]
     public int frontstageTeleportAttempts = 20;
 
-    [Tooltip("If true, the re-entry teleport point must be on the same navmesh area as the player.")]
+    [Tooltip("If true, the re-entry teleport point must be connected to the player's navmesh (path complete).")]
     public bool frontstageTeleportRequireSameNavAreaAsPlayer = true;
 
-    private SkinnedMeshRenderer[] backstageSkinnedMeshes;
-
-
-    [Tooltip("Disable the CharacterController while BackstageIdle so the player cannot bump into an invisible monster.")]
-    [SerializeField] private bool disableCharacterControllerWhileBackstageIdle = true;
-
-    [Tooltip("Minimum distance (XZ) from the player required before the monster will enter BackstageIdle (hide + no collision). If <= 0, uses frontstageRevealDistance.")]
+    [Tooltip("Minimum distance (XZ) from the player required before the monster will enter BackstageIdle. If <= 0, uses frontstageRevealDistance.")]
     public float backstageMinDistanceFromPlayer = 0f;
 
-    [Tooltip("If the requested backstage target is too close / invalid, the controller will try to pick a better one automatically.")]
     [SerializeField] private bool enforceBackstageDistance = true;
-
-    [Tooltip("Attempts used when auto-picking a safer backstage destination.")]
     public int backstagePickAttempts = 20;
 
-    float nextBackstageRepickAt;
-    const float BackstageRepickCooldown = 0.25f;
-
-
-    public float chaseDistance = 6f;
-    public float killDistance = 1.5f;
-    public float arriveDistance = 1.2f;
-
-    public float repathInterval = 0.5f;
-    public float huntRepathInterval = 0.2f;
-
-    public float turnSpeed = 4f;
-    public float emoteChancePerSecond = 0.03f;
-
-    // Determines how long the Emote state lasts before returning to Roaming.
-    // If <= 0, falls back to the selected emote clip length.
-    public float emoteDuration = 1.5f;
-
-    // When the monster gives up hunting (after reaching last seen position / losing too long), it idles for this long, then returns to Roaming.
-    public float idleTimeAfterHunting = 1.0f;
-
-    public LayerMask losMask = ~0;
-    public int monsterLayer = 7;
-
-    // Grace period after LOS breaks (ONLY used for LOS breaks, not for "player is unpathable").
-    public float losGrace = 0.5f;
-
-    // Only used when LOS is actually lost. If player is visible but unpathable, we do NOT end by timeout;
-    // we run to lastSeenPos and end there.
-    public float lostHuntTimeout = 4f;
-
-    // Player considered "unpathable" if nearest walkable point is further than this (XZ) or on a different area.
-    public float offMeshTolerance = 1.5f;
-
-    public int maxPathFails = 2;
-
-    // Stuck handling.
-    public float stuckTime = 0.8f;
-    public float unstuckCooldown = 0.5f;
-    public int maxStuckDetours = 3;
-
-    [Header("Navigation Robustness")]
-    [Tooltip("When Hunting with LOS, the monster prefers a direct chase. If an obstacle is detected in the immediate forward direction, it will follow the computed path instead.")]
-    public bool avoidDirectChaseIntoObstacles = true;
-
-    [Tooltip("Minimum progress (meters) toward the current destination required per frame to avoid being considered stuck.")]
-    public float minProgressPerFrame = 0.02f;
-
-    // How far we probe for immediate obstructions and how far we try to step away for the detour.
-    public float unstuckRayDistance = 1.2f;
-    public float unstuckDetourDistance = 3.0f;
-    public float unstuckDetourDuration = 0.9f;
-    public int roamPickAttempts = 12;
-
-    // Prevent immediate re-hunt ping-pong after giving up.
-    public float giveUpCooldown = 0.75f;
-
-    // --- Killing "cinematic" controls ---
     [Header("Killing Sequence")]
-    public float killingSlowStart = 1.0f;      // t < this => normal speed
-    public float killingSlowEnd = 2.0f;        // [slowStart, slowEnd) => slow speed, then normal after
+    public float killingSlowStart = 1.0f;
+    public float killingSlowEnd = 2.0f;
     public float killingSlowSpeed = 0.25f;
     public float killingNormalSpeed = 1.0f;
     public float killingEndTime = 3.15f;
 
     public AudioClip killingSfx;
-    public float killingSfxAt = 1.0f;          // time since kill started
+    public float killingSfxAt = 1.0f;
     public float killingSfxVolume = 1.0f;
     public bool killingSfxRandomPitch = true;
 
-    public bool debug = true;
+    [Header("Debug")]
+    public bool debug = false;
     public float debugInterval = 0.5f;
 
-    AudioSource audioSource;
-    CharacterController controller;
-    Seeker seeker;
-    PlayerController player;
+    // --- Components / caches ---
+    [SerializeField] private NavMeshAgent agent;
+    private AnimancerComponent animancer;
+    private AudioSource audioSource;
 
-    Vector3 destination;
-    Vector3 lastSeenPos;
-    Vector3 backstageDestination;
+    private Renderer[] cachedRenderers;
+    private Collider[] cachedColliders;
 
-    Path path;
-    int waypoint;
-    float repathAt;
+    // --- Destination ---
+    private Vector3 destination;
+    private float nextDestinationUpdateAt;
 
-    float idleUntil;
-    MonsterActionState idleNext;
+    // --- State timers ---
+    private float emoteEndAt;
+    private float idleEndAt;
+    private MonsterActionState idleNext = MonsterActionState.Roaming;
 
-    float emoteEndAt;
+    // --- Hunt memory ---
+    private Vector3 lastSeenNavPos;
+    private float lastLosAt = -999f;
+    private bool hadLosThisHunt;
 
-    AnimationClip lastClip;
-    float lastAnimSpeed = 1f;
+    // Investigate state control
+    private Vector3 investigateTarget;
+    private float investigateEndAt;
+    private bool investigateEndsInPostHunt;
 
-    float lastLosAt = -999f;
-    bool wasChasing;
-    float lostAt = -1f;
+    // Give-up cooldown bookkeeping
+    private float gaveUpAt = -999f;
+    private bool lastGiveUpHadLos = true;
 
-    float stuckFor;
-    float lastUnstuckAt = -999f;
-    int stuckDetours;
+    // Backstage destination
+    private Vector3 backstageDestination;
+    private float nextBackstageRepickAt;
+    private const float BackstageRepickCooldown = 0.25f;
 
-    // Navmesh safety: when the monster drifts off the navmesh, A*'s GetNearest() can snap to a
-    // disconnected island through a thin wall (e.g. interior nodes inside a building). If we then
-    // use that snapped node as our start, the resulting path can be "valid" but physically unreachable,
-    // causing the monster to run into the wall forever.
-    bool hasNavAreaAnchor;
-    uint navAreaAnchor;
-    Vector3 navAreaAnchorPos;
+    // Stuck handling
+    private Vector3 lastPos;
+    private float stuckFor;
+    private float lastUnstuckAt;
+    private int stuckDetours;
 
-    float nextDebugAt;
-    MonsterActionState lastState;
-    bool lastLos;
-    int pathFails;
+    // LOS cache (throttled)
+    private readonly RaycastHit[] losHits = new RaycastHit[16];
+    private float nextLosCheckAt;
+    private bool cachedLos;
+    private bool cachedPlayerNavOk;
+    private Vector3 cachedPlayerNavPos;
+    private bool cachedPlayerOffMesh;
 
-    // Post-hunt / cooldown helpers.
-    float gaveUpAt = -999f;
-    bool forceRoamPick;
+    // Kill sequence
+    private float killingStartedAt;
+    private bool killingSfxPlayed;
 
-    // Temporary detour to get around local obstructions.
-    bool detouring;
-    Vector3 resumeDestination;
-    float detourUntil;
+    // Animancer cache
+    private AnimationClip lastClip;
+    private float lastAnimSpeed;
 
-    // Killing sequence runtime.
-    float killingStartedAt = -999f;
-    bool killingSfxPlayed;
+    private float nextDebugAt;
 
     void Awake()
     {
-        controller = GetComponent<CharacterController>();
-        seeker = GetComponent<Seeker>();
+        agent = GetComponent<NavMeshAgent>();
+        animancer = GetComponentInChildren<AnimancerComponent>();
         audioSource = GetComponent<AudioSource>();
-        if (!animancer) animancer = GetComponentInChildren<AnimancerComponent>();
 
-        player = FindFirstObjectByType<PlayerController>();
+        agent.updateRotation = useAgentRotation;
+        agent.autoRepath = true;
+        agent.acceleration = Mathf.Max(1f, agentAcceleration);
+        agent.angularSpeed = Mathf.Max(60f, agentAngularSpeed);
+        agent.obstacleAvoidanceType = agentAvoidance;
+
+        CachePresentationObjects();
+        EnsureOnNavMesh();
 
         destination = transform.position;
-        lastSeenPos = destination;
-        roamCenter = destination;
-        backstageDestination = destination;
-        lastState = state;
+        lastPos = transform.position;
 
-        UpdateNavAreaAnchor(destination, true);
-
-
+        lastSeenNavPos = transform.position;
         ApplyBackstagePresentationForState(state);
-    }
-
-    static float SqrXZ(Vector3 a, Vector3 b)
-    {
-        float dx = a.x - b.x;
-        float dz = a.z - b.z;
-        return dx * dx + dz * dz;
-    }
-
-    void UpdateNavAreaAnchor(Vector3 p, bool force = false)
-    {
-        if (!AstarPath.active)
-        {
-            hasNavAreaAnchor = false;
-            return;
-        }
-
-        var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
-        if (nn.node == null || !nn.node.Walkable) return;
-
-        if (!hasNavAreaAnchor || force)
-        {
-            hasNavAreaAnchor = true;
-            navAreaAnchor = nn.node.Area;
-            navAreaAnchorPos = nn.position;
-            return;
-        }
-
-        // Never switch the anchored connected component based on proximity.
-        // If we're slightly off-mesh next to a wall, GetNearest can return a node on a disconnected island
-        // (like an interior navmesh), even though it's physically unreachable.
-        if (nn.node.Area != navAreaAnchor) return;
-
-        // Only update the anchor position when we're close enough to the navmesh.
-        float tol = offMeshTolerance;
-        if (SqrXZ(p, nn.position) <= tol * tol)
-            navAreaAnchorPos = nn.position;
-    }
-
-    bool TryProjectToWalkableOnArea(Vector3 p, uint area, out Vector3 projected)
-    {
-        projected = p;
-        if (!AstarPath.active) return false;
-
-        var best = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
-        if (best.node != null && best.node.Walkable && best.node.Area == area)
-        {
-            projected = best.position;
-            return true;
-        }
-
-        // Sampling search to find a node on the desired connected component.
-        // This avoids relying on NNConstraint.constrainArea fields (which vary between A* versions).
-        float baseStep = Mathf.Max(0.5f, offMeshTolerance * 0.75f);
-        int rings = 3;
-        int dirs = 16;
-
-        float bestSqr = float.PositiveInfinity;
-        Vector3 bestPos = Vector3.zero;
-        bool found = false;
-
-        for (int r = 1; r <= rings; r++)
-        {
-            float radius = baseStep * r;
-            for (int i = 0; i < dirs; i++)
-            {
-                float a = (i / (float)dirs) * 360f;
-                var q = Quaternion.Euler(0f, a, 0f);
-                Vector3 sample = p + q * (Vector3.forward * radius);
-
-                var nn = AstarPath.active.GetNearest(sample, NNConstraint.Walkable);
-                if (nn.node == null || !nn.node.Walkable) continue;
-                if (nn.node.Area != area) continue;
-
-                float sqr = SqrXZ(p, nn.position);
-                if (sqr < bestSqr)
-                {
-                    bestSqr = sqr;
-                    bestPos = nn.position;
-                    found = true;
-                }
-            }
-        }
-
-        if (found)
-        {
-            projected = bestPos;
-            return true;
-        }
-
-        return false;
-    }
-
-    Vector3 ProjectToWalkableAny(Vector3 p)
-    {
-        if (!AstarPath.active) return p;
-        var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
-        return nn.position;
-    }
-
-    Vector3 ProjectToWalkable(Vector3 p)
-    {
-        if (!AstarPath.active) return p;
-
-        if (hasNavAreaAnchor && TryProjectToWalkableOnArea(p, navAreaAnchor, out var projected))
-            return projected;
-
-        return ProjectToWalkableAny(p);
-    }
-
-    Vector3 GetSafeNavPosition(Vector3 p)
-    {
-        if (!AstarPath.active) return p;
-
-        if (hasNavAreaAnchor)
-        {
-            if (TryProjectToWalkableOnArea(p, navAreaAnchor, out var projected))
-                return projected;
-
-            return navAreaAnchorPos;
-        }
-
-        return ProjectToWalkableAny(p);
-    }
-
-    public bool TryGetNavAreaAnchor(out uint area)
-    {
-        area = navAreaAnchor;
-        return hasNavAreaAnchor;
-    }
-
-    bool IsBackstageState(MonsterActionState s) => s == MonsterActionState.BackstageTravel || s == MonsterActionState.BackstageIdle;
-
-    // Only hide visuals once the monster is parked and idle backstage (so you can still see it leaving).
-    bool ShouldHideMeshesInState(MonsterActionState s) => s == MonsterActionState.BackstageIdle;
-
-
-    float GetBackstageRequiredDistance()
-    {
-        float d = backstageMinDistanceFromPlayer > 0.01f ? backstageMinDistanceFromPlayer : frontstageRevealDistance;
-        return Mathf.Max(0f, d);
-    }
-
-    void ApplyBackstagePresentationForState(MonsterActionState s)
-    {
-        bool hide = ShouldHideMeshesInState(s);
-
-        // Visuals (only hidden in BackstageIdle).
-        if (hideMeshesWhileBackstage)
-            SetBackstageMeshesEnabled(!hide);
-
-        // Collision: disable CharacterController only when hidden.
-        if (disableCharacterControllerWhileBackstageIdle)
-        {
-            if (controller == null) controller = GetComponent<CharacterController>();
-            if (controller != null && controller.enabled == hide)
-                controller.enabled = !hide;
-        }
-    }
-
-    bool TryPickBackstageDestination(Vector3 monsterPos, Vector3 playerPos, float requiredDist, out Vector3 picked)
-    {
-        picked = monsterPos;
-
-        requiredDist = Mathf.Max(0f, requiredDist);
-        if (requiredDist <= 0.01f) return false;
-
-        // Fallback if we have no A* graph.
-        if (!AstarPath.active)
-        {
-            Vector3 away = monsterPos - playerPos;
-            away.y = 0f;
-            if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
-            away.Normalize();
-
-            picked = playerPos + away * requiredDist;
-            return true;
-        }
-
-        var startPos = ProjectToWalkable(monsterPos);
-        var start = AstarPath.active.GetNearest(startPos, NNConstraint.Walkable);
-        if (start.node == null || !start.node.Walkable) return false;
-
-        uint startArea = start.node.Area;
-
-        float jitter = Mathf.Clamp(frontstageRevealDistanceJitter, 0f, 0.5f);
-        int attempts = Mathf.Max(1, backstagePickAttempts);
-
-        for (int i = 0; i < attempts; i++)
-        {
-            Vector2 dir2 = Random.insideUnitCircle;
-            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
-            dir2.Normalize();
-
-            float d = requiredDist * Random.Range(1f - jitter, 1f + jitter);
-            Vector3 candidate = playerPos + new Vector3(dir2.x, 0f, dir2.y) * d;
-
-            var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
-            if (nn.node == null || !nn.node.Walkable) continue;
-
-            if (nn.node.Area != startArea) continue;
-
-            if (SqrXZ(nn.position, playerPos) < requiredDist * requiredDist)
-                continue;
-
-            // Must be reachable from the monster.
-            if (!IsTargetPathableFrom(monsterPos, nn.position))
-                continue;
-
-            picked = nn.position;
-            return true;
-        }
-
-        return false;
-    }
-
-    bool RepickBackstageDestination(Vector3 monsterPos, Vector3 playerPos)
-    {
-        float required = GetBackstageRequiredDistance();
-        if (required <= 0.01f) return false;
-
-        if (!TryPickBackstageDestination(monsterPos, playerPos, required, out var picked))
-            return false;
-
-        backstageDestination = picked;
-        destination = picked;
-
-
-        if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-
-        path = null;
-        waypoint = 0;
-        repathAt = 0f;
-        pathFails = 0;
-
-        return true;
-    }
-
-    void CacheBackstageMeshes()
-    {
-        if (!hideMeshesWhileBackstage) return;
-        if (backstageSkinnedMeshes == null || backstageSkinnedMeshes.Length == 0)
-            backstageSkinnedMeshes = GetComponentsInChildren<SkinnedMeshRenderer>(true);
-    }
-
-    void SetBackstageMeshesEnabled(bool enabled)
-    {
-        if (!hideMeshesWhileBackstage) return;
-
-        CacheBackstageMeshes();
-        if (backstageSkinnedMeshes == null) return;
-
-        for (int i = 0; i < backstageSkinnedMeshes.Length; i++)
-        {
-            var r = backstageSkinnedMeshes[i];
-            if (r) r.enabled = enabled;
-        }
-    }
-
-    void TeleportTo(Vector3 p)
-    {
-        // CharacterController doesn't like being moved while enabled.
-        if (controller == null) controller = GetComponent<CharacterController>();
-
-        bool ccWasEnabled = controller != null && controller.enabled;
-        if (controller != null) controller.enabled = false;
-
-        transform.position = p;
-
-        if (controller != null)
-        {
-            controller.enabled = ccWasEnabled;
-            if (controller.enabled) controller.Move(Vector3.zero); // flush internal state
-        }
-
-        destination = p;
-        lastSeenPos = p;
-
-        UpdateNavAreaAnchor(p, true);
-
-        if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-
-        path = null;
-        waypoint = 0;
-        repathAt = 0f;
-    }
-
-    bool TryPickFrontstageTeleportPoint(Vector3 playerPos, out Vector3 picked)
-    {
-        picked = transform.position;
-
-        float dist = Mathf.Max(0f, frontstageRevealDistance);
-        if (dist <= 0.01f) return false;
-
-        // Fallback if we have no A* graph.
-        if (!AstarPath.active)
-        {
-            Vector2 dir2 = Random.insideUnitCircle;
-            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
-            dir2.Normalize();
-
-            picked = playerPos + new Vector3(dir2.x, 0f, dir2.y) * dist;
-            return true;
-        }
-
-        var playerNN = AstarPath.active.GetNearest(playerPos, NNConstraint.Walkable);
-        if (playerNN.node == null || !playerNN.node.Walkable) return false;
-
-        uint requiredArea = playerNN.node.Area;
-
-        float minSqr = dist * dist;
-        float jitter = Mathf.Clamp(frontstageRevealDistanceJitter, 0f, 0.5f);
-
-        for (int i = 0; i < Mathf.Max(1, frontstageTeleportAttempts); i++)
-        {
-            Vector2 dir2 = Random.insideUnitCircle;
-            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
-            dir2.Normalize();
-
-            float d = dist * Random.Range(1f - jitter, 1f + jitter);
-            Vector3 candidate = playerPos + new Vector3(dir2.x, 0f, dir2.y) * d;
-
-            var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
-            if (nn.node == null || !nn.node.Walkable) continue;
-
-            if (frontstageTeleportRequireSameNavAreaAsPlayer && nn.node.Area != requiredArea)
-                continue;
-
-            if (SqrXZ(nn.position, playerPos) < minSqr)
-                continue;
-
-            // Ensure the monster can actually reach the player from there.
-            if (!IsTargetPathableFrom(nn.position, playerPos))
-                continue;
-
-            picked = nn.position;
-            return true;
-        }
-
-        // Worst-case fallback: directly away from player.
-        Vector3 away = transform.position - playerPos;
-        away.y = 0f;
-        if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
-        away.Normalize();
-
-        Vector3 fallback = ProjectToWalkableAny(playerPos + away * dist);
-
-        var fallbackNN = AstarPath.active.GetNearest(fallback, NNConstraint.Walkable);
-        if (fallbackNN.node != null && fallbackNN.node.Walkable)
-        {
-            if (!frontstageTeleportRequireSameNavAreaAsPlayer || fallbackNN.node.Area == requiredArea)
-            {
-                picked = fallbackNN.position;
-                return IsTargetPathableFrom(picked, playerPos);
-            }
-        }
-
-        return false;
-    }
-
-
-    bool IsTargetPathableFrom(Vector3 from, Vector3 target)
-    {
-        if (!AstarPath.active) return true;
-
-        var start = AstarPath.active.GetNearest(from, NNConstraint.Walkable);
-
-        // If we're asking "from" the monster's current position, ensure we don't accidentally snap through
-        // a wall to a disconnected island when the monster is slightly off-mesh.
-        if (hasNavAreaAnchor && SqrXZ(from, transform.position) <= 4f)
-        {
-            if (TryProjectToWalkableOnArea(from, navAreaAnchor, out var projectedStart))
-                start = AstarPath.active.GetNearest(projectedStart, NNConstraint.Walkable);
-        }
-
-        var end = AstarPath.active.GetNearest(target, NNConstraint.Walkable);
-
-        if (start.node == null || end.node == null) return false;
-        if (!start.node.Walkable || !end.node.Walkable) return false;
-
-        // Disconnected navmesh islands.
-        if (start.node.Area != end.node.Area) return false;
-
-        // Target significantly off the navmesh.
-        if (SqrXZ(target, end.position) > offMeshTolerance * offMeshTolerance) return false;
-
-        return true;
-    }
-
-    bool TryPickRoamDestination(Vector3 startPos, Vector3 center, out Vector3 picked)
-    {
-        picked = startPos;
-
-        float radius = Mathf.Max(0f, roamRadius);
-        float minDist = Mathf.Clamp(minRoamDistance, 0f, radius);
-
-        if (!AstarPath.active)
-        {
-            var r = Random.insideUnitSphere * radius;
-            r.y = 0f;
-            if (r.sqrMagnitude < minDist * minDist)
-                r = r.sqrMagnitude > 0.0001f ? r.normalized * minDist : Vector3.forward * minDist;
-
-            picked = center + r;
-            return true;
-        }
-
-        var startOnNav = ProjectToWalkable(startPos);
-        var start = AstarPath.active.GetNearest(startOnNav, NNConstraint.Walkable);
-        if (start.node == null || !start.node.Walkable) return false;
-
-        for (int i = 0; i < Mathf.Max(1, roamPickAttempts); i++)
-        {
-            var r = Random.insideUnitSphere * radius;
-            r.y = 0f;
-
-            if (r.sqrMagnitude < minDist * minDist)
-                r = r.sqrMagnitude > 0.0001f ? r.normalized * minDist : Vector3.forward * minDist;
-
-            var candidate = center + r;
-            var end = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
-
-            if (end.node == null || !end.node.Walkable) continue;
-            if (end.node.Area != start.node.Area) continue;
-
-            picked = end.position;
-            return true;
-        }
-
-        picked = start.position;
-        return true;
-    }
-
-    void PickNewRoamDestination(Vector3 startPos, Vector3 center)
-    {
-        if (TryPickRoamDestination(startPos, center, out var picked))
-        {
-            destination = picked;
-            if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-            path = null;
-            waypoint = 0;
-            repathAt = 0f;
-        }
-        else
-        {
-            destination = startPos;
-            if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-            path = null;
-            waypoint = 0;
-            repathAt = 0f;
-        }
-    }
-
-    void EnterIdle(float duration, MonsterActionState nextState, Vector3 playerPos)
-    {
-        SetState(MonsterActionState.Idle, playerPos);
-        idleUntil = Time.time + Mathf.Max(0f, duration);
-        idleNext = nextState;
-    }
-
-    void EnterPostHuntIdle(Vector3 playerPos)
-    {
-        gaveUpAt = Time.time;
-
-        // If the director currently wants the monster backstage, a failed hunt should resume BackstageTravel
-        // (after the same post-hunt idle). Otherwise, return to normal roaming.
-        if (wantsBackstage)
-        {
-            EnterIdle(idleTimeAfterHunting, MonsterActionState.BackstageTravel, playerPos);
-        }
-        else
-        {
-            forceRoamPick = true;
-            EnterIdle(idleTimeAfterHunting, MonsterActionState.Roaming, playerPos);
-        }
-    }
-
-    void ClearDetour()
-    {
-        detouring = false;
-        detourUntil = 0f;
-    }
-
-    void SetState(MonsterActionState s, Vector3 playerPos)
-    {
-        if (s == state) return;
-
-        if (debug) Debug.Log($"[Monster] State {state} -> {s}");
-
-        // Leaving Hunting: stop breathe loop if active.
-        if (state == MonsterActionState.Hunting && s != MonsterActionState.Hunting &&
-            audioSource && audioSource.clip == huntingBreatheAudio)
-        {
-            audioSource.Stop();
-            audioSource.loop = false;
-        }
-
-        // Leaving Killing: release death sequence flag.
-        if (state == MonsterActionState.Killing && s != MonsterActionState.Killing && player != null)
-        {
-            player.isInDeathSequence = false;
-        }
-
-        if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-        path = null;
-        waypoint = 0;
-        repathAt = 0f;
-        pathFails = 0;
-
-        stuckFor = 0f;
-        stuckDetours = 0;
-
-
-        ClearDetour();
-
-        state = s;
-        ApplyBackstagePresentationForState(state);
-
-
-        if (state == MonsterActionState.Hunting)
-        {
-            lastSeenPos = playerPos;
-            lastLosAt = Time.time;
-            wasChasing = true;
-            lostAt = -1f;
-        }
-        else
-        {
-            wasChasing = false;
-            lostAt = -1f;
-        }
-
-        if (state == MonsterActionState.Killing)
-        {
-            killingStartedAt = Time.time;
-            killingSfxPlayed = false;
-
-            if (player != null)
-                player.isInDeathSequence = true;
-        }
-    }
-
-    bool IsDirectionBlocked(Vector3 origin, Vector3 dir, float dist)
-    {
-        origin += Vector3.up * Mathf.Min(0.8f, controller.height * 0.35f);
-        return Physics.Raycast(origin, dir, dist, ~0, QueryTriggerInteraction.Ignore);
-    }
-
-    bool TryStartDetour(Vector3 currentPos)
-    {
-        var f = transform.forward; f.y = 0f; f = f.sqrMagnitude > 0.001f ? f.normalized : Vector3.forward;
-        var r = transform.right; r.y = 0f; r = r.sqrMagnitude > 0.001f ? r.normalized : Vector3.right;
-
-        bool blockF = IsDirectionBlocked(currentPos, f, unstuckRayDistance);
-        bool blockB = IsDirectionBlocked(currentPos, -f, unstuckRayDistance);
-        bool blockR = IsDirectionBlocked(currentPos, r, unstuckRayDistance);
-        bool blockL = IsDirectionBlocked(currentPos, -r, unstuckRayDistance);
-
-        Vector3 escape = Vector3.zero;
-        if (blockF) escape += -f;
-        if (blockB) escape += f;
-        if (blockR) escape += -r;
-        if (blockL) escape += r;
-
-        if (escape.sqrMagnitude < 0.001f)
-        {
-            escape = Random.insideUnitSphere;
-            escape.y = 0f;
-        }
-
-        escape.y = 0f;
-        if (escape.sqrMagnitude < 0.001f) return false;
-        escape.Normalize();
-
-        Vector3 from = currentPos;
-        for (int i = 0; i < 6; i++)
-        {
-            float ang = Random.Range(-45f, 45f);
-            var dir = Quaternion.Euler(0f, ang, 0f) * escape;
-
-            var candidate = from + dir * unstuckDetourDistance;
-            var walkable = ProjectToWalkable(candidate);
-
-            if (!AstarPath.active)
-            {
-                resumeDestination = destination;
-                detouring = true;
-                detourUntil = Time.time + Mathf.Max(0.1f, unstuckDetourDuration);
-
-                destination = walkable;
-                if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-                path = null;
-                waypoint = 0;
-                repathAt = 0f;
-                return true;
-            }
-
-            if (!IsTargetPathableFrom(from, walkable)) continue;
-
-            resumeDestination = destination;
-            detouring = true;
-            detourUntil = Time.time + Mathf.Max(0.1f, unstuckDetourDuration);
-
-            destination = walkable;
-            if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-            path = null;
-            waypoint = 0;
-            repathAt = 0f;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    void KillingSequence(Vector3 pos, Vector3 playerPos, Vector3 toPlayerFlat)
-    {
-        // Freeze movement during the cinematic.
-        controller.SimpleMove(Vector3.zero);
-
-        // Timeline-based animation speed.
-        float t = Time.time - killingStartedAt;
-
-        float animSpeed = killingNormalSpeed;
-        if (t >= killingSlowStart && t < killingSlowEnd)
-            animSpeed = killingSlowSpeed;
-
-        if (killingClip)
-            PlayClip(killingClip, animSpeed);
-
-        // Optional timed SFX.
-        if (!killingSfxPlayed && killingSfx && t >= killingSfxAt)
-        {
-            killingSfxPlayed = true;
-            PlayOneShot(killingSfx, killingSfxVolume, killingSfxRandomPitch, 0f);
-        }
-
-        // Always face the player during kill (lerped).
-        if (toPlayerFlat.sqrMagnitude > 0.001f)
-            TurnTowards(toPlayerFlat);
-
-        if (t > killingEndTime)
-        {
-            var gameUI = FindFirstObjectByType<GameUI>();
-
-            if (gameUI != null)
-            {
-                gameUI.ShowDeadUI();
-            }
-        }
     }
 
     void Update()
@@ -875,550 +284,270 @@ public class MonsterController : MonoBehaviour
             if (!player) return;
         }
 
+        EnsureOnNavMesh();
+
         var pos = transform.position;
         var playerPos = player.transform.position;
+        Transform rt = playerTargetOverride ? playerTargetOverride : (player.raycastTarget ? player.raycastTarget : player.transform);
 
-        if (detouring)
-        {
-            if (Time.time >= detourUntil || SqrXZ(pos, destination) <= arriveDistance * arriveDistance)
-            {
-                destination = resumeDestination;
-                ClearDetour();
-                if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-                path = null;
-                waypoint = 0;
-                repathAt = 0f;
-            }
-        }
+        // Update cached LOS + player nav position at a throttled rate.
+        UpdatePerceptionCache(pos, rt);
 
-        UpdateNavAreaAnchor(pos);
-        var safeNavPos = GetSafeNavPosition(pos);
-        bool offNav = AstarPath.active && hasNavAreaAnchor && SqrXZ(pos, safeNavPos) > offMeshTolerance * offMeshTolerance;
-
-        if (offNav && !detouring && (state == MonsterActionState.Roaming || state == MonsterActionState.Hunting || state == MonsterActionState.BackstageTravel))
-        {
-            // Force a recovery destination on our anchored nav area.
-            destination = safeNavPos;
-
-            if (seeker == null) seeker = GetComponent<Seeker>();
-            if (seeker != null) seeker.CancelCurrentPathRequest();
-
-            path = null;
-            waypoint = 0;
-            repathAt = 0f;
-            pathFails = 0;
-
-            if (debug && Time.time >= nextDebugAt)
-                Debug.Log($"[Monster] Off-nav recovery: pos={pos} safe={safeNavPos} area={navAreaAnchor}");
-        }
-
-        var toPlayer = playerPos - pos;
+        Vector3 toPlayer = playerPos - pos;
         toPlayer.y = 0f;
-        var dPlayer = toPlayer.magnitude;
+        float dPlayer = toPlayer.magnitude;
 
-        Transform rt = player.raycastTarget ? player.raycastTarget : player.transform;
-
-
-        // Backstage behaviour: travel to a backstage destination, then idle there.
+        // Backstage idle is a hard override: invisible, no collisions, no movement.
         if (state == MonsterActionState.BackstageIdle)
         {
-            // Robust: enforce hidden + no-collision every frame while parked backstage.
             ApplyBackstagePresentationForState(state);
-
-            if (controller != null && controller.enabled)
-                controller.SimpleMove(Vector3.zero);
-
-            if (idleClip) PlayClip(idleClip, 1f);
+            StopAgent();
+            PlayLocomotion(false, sprinting: false);
             return;
         }
-        if (state == MonsterActionState.BackstageTravel)
+
+        // Ensure visible/collidable in all other states.
+        ApplyBackstagePresentationForState(state);
+
+        // Killing takes over.
+        if (dPlayer <= killDistance)
         {
-            // Ensure we stay visible/collidable while leaving.
-            ApplyBackstagePresentationForState(state);
-
-            // IMPORTANT: Even while traveling backstage, the monster remains dangerous.
-            // If the player gets within hunt range, enter Hunting using the exact same code path as normal.
-            bool inRange = dPlayer <= chaseDistance && (Time.time - gaveUpAt) >= giveUpCooldown;
-            bool huntable = inRange && IsTargetPathableFrom(pos, rt.position);
-            if (huntable)
-            {
-                SetState(MonsterActionState.Hunting, playerPos);
-            }
-
-            // If we didn't switch to Hunting, continue traveling backstage.
-            if (state == MonsterActionState.BackstageTravel)
-            {
-                destination = ProjectToWalkable(backstageDestination);
-
-                // If we've effectively arrived, only park backstage if we're far enough from the player.
-                if (SqrXZ(pos, destination) <= arriveDistance * arriveDistance)
-                {
-                    float required = GetBackstageRequiredDistance();
-
-                    if (enforceBackstageDistance && required > 0.01f && SqrXZ(destination, playerPos) < required * required)
-                    {
-                        // Too close - pick a better backstage point and keep traveling.
-                        if (Time.time >= nextBackstageRepickAt)
-                        {
-                            nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
-                            RepickBackstageDestination(pos, playerPos);
-                        }
-                    }
-                    else
-                    {
-                        SetState(MonsterActionState.BackstageIdle, playerPos);
-
-                        // Apply immediately (so visuals/collision flip right away on arrival).
-                        ApplyBackstagePresentationForState(state);
-
-                        if (controller != null && controller.enabled)
-                            controller.SimpleMove(Vector3.zero);
-
-                        if (idleClip) PlayClip(idleClip, 1f);
-                        return;
-                    }
-                }
-            }
+            if (state != MonsterActionState.Killing)
+                SetState(MonsterActionState.Killing, playerPos);
         }
-
-        if (state != lastState)
+        else if (state == MonsterActionState.Killing)
         {
-            lastState = state;
-            if (debug) Debug.Log($"[Monster] Now {state}");
+            SetState(MonsterActionState.Roaming, playerPos);
         }
-
-        if (dPlayer <= killDistance) SetState(MonsterActionState.Killing, playerPos);
-        else if (state == MonsterActionState.Killing) SetState(MonsterActionState.Roaming, playerPos);
 
         if (state == MonsterActionState.Killing)
         {
-            KillingSequence(pos, playerPos, toPlayer);
+            KillingSequence(toPlayer);
             return;
         }
 
-        if (state == MonsterActionState.Idle)
-        {
-            controller.SimpleMove(Vector3.zero);
-            if (idleClip) PlayClip(idleClip, 1f);
-            if (Time.time >= idleUntil) SetState(idleNext, playerPos);
-            return;
-        }
-
+        // Emote state ticks.
         if (state == MonsterActionState.Emote)
         {
-            controller.SimpleMove(Vector3.zero);
-            if (Time.time >= emoteEndAt) SetState(MonsterActionState.Roaming, playerPos);
+            StopAgent();
+            if (Time.time >= emoteEndAt)
+                SetState(MonsterActionState.Roaming, playerPos);
+
+            PlayLocomotion(false, sprinting: false);
             return;
         }
 
-        // ROAMING logic
+        // Idle (post-hunt) ticks.
+        if (state == MonsterActionState.Idle)
+        {
+            StopAgent();
+            if (Time.time >= idleEndAt)
+                SetState(idleNext, playerPos);
+
+            PlayLocomotion(false, sprinting: false);
+            return;
+        }
+
+        // Backstage travel ticks.
+        if (state == MonsterActionState.BackstageTravel)
+        {
+            bool inRange = IsInHuntRange(dPlayer);
+            if (inRange && cachedLos && CanChasePointBeReached(pos, rt.position))
+                SetState(MonsterActionState.Hunting, playerPos);
+
+            destination = ProjectToNavmesh(backstageDestination, preferConnectedTo: pos);
+            MoveAgentTo(destination, speed * 0.9f);
+
+            if (HasArrived())
+            {
+                float required = GetBackstageRequiredDistance();
+                if (enforceBackstageDistance && required > 0.01f && SqrXZ(destination, playerPos) < required * required)
+                {
+                    if (Time.time >= nextBackstageRepickAt)
+                    {
+                        nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
+                        RepickBackstageDestination(pos, playerPos, required);
+                    }
+                }
+                else
+                {
+                    SetState(MonsterActionState.BackstageIdle, playerPos);
+                    StopAgent();
+                    PlayLocomotion(false, sprinting: false);
+                    return;
+                }
+            }
+
+            TickStuck(pos, wantsToMove: !HasArrived());
+            TickRotation(rt, agent.desiredVelocity);
+            PlayLocomotion(agent.velocity.sqrMagnitude > 0.01f, sprinting: false);
+            return;
+        }
+
+        // Main frontstage logic.
+        bool inHuntRange = IsInHuntRange(dPlayer);
+
         if (state == MonsterActionState.Roaming)
         {
-            bool inRange = dPlayer <= chaseDistance && (Time.time - gaveUpAt) >= giveUpCooldown;
-            bool huntable = inRange && IsTargetPathableFrom(pos, rt.position);
+            // If we can see and can path, go hunt.
+            if (inHuntRange && cachedLos && CanChasePointBeReached(pos, rt.position))
+            {
+                SetState(MonsterActionState.Hunting, playerPos);
+            }
+            else if (inHuntRange && !cachedLos && cachedPlayerNavOk)
+            {
+                // In range but LOS blocked: investigate toward a reachable point near the player.
+                Vector3 target = ProjectToNavmesh(playerPos, preferConnectedTo: pos);
+                EnterInvestigate(target, Time.time + Mathf.Max(0.1f, investigateFromRoamDuration), endsInPostHunt: false);
+            }
+            else
+            {
+                // Emote chance.
+                if (emoteClips.Count > 0 && Random.value < emoteChancePerSecond * Time.deltaTime)
+                {
+                    StartEmote();
+                    return;
+                }
 
-            if (huntable)
+                if (HasArrived())
+                    PickNewRoamDestination(pos);
+            }
+        }
+
+        // Hunting tick.
+        if (state == MonsterActionState.Hunting)
+        {
+            if (!cachedLos)
+            {
+                bool grace = hadLosThisHunt && (Time.time - lastLosAt) <= losGrace;
+
+                // Keep moving to last seen during grace (prevents stop->stuck->idle).
+                destination = lastSeenNavPos;
+                MoveAgentTo(destination, speed * sprintMultiplier);
+
+                if (!grace)
+                    EnterInvestigate(lastSeenNavPos, Time.time + Mathf.Max(0.1f, lostHuntTimeout), endsInPostHunt: true);
+            }
+            else
+            {
+                hadLosThisHunt = true;
+                lastLosAt = Time.time;
+
+                // Chase a connected nav point near the player's current position.
+                lastSeenNavPos = ProjectToNavmesh(rt.position, preferConnectedTo: pos);
+                destination = lastSeenNavPos;
+                MoveAgentTo(destination, speed * sprintMultiplier);
+            }
+
+            // Safety: if we arrive at last seen without LOS, go post-hunt idle.
+            if (HasArrived() && !cachedLos)
+            {
+                EnterPostHuntIdle(playerPos);
+                return;
+            }
+
+            // If navmesh path becomes invalid but LOS is true, keep pressure (reset path so we repath next tick).
+            if (cachedLos && !agent.pathPending && agent.pathStatus != NavMeshPathStatus.PathComplete)
+            {
+                agent.ResetPath();
+                nextDestinationUpdateAt = 0f;
+            }
+
+            TickStuck(pos, wantsToMove: !HasArrived());
+            TickRotation(rt, agent.desiredVelocity);
+            PlayLocomotion(agent.velocity.sqrMagnitude > 0.01f, sprinting: true);
+            PlayHuntBreathing(loop: true);
+            return;
+        }
+
+        // Investigating tick.
+        if (state == MonsterActionState.Investigating)
+        {
+            if (cachedLos && CanChasePointBeReached(pos, rt.position))
             {
                 SetState(MonsterActionState.Hunting, playerPos);
             }
             else
             {
-                if (forceRoamPick)
-                {
-                    forceRoamPick = false;
-                    PickNewRoamDestination(pos, roamCenter);
-                }
-                else if (emoteClips.Count > 0 && Random.value < emoteChancePerSecond * Time.deltaTime)
-                {
-                    SetState(MonsterActionState.Emote, playerPos);
+                destination = investigateTarget;
+                MoveAgentTo(destination, speed * 1.1f);
 
-                    var clip = emoteClips[Random.Range(0, emoteClips.Count)];
-                    if (clip)
+                bool timeUp = Time.time >= investigateEndAt;
+                if ((HasArrived() || timeUp) && !cachedLos)
+                {
+                    if (investigateEndsInPostHunt)
                     {
-                        PlayClip(clip, 1f);
-                        float duration = emoteDuration > 0f ? emoteDuration : clip.length;
-                        emoteEndAt = Time.time + Mathf.Max(0f, duration);
-
-                        if (emoteAudioSound.Count > 0)
-                            PlayAudio(emoteAudioSound[Random.Range(0, emoteAudioSound.Count)], 1f);
+                        EnterPostHuntIdle(playerPos);
                     }
                     else
                     {
-                        float duration = emoteDuration > 0f ? emoteDuration : 0f;
-                        emoteEndAt = Time.time + Mathf.Max(0f, duration);
-                    }
-
-                    return;
-                }
-                else
-                {
-                    bool needNew =
-                        path == null ||
-                        waypoint >= (path?.vectorPath?.Count ?? 0) ||
-                        (destination - pos).sqrMagnitude <= arriveDistance * arriveDistance;
-
-                    if (needNew)
-                        PickNewRoamDestination(pos, roamCenter);
-                }
-            }
-        }
-
-        bool los = false;
-        bool chasing = false;
-        bool losPathable = false;
-
-        // HUNTING logic
-        if (state == MonsterActionState.Hunting)
-        {
-            int mask = losMask & ~(1 << monsterLayer);
-
-            var eye = pos + Vector3.up * (controller.height * 0.8f);
-            var targetPos = rt.position;
-            var dir = targetPos - eye;
-
-            if (dir.sqrMagnitude > 0.001f)
-            {
-                var start = eye + dir.normalized * (controller.radius + 0.05f);
-                var dir2 = targetPos - start;
-                var dist = dir2.magnitude;
-
-                if (dist > 0.01f)
-                {
-                    if (Physics.Raycast(start, dir2 / dist, out var hit, dist, mask, QueryTriggerInteraction.Ignore))
-                    {
-                        los = (hit.transform == rt) || hit.transform.IsChildOf(player.transform);
-                        if (debug && Time.time >= nextDebugAt)
-                            Debug.Log($"[Monster] LOS ray hit {hit.collider.name} (layer {hit.collider.gameObject.layer}) => los={los}");
-                    }
-                    else
-                    {
-                        los = true;
-                    }
-                }
-            }
-
-            // Only refresh lastSeenPos (and lastLosAt) when player pos is pathable.
-            if (los)
-            {
-                if (IsTargetPathableFrom(pos, targetPos))
-                {
-                    losPathable = true;
-                    lastLosAt = Time.time;
-                    lastSeenPos = targetPos;
-                    lostAt = -1f;
-                }
-                else
-                {
-                    losPathable = false;
-                }
-            }
-
-            bool graceChase = (!los) && (Time.time - lastLosAt <= losGrace);
-            chasing = losPathable || graceChase;
-
-            if (!los && !chasing && lostAt < 0f) lostAt = Time.time;
-            if (los) lostAt = -1f;
-
-            if (debug && los != lastLos) Debug.Log($"[Monster] LOS {(los ? "OK" : "FAIL")} losPathable={losPathable} chasing={chasing}");
-            lastLos = los;
-
-            if (wasChasing && !chasing)
-            {
-                path = null;
-                waypoint = 0;
-                repathAt = 0f;
-                if (debug) Debug.Log("[Monster] Stop perfect chase -> lastSeenPos");
-            }
-            wasChasing = chasing;
-
-            Vector3 desired = chasing ? targetPos : lastSeenPos;
-            destination = ProjectToWalkable(desired);
-
-            // If we're searching last seen but it isn't actually reachable from our current nav area,
-            // don't sit at a wall forever.
-            if (!chasing && AstarPath.active && !IsTargetPathableFrom(pos, destination))
-            {
-                if (debug) Debug.Log("[Monster] Last seen destination is not pathable from current position -> Post-hunt idle");
-                EnterPostHuntIdle(playerPos);
-                return;
-            }
-
-            if (lostAt >= 0f && Time.time - lostAt >= lostHuntTimeout)
-            {
-                if (debug) Debug.Log("[Monster] Lost too long -> Post-hunt idle");
-                EnterPostHuntIdle(playerPos);
-                return;
-            }
-        }
-
-        bool searchingToLastKnown =
-            state == MonsterActionState.Hunting &&
-            !chasing &&
-            SqrXZ(pos, destination) > arriveDistance * arriveDistance;
-
-        bool sprinting =
-            state == MonsterActionState.Hunting &&
-            (chasing || searchingToLastKnown);
-
-        // Repath
-        if (seeker.IsDone() && Time.time >= repathAt)
-        {
-            float interval = (state == MonsterActionState.Hunting && sprinting) ? huntRepathInterval : repathInterval;
-            repathAt = Time.time + interval;
-
-            if (AstarPath.active)
-            {
-                var safeStartPos = GetSafeNavPosition(pos);
-                var start = AstarPath.active.GetNearest(safeStartPos, NNConstraint.Walkable).position;
-                var end = AstarPath.active.GetNearest(destination, NNConstraint.Walkable).position;
-
-                bool doRepath =
-                    state == MonsterActionState.Roaming ||
-                    state == MonsterActionState.BackstageTravel ||
-                    (state == MonsterActionState.Hunting && (chasing || path == null || detouring));
-
-                if (doRepath)
-                {
-                    var playerPosNow = playerPos;
-                    if (debug) Debug.Log($"[Monster] Repath {state} chasing={chasing} sprinting={sprinting} detour={detouring} -> {end}");
-
-                    seeker.StartPath(start, end, p =>
-                    {
-                        if (!p.error && p.vectorPath != null && p.vectorPath.Count > 0)
-                        {
-                            path = p;
-                            waypoint = 0;
-                            pathFails = 0;
-                        }
-                        else
-                        {
-                            pathFails++;
-                            if (debug) Debug.Log($"[Monster] Path FAIL ({pathFails}) {p.errorLog}");
-
-                            path = null;
-                            waypoint = 0;
-
-                            if (state == MonsterActionState.Roaming)
-                            {
-                                forceRoamPick = true;
-                            }
-
-                            if (state == MonsterActionState.BackstageTravel)
-                            {
-                                // If we can't path to the chosen backstage point, pick a new one (otherwise it can appear to "idle" in view).
-                                float required = GetBackstageRequiredDistance();
-                                if (enforceBackstageDistance && required > 0.01f && Time.time >= nextBackstageRepickAt)
-                                {
-                                    nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
-                                    RepickBackstageDestination(transform.position, playerPosNow);
-                                }
-                            }
-
-                            if (state == MonsterActionState.Hunting && pathFails >= maxPathFails)
-                            {
-                                if (debug) Debug.Log("[Monster] Too many path fails -> Post-hunt idle");
-                                EnterPostHuntIdle(playerPosNow);
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        // Movement vector
-        Vector3 move = Vector3.zero;
-
-        if (offNav)
-        {
-            var backToNav = destination - pos;
-            backToNav.y = 0f;
-            move = backToNav.sqrMagnitude > 0.001f ? backToNav.normalized : Vector3.zero;
-        }
-        else if (state == MonsterActionState.Hunting && losPathable)
-        {
-            var direct = rt.position - pos;
-            direct.y = 0f;
-
-            if (direct.sqrMagnitude > 0.001f)
-            {
-                bool blocked = false;
-                if (avoidDirectChaseIntoObstacles)
-                {
-                    float dist = Mathf.Min(unstuckRayDistance, direct.magnitude);
-                    blocked = IsDirectionBlocked(pos, direct.normalized, dist);
-                }
-
-                if (!blocked)
-                    move = direct.normalized;
-            }
-        }
-        else if (path != null && waypoint < path.vectorPath.Count)
-        {
-            while (waypoint < path.vectorPath.Count - 1 &&
-                   (path.vectorPath[waypoint] - pos).sqrMagnitude < 2.25f)
-                waypoint++;
-
-            var wp = path.vectorPath[waypoint] - pos;
-            wp.y = 0f;
-            if (wp.sqrMagnitude <= arriveDistance * arriveDistance) waypoint++;
-
-            move = wp.sqrMagnitude > 0.001f ? wp.normalized : Vector3.zero;
-        }
-
-        float speedMult = sprinting ? 2f : 1f;
-        controller.SimpleMove(move * (speed * speedMult));
-
-        // For stuck checks we need to look at actual transform movement after SimpleMove.
-        var posAfterMove = transform.position;
-
-        bool moving = controller.velocity.sqrMagnitude > 0.01f;
-
-        float movedXZ = Mathf.Sqrt(SqrXZ(posAfterMove, pos));
-        bool madeMove = movedXZ >= Mathf.Max(0f, minProgressPerFrame);
-
-        if (madeMove)
-            stuckDetours = 0;
-
-        if (state == MonsterActionState.Hunting && sprinting && moving)
-            PlayAudio(huntingBreatheAudio, 1f, true);
-        else if (audioSource && audioSource.clip == huntingBreatheAudio && audioSource.isPlaying)
-        {
-            audioSource.Stop();
-            audioSource.loop = false;
-        }
-
-        var clip2 = moving ? runningClip : idleClip;
-        float animSpeed2 = (state == MonsterActionState.Hunting && sprinting && moving && clip2 == runningClip) ? 1.5f : 1f;
-        if (clip2) PlayClip(clip2, animSpeed2);
-
-        if (state == MonsterActionState.Hunting && losPathable && (rt.position - pos).sqrMagnitude > 0.001f)
-        {
-            var face = rt.position - pos;
-            face.y = 0f;
-            TurnTowards(face);
-        }
-        else if (move.sqrMagnitude > 0.001f)
-        {
-            TurnTowards(move);
-        }
-
-        bool shouldMove =
-            (state == MonsterActionState.Roaming || state == MonsterActionState.Hunting || state == MonsterActionState.BackstageTravel) &&
-            SqrXZ(posAfterMove, destination) > arriveDistance * arriveDistance;
-
-        if (shouldMove && !madeMove) stuckFor += Time.deltaTime;
-        else stuckFor = 0f;
-
-        if (stuckFor >= stuckTime && Time.time - lastUnstuckAt >= unstuckCooldown)
-        {
-            lastUnstuckAt = Time.time;
-            stuckFor = 0f;
-
-            if (stuckDetours >= maxStuckDetours)
-            {
-                if (state == MonsterActionState.Hunting)
-                {
-                    if (debug) Debug.Log("[Monster] Too many stuck detours during hunt -> Post-hunt idle");
-                    EnterPostHuntIdle(playerPos);
-                    return;
-                }
-                else if (state == MonsterActionState.Roaming)
-                {
-                    if (debug) Debug.Log("[Monster] Too many stuck detours while roaming -> new roam destination");
-                    PickNewRoamDestination(posAfterMove, roamCenter);
-                    return;
-                }
-                else if (state == MonsterActionState.BackstageTravel)
-                {
-                    if (debug) Debug.Log("[Monster] Too many stuck detours while traveling backstage -> repick backstage destination");
-                    if (Time.time >= nextBackstageRepickAt)
-                    {
-                        nextBackstageRepickAt = Time.time + BackstageRepickCooldown;
-                        RepickBackstageDestination(posAfterMove, playerPos);
+                        MarkGaveUp(hadLos: false);
+                        SetState(MonsterActionState.Roaming, playerPos);
+                        ForcePickNewRoamDestination();
                     }
                     return;
                 }
             }
 
-            bool startedDetour = TryStartDetour(posAfterMove);
-            if (startedDetour)
-            {
-                stuckDetours++;
-                if (debug) Debug.Log($"[Monster] UNSTUCK detour #{stuckDetours}");
-            }
-            else
-            {
-                if (seeker == null) seeker = GetComponent<Seeker>();
-        if (seeker != null) seeker.CancelCurrentPathRequest();
-                path = null;
-                waypoint = 0;
-                repathAt = 0f;
-
-                if (debug) Debug.Log("[Monster] UNSTUCK fallback repath");
-            }
-        }
-
-        if (state == MonsterActionState.Hunting && !chasing &&
-            SqrXZ(posAfterMove, destination) <= arriveDistance * arriveDistance &&
-            (path == null || waypoint >= path.vectorPath.Count))
-        {
-            EnterPostHuntIdle(playerPos);
+            TickStuck(pos, wantsToMove: !HasArrived());
+            TickRotation(rt, agent.desiredVelocity);
+            PlayLocomotion(agent.velocity.sqrMagnitude > 0.01f, sprinting: false);
+            PlayHuntBreathing(loop: false);
             return;
         }
+
+        // Default roaming movement (keeps agent updated even if destination comes from outside).
+        MoveAgentTo(destination, speed);
+        TickStuck(pos, wantsToMove: !HasArrived());
+        TickRotation(rt, agent.desiredVelocity);
+        PlayLocomotion(agent.velocity.sqrMagnitude > 0.01f, sprinting: false);
+        PlayHuntBreathing(loop: false);
 
         if (debug && Time.time >= nextDebugAt)
         {
             nextDebugAt = Time.time + debugInterval;
-            Debug.Log($"[Monster] state={state} los={los} losPathable={losPathable} chasing={chasing} sprinting={sprinting} detour={detouring} speedMult={speedMult:F1} destDist={Mathf.Sqrt(SqrXZ(posAfterMove, destination)):F1} path={(path != null ? path.vectorPath.Count.ToString() : "null")} wp={waypoint} vel={controller.velocity.magnitude:F2}");
+            Debug.Log($"[Monster] state={state} los={cachedLos} hadLosThisHunt={hadLosThisHunt} remDist={(agent.pathPending ? -1f : agent.remainingDistance):F2} status={agent.pathStatus}");
         }
     }
 
-    // --- Director API (MonsterManager) ---
+    // -----------------------------
+    // Director API (MonsterManager)
+    // -----------------------------
     public void SetRoamCenter(Vector3 center, bool forceNewDestination = false)
     {
         roamCenter = center;
-        if (forceNewDestination) forceRoamPick = true;
+        if (forceNewDestination) ForcePickNewRoamDestination();
     }
 
     public void ForcePickNewRoamDestination()
     {
-        forceRoamPick = true;
+        destination = transform.position;
+        agent.ResetPath();
+        nextDestinationUpdateAt = 0f;
     }
 
     public void ApplySavedPose(Vector3 position, Quaternion rotation)
     {
-        // Use our internal teleport helper so we reset pathing, destinations, etc.
         TeleportTo(position);
         transform.rotation = rotation;
     }
 
-    /// <summary>
-    /// Forces the monster into BackstageIdle immediately (hidden + no collision), without requiring travel.
-    /// Used by save/load so a monster saved while parked backstage doesn't briefly appear walking on load.
-    /// </summary>
     public void ForceBackstageIdle(Vector3 playerPos)
     {
         wantsBackstage = true;
-
-        // Don't stomp the death cinematic.
         if (state == MonsterActionState.Killing) return;
 
         backstageDestination = transform.position;
         nextBackstageRepickAt = 0f;
 
         SetState(MonsterActionState.BackstageIdle, playerPos);
-
-        destination = transform.position;
-
-        if (idleClip) PlayClip(idleClip, 1f);
+        StopAgent();
+        PlayLocomotion(false, sprinting: false);
     }
 
     public void SendBackstage(Vector3 target)
     {
         wantsBackstage = true;
-
-        // Don't stomp the death cinematic.
         if (state == MonsterActionState.Killing) return;
 
         Vector3 playerPos = player ? player.transform.position : transform.position;
@@ -1426,19 +555,8 @@ public class MonsterController : MonoBehaviour
 
         if (enforceBackstageDistance && required > 0.01f)
         {
-            bool ok = true;
-
-            // Must be far enough from the player.
-            if (SqrXZ(target, playerPos) < required * required)
-                ok = false;
-
-            // Must land on walkable.
-            if (AstarPath.active)
-            {
-                var nn = AstarPath.active.GetNearest(target, NNConstraint.Walkable);
-                if (nn.node == null || !nn.node.Walkable)
-                    ok = false;
-            }
+            bool ok = SqrXZ(target, playerPos) >= required * required;
+            target = ProjectToNavmesh(target, preferConnectedTo: transform.position);
 
             if (!ok && TryPickBackstageDestination(transform.position, playerPos, required, out var picked))
                 target = picked;
@@ -1454,15 +572,12 @@ public class MonsterController : MonoBehaviour
     {
         wantsBackstage = false;
 
-        // If we're currently in a post-hunt idle that was going to resume backstage travel, redirect it to roaming.
         if (state == MonsterActionState.Idle && idleNext == MonsterActionState.BackstageTravel)
             idleNext = MonsterActionState.Roaming;
 
         bool wasBackstage = IsBackstageState(state);
         if (!wasBackstage) return;
 
-        // Only do the "hidden re-entry" teleport if we were parked backstage and invisible.
-        // If we're still in BackstageTravel, we want to stay visible so the player can see/hear it leaving.
         bool wasHidden = ShouldHideMeshesInState(state);
 
         if (wasHidden)
@@ -1474,25 +589,725 @@ public class MonsterController : MonoBehaviour
                     TeleportTo(picked);
                 else
                 {
-                    // Worst-case: still move it away so it doesn't "pop" right next to the player.
                     Vector3 away = transform.position - playerPos;
                     away.y = 0f;
                     if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
                     away.Normalize();
-
-                    TeleportTo(ProjectToWalkableAny(playerPos + away * d));
+                    TeleportTo(ProjectToNavmesh(playerPos + away * d, preferConnectedTo: playerPos));
                 }
             }
         }
 
         SetState(MonsterActionState.Roaming, playerPos);
-        forceRoamPick = true;
+        ForcePickNewRoamDestination();
     }
 
     public bool IsBackstage => state == MonsterActionState.BackstageTravel || state == MonsterActionState.BackstageIdle;
 
+    // -----------------------------
+    // State transitions
+    // -----------------------------
+    private void SetState(MonsterActionState next, Vector3 playerPos)
+    {
+        if (state == next) return;
 
-    void PlayClip(AnimationClip clip, float animSpeed)
+        state = next;
+
+        if (debug) Debug.Log($"[Monster] Now {state}");
+
+        switch (state)
+        {
+            case MonsterActionState.Roaming:
+                hadLosThisHunt = false;
+                PlayHuntBreathing(loop: false);
+                break;
+
+            case MonsterActionState.Hunting:
+                // Only mark as "had LOS" if we really have it now.
+                hadLosThisHunt = cachedLos;
+                if (cachedLos) lastLosAt = Time.time;
+                lastSeenNavPos = ProjectToNavmesh(playerPos, preferConnectedTo: transform.position);
+                stuckDetours = 0;
+                break;
+
+            case MonsterActionState.BackstageTravel:
+                stuckDetours = 0;
+                break;
+
+            case MonsterActionState.BackstageIdle:
+                PlayHuntBreathing(loop: false);
+                break;
+
+            case MonsterActionState.Idle:
+                PlayHuntBreathing(loop: false);
+                break;
+
+            case MonsterActionState.Killing:
+                killingStartedAt = Time.time;
+                killingSfxPlayed = false;
+
+                StopAgent();
+
+                if (player != null)
+                    player.isInDeathSequence = true;
+                break;
+        }
+
+        ApplyBackstagePresentationForState(state);
+    }
+
+    private void EnterInvestigate(Vector3 target, float endAt, bool endsInPostHunt)
+    {
+        investigateTarget = ProjectToNavmesh(target, preferConnectedTo: transform.position);
+        investigateEndAt = endAt;
+        investigateEndsInPostHunt = endsInPostHunt;
+
+        SetState(MonsterActionState.Investigating, target);
+
+        destination = investigateTarget;
+        nextDestinationUpdateAt = 0f;
+        MoveAgentTo(destination, speed * 1.1f);
+    }
+
+    private void EnterPostHuntIdle(Vector3 playerPos)
+    {
+        MarkGaveUp(hadLosThisHunt);
+
+        idleEndAt = Time.time + Mathf.Max(0f, idleTimeAfterHunting);
+        idleNext = wantsBackstage ? MonsterActionState.BackstageTravel : MonsterActionState.Roaming;
+
+        SetState(MonsterActionState.Idle, playerPos);
+        StopAgent();
+
+        PlayLocomotion(false, sprinting: false);
+    }
+
+    private void MarkGaveUp(bool hadLos)
+    {
+        lastGiveUpHadLos = hadLos;
+        gaveUpAt = Time.time;
+        hadLosThisHunt = false;
+    }
+
+    private void StartEmote()
+    {
+        if (emoteClips.Count <= 0)
+            return;
+
+        SetState(MonsterActionState.Emote, player ? player.transform.position : transform.position);
+
+        var clip = emoteClips[Random.Range(0, emoteClips.Count)];
+        if (clip)
+        {
+            PlayClip(clip, 1f);
+            float duration = emoteDuration > 0f ? emoteDuration : clip.length;
+            emoteEndAt = Time.time + Mathf.Max(0f, duration);
+
+            if (emoteAudioSound.Count > 0)
+                PlayOneShot(emoteAudioSound[Random.Range(0, emoteAudioSound.Count)], 1f, randomPitch: true);
+        }
+        else
+        {
+            float duration = emoteDuration > 0f ? emoteDuration : 0f;
+            emoteEndAt = Time.time + Mathf.Max(0f, duration);
+        }
+    }
+
+    // -----------------------------
+    // Behavior helpers
+    // -----------------------------
+    private bool IsInHuntRange(float dPlayer)
+    {
+        float cd = lastGiveUpHadLos ? giveUpCooldown : giveUpCooldownNoLos;
+        return dPlayer <= chaseDistance && (Time.time - gaveUpAt) >= cd;
+    }
+
+    private bool CanChasePointBeReached(Vector3 monsterPos, Vector3 targetPos)
+    {
+        Vector3 chaseNav = ProjectToNavmesh(targetPos, preferConnectedTo: monsterPos);
+        return IsPathComplete(monsterPos, chaseNav);
+    }
+
+    private void PickNewRoamDestination(Vector3 currentPos)
+    {
+        if (TryPickRoamDestination(currentPos, roamCenter, out var picked))
+        {
+            destination = picked;
+            nextDestinationUpdateAt = 0f;
+            MoveAgentTo(destination, speed);
+        }
+    }
+
+    private bool TryPickRoamDestination(Vector3 currentPos, Vector3 center, out Vector3 picked)
+    {
+        float radius = Mathf.Max(0f, roamRadius);
+        float minD = Mathf.Clamp(minRoamDistance, 0f, radius);
+
+        Vector3 centerNav = ProjectToNavmesh(center, preferConnectedTo: currentPos);
+
+        for (int i = 0; i < Mathf.Max(1, roamPickAttempts); i++)
+        {
+            Vector2 off2 = Random.insideUnitCircle * radius;
+            if (off2.sqrMagnitude < 0.0001f) off2 = Vector2.right;
+
+            Vector3 candidate = centerNav + new Vector3(off2.x, 0f, off2.y);
+            candidate = ProjectToNavmesh(candidate, preferConnectedTo: currentPos);
+
+            float d = Mathf.Sqrt(SqrXZ(candidate, currentPos));
+            if (d < minD) continue;
+
+            if (!IsPathComplete(currentPos, candidate))
+                continue;
+
+            picked = candidate;
+            return true;
+        }
+
+        picked = centerNav;
+        return true;
+    }
+
+    private void RepickBackstageDestination(Vector3 monsterPos, Vector3 playerPos, float requiredDistance)
+    {
+        if (TryPickBackstageDestination(monsterPos, playerPos, requiredDistance, out var picked))
+        {
+            backstageDestination = picked;
+            destination = backstageDestination;
+            agent.ResetPath();
+            nextDestinationUpdateAt = 0f;
+        }
+    }
+
+    private bool TryPickBackstageDestination(Vector3 monsterPos, Vector3 playerPos, float requiredDistance, out Vector3 picked)
+    {
+        float targetDistance = Mathf.Max(frontstageRevealDistance, requiredDistance, 1f);
+
+        Vector3 monsterNav = ProjectToNavmesh(monsterPos, preferConnectedTo: monsterPos);
+        Vector3 playerNav = ProjectToNavmesh(playerPos, preferConnectedTo: playerPos);
+
+        for (int i = 0; i < Mathf.Max(1, backstagePickAttempts); i++)
+        {
+            Vector2 dir2 = Random.insideUnitCircle;
+            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
+            dir2.Normalize();
+
+            float dist = targetDistance * Random.Range(0.85f, 1.15f);
+            Vector3 candidate = playerNav + new Vector3(dir2.x, 0f, dir2.y) * dist;
+            candidate = ProjectToNavmesh(candidate, preferConnectedTo: monsterNav);
+
+            if (Mathf.Sqrt(SqrXZ(candidate, playerPos)) < requiredDistance)
+                continue;
+
+            if (!IsPathComplete(monsterNav, candidate))
+                continue;
+
+            picked = candidate;
+            return true;
+        }
+
+        Vector3 away = monsterPos - playerPos;
+        away.y = 0f;
+        if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
+        away.Normalize();
+
+        picked = ProjectToNavmesh(playerPos + away * targetDistance, preferConnectedTo: monsterPos);
+        return true;
+    }
+
+    private bool TryPickFrontstageTeleportPoint(Vector3 playerPos, out Vector3 picked)
+    {
+        Vector3 playerNav = ProjectToNavmesh(playerPos, preferConnectedTo: playerPos);
+
+        Vector3 preferredDir = Vector3.forward;
+        if (player != null)
+        {
+            preferredDir = -player.transform.forward;
+            preferredDir.y = 0f;
+        }
+
+        if (preferredDir.sqrMagnitude < 0.0001f) preferredDir = Vector3.forward;
+        preferredDir.Normalize();
+
+        float baseDist = Mathf.Max(0f, frontstageRevealDistance);
+        float jitter = Mathf.Clamp01(frontstageRevealDistanceJitter);
+        float minDist = baseDist * (1f - jitter);
+        float maxDist = baseDist * (1f + jitter);
+
+        for (int i = 0; i < Mathf.Max(1, frontstageTeleportAttempts); i++)
+        {
+            float ang = Random.Range(-70f, 70f);
+            Vector3 dir = Quaternion.Euler(0f, ang, 0f) * preferredDir;
+
+            float dist = Random.Range(minDist, maxDist);
+            Vector3 candidate = playerNav + dir * dist;
+
+            if (!TryGetNavPoint(candidate, 8f, out var navCandidate))
+                continue;
+
+            if (frontstageTeleportRequireSameNavAreaAsPlayer)
+            {
+                if (!IsPathComplete(playerNav, navCandidate))
+                    continue;
+            }
+
+            if (SqrXZ(navCandidate, playerPos) < (killDistance * killDistance))
+                continue;
+
+            picked = navCandidate;
+            return true;
+        }
+
+        picked = default;
+        return false;
+    }
+
+    private float GetBackstageRequiredDistance()
+    {
+        return backstageMinDistanceFromPlayer > 0.01f ? backstageMinDistanceFromPlayer : frontstageRevealDistance;
+    }
+
+    // -----------------------------
+    // NavMesh helpers
+    // -----------------------------
+    private void EnsureOnNavMesh()
+    {
+        if (agent.isOnNavMesh) return;
+
+        if (TryGetNavPoint(transform.position, 10f, out var navPos))
+        {
+            agent.Warp(navPos);
+            agent.ResetPath();
+        }
+    }
+
+    private bool TryGetNavPoint(Vector3 p, float maxDistance, out Vector3 navPoint)
+    {
+        if (NavMesh.SamplePosition(p, out var hit, Mathf.Max(0.01f, maxDistance), NavMesh.AllAreas))
+        {
+            navPoint = hit.position;
+            return true;
+        }
+
+        navPoint = default;
+        return false;
+    }
+
+    private Vector3 ProjectToNavmesh(Vector3 p, Vector3 preferConnectedTo)
+    {
+        if (!TryGetNavPoint(p, 6f, out var nav))
+            return p;
+
+        if (TryGetNavPoint(preferConnectedTo, 6f, out var from) && IsPathComplete(from, nav))
+            return nav;
+
+        for (int i = 0; i < 6; i++)
+        {
+            Vector2 off2 = Random.insideUnitCircle * 4f;
+            Vector3 candidate = p + new Vector3(off2.x, 0f, off2.y);
+
+            if (TryGetNavPoint(candidate, 10f, out var nav2) && IsPathComplete(from, nav2))
+                return nav2;
+        }
+
+        return nav;
+    }
+
+    private bool IsPathComplete(Vector3 fromWorld, Vector3 toWorld)
+    {
+        if (!TryGetNavPoint(fromWorld, 6f, out var from)) return false;
+        if (!TryGetNavPoint(toWorld, 6f, out var to)) return false;
+
+        var path = new NavMeshPath();
+        if (!NavMesh.CalculatePath(from, to, NavMesh.AllAreas, path))
+            return false;
+
+        return path.status == NavMeshPathStatus.PathComplete;
+    }
+
+    // -----------------------------
+    // Perception
+    // -----------------------------
+    private void UpdatePerceptionCache(Vector3 monsterPos, Transform target)
+    {
+        if (Time.time < nextLosCheckAt) return;
+        nextLosCheckAt = Time.time + 0.05f;
+
+        cachedLos = HasLineOfSight(monsterPos, target);
+
+        Vector3 playerPos = target ? target.position : (player ? player.transform.position : monsterPos);
+
+        cachedPlayerNavOk = TryGetNavPoint(playerPos, Mathf.Max(0.01f, offMeshTolerance), out cachedPlayerNavPos);
+        cachedPlayerOffMesh = true;
+
+        if (cachedPlayerNavOk)
+        {
+            float d = Mathf.Sqrt(SqrXZ(playerPos, cachedPlayerNavPos));
+            cachedPlayerOffMesh = d > offMeshTolerance;
+        }
+
+        if (!cachedPlayerNavOk)
+            cachedPlayerNavPos = ProjectToNavmesh(playerPos, preferConnectedTo: monsterPos);
+    }
+
+    private bool HasLineOfSight(Vector3 monsterPos, Transform target)
+    {
+        if (!target) return false;
+
+        int mask = losMask & ~(1 << monsterLayer);
+
+        float eyeHeight = Mathf.Max(0.6f, agent.height * 0.8f);
+        var eye = monsterPos + Vector3.up * eyeHeight;
+        var targetPos = target.position;
+
+        var dir = targetPos - eye;
+        float dist = dir.magnitude;
+        if (dist <= 0.01f) return true;
+        dir /= dist;
+
+        var triggerMode = losTreatTriggersAsOccluders ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
+
+        // Primary: raycast (fewer false negatives).
+        int hitCount = Physics.RaycastNonAlloc(eye, dir, losHits, dist, mask, triggerMode);
+
+        if (hitCount <= 0)
+            return true;
+
+        float best = float.PositiveInfinity;
+        RaycastHit bestHit = default;
+        bool found = false;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            var h = losHits[i];
+            if (h.collider == null) continue;
+
+            if (h.transform == transform || h.transform.IsChildOf(transform))
+                continue;
+
+            if (h.distance < best)
+            {
+                best = h.distance;
+                bestHit = h;
+                found = true;
+            }
+        }
+
+        if (!found) return true;
+
+        bool isPlayer =
+            bestHit.transform == target ||
+            (player != null && bestHit.transform.IsChildOf(player.transform));
+
+        if (isPlayer) return true;
+
+        // Secondary: spherecast for thin occluders (only in closer ranges to reduce corner false-occlusion).
+        if (losProbeRadius > 0.001f && dist <= 12f)
+        {
+            int sc = Physics.SphereCastNonAlloc(eye, losProbeRadius, dir, losHits, dist, mask, triggerMode);
+            if (sc <= 0) return true;
+
+            best = float.PositiveInfinity;
+            found = false;
+
+            for (int i = 0; i < sc; i++)
+            {
+                var h = losHits[i];
+                if (h.collider == null) continue;
+
+                if (h.transform == transform || h.transform.IsChildOf(transform))
+                    continue;
+
+                if (h.distance < best)
+                {
+                    best = h.distance;
+                    bestHit = h;
+                    found = true;
+                }
+            }
+
+            if (!found) return true;
+
+            isPlayer =
+                bestHit.transform == target ||
+                (player != null && bestHit.transform.IsChildOf(player.transform));
+
+            return isPlayer;
+        }
+
+        return false;
+    }
+
+    // -----------------------------
+    // Movement / rotation / stuck
+    // -----------------------------
+    private void MoveAgentTo(Vector3 dest, float desiredSpeed)
+    {
+        if (!agent.enabled) return;
+
+        bool huntingLike = state == MonsterActionState.Hunting || state == MonsterActionState.Investigating;
+
+        agent.isStopped = false;
+        agent.speed = Mathf.Max(0.1f, desiredSpeed);
+
+        agent.autoBraking = !huntingLike && autoBrakingWhenNotHunting;
+        agent.stoppingDistance = Mathf.Max(0.05f, state == MonsterActionState.Hunting ? huntingStoppingDistance : arriveDistance);
+
+        float interval = huntingLike ? destinationUpdateIntervalHunt : destinationUpdateInterval;
+
+        if (Time.time < nextDestinationUpdateAt)
+            return;
+
+        nextDestinationUpdateAt = Time.time + Mathf.Max(0.02f, interval);
+
+        destination = dest;
+        Vector3 navDest = ProjectToNavmesh(destination, preferConnectedTo: transform.position);
+        agent.SetDestination(navDest);
+    }
+
+    private void StopAgent()
+    {
+        if (!agent.enabled) return;
+        agent.isStopped = true;
+        agent.ResetPath();
+    }
+
+    private bool HasArrived()
+    {
+        if (!agent.enabled) return true;
+        if (agent.pathPending) return false;
+
+        // If the path is invalid, treat as "not arrived" so stuck handling can kick in.
+        if (agent.pathStatus == NavMeshPathStatus.PathInvalid)
+            return false;
+
+        return agent.remainingDistance <= Mathf.Max(0.05f, arriveDistance);
+    }
+
+    private void TickRotation(Transform target, Vector3 desiredVelocity)
+    {
+        if (useAgentRotation) return;
+
+        Vector3 face = desiredVelocity;
+        face.y = 0f;
+
+        if (state == MonsterActionState.Hunting && cachedLos && target != null)
+        {
+            float d = Mathf.Sqrt(SqrXZ(transform.position, target.position));
+            if (d <= Mathf.Max(0f, faceTargetWithinDistance))
+            {
+                face = target.position - transform.position;
+                face.y = 0f;
+            }
+        }
+
+        if (face.sqrMagnitude < 0.0001f)
+            return;
+
+        face.Normalize();
+        var targetRot = Quaternion.LookRotation(face);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
+    }
+
+    private void TickStuck(Vector3 pos, bool wantsToMove)
+    {
+        if (!wantsToMove)
+        {
+            stuckFor = 0f;
+            stuckDetours = 0;
+            lastPos = pos;
+            return;
+        }
+
+        float movedSqr = SqrXZ(pos, lastPos);
+        lastPos = pos;
+
+        bool moving = agent.velocity.sqrMagnitude > 0.05f || movedSqr > 0.02f * 0.02f;
+
+        if (moving)
+        {
+            stuckFor = 0f;
+            stuckDetours = 0;
+            return;
+        }
+
+        stuckFor += Time.deltaTime;
+        if (stuckFor < stuckTime) return;
+        if (Time.time - lastUnstuckAt < unstuckCooldown) return;
+
+        lastUnstuckAt = Time.time;
+        stuckFor = 0f;
+
+        if (state == MonsterActionState.Hunting)
+        {
+            // Never abandon a hunt while LOS is true.
+            if (cachedLos)
+            {
+                agent.ResetPath();
+                nextDestinationUpdateAt = 0f;
+                return;
+            }
+
+            // If we're already investigating after LOS loss, let that timeout handle the give up.
+            if (hadLosThisHunt && state != MonsterActionState.Investigating)
+            {
+                EnterInvestigate(lastSeenNavPos, Time.time + Mathf.Max(0.1f, lostHuntTimeout), endsInPostHunt: true);
+                return;
+            }
+
+            // Otherwise: allow limited detours; if we exhaust detours with no LOS ever, give up.
+            if (stuckDetours >= maxStuckDetours && !hadLosThisHunt)
+            {
+                EnterPostHuntIdle(player ? player.transform.position : pos);
+                return;
+            }
+        }
+
+        if (stuckDetours >= maxStuckDetours)
+        {
+            agent.ResetPath();
+            stuckDetours = 0;
+            return;
+        }
+
+        stuckDetours++;
+
+        Vector3 forward = transform.forward; forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f) forward = Vector3.forward;
+        forward.Normalize();
+
+        Vector3 right = transform.right; right.y = 0f;
+        if (right.sqrMagnitude < 0.0001f) right = Vector3.right;
+        right.Normalize();
+
+        Vector3 escape = Vector3.zero;
+
+        if (IsDirectionBlocked(pos, forward, unstuckProbeDistance)) escape -= forward;
+        if (IsDirectionBlocked(pos, -forward, unstuckProbeDistance)) escape += forward;
+        if (IsDirectionBlocked(pos, right, unstuckProbeDistance)) escape -= right;
+        if (IsDirectionBlocked(pos, -right, unstuckProbeDistance)) escape += right;
+
+        if (escape.sqrMagnitude < 0.001f)
+        {
+            escape = Random.insideUnitSphere;
+            escape.y = 0f;
+        }
+
+        if (escape.sqrMagnitude < 0.001f)
+        {
+            agent.ResetPath();
+            return;
+        }
+
+        escape.Normalize();
+        Vector3 candidate = pos + escape * unstuckDetourDistance;
+
+        if (TryGetNavPoint(candidate, 10f, out var navCandidate) && IsPathComplete(pos, navCandidate))
+        {
+            nextDestinationUpdateAt = 0f;
+            MoveAgentTo(navCandidate, speed * 1.1f);
+        }
+        else
+        {
+            agent.ResetPath();
+        }
+    }
+
+    private bool IsDirectionBlocked(Vector3 origin, Vector3 dir, float dist)
+    {
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return false;
+        dir.Normalize();
+
+        float radius = Mathf.Max(0.05f, agent.radius * 0.95f);
+        float height = Mathf.Max(radius * 2f, agent.height);
+
+        Vector3 baseCenter = origin + Vector3.up * radius;
+        Vector3 topCenter = origin + Vector3.up * (height - radius);
+
+        int mask = losMask & ~(1 << monsterLayer);
+        var triggerMode = losTreatTriggersAsOccluders ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
+
+        return Physics.CapsuleCast(baseCenter, topCenter, radius, dir, dist, mask, triggerMode);
+    }
+
+    // -----------------------------
+    // Presentation / animation / audio
+    // -----------------------------
+    private void CachePresentationObjects()
+    {
+        cachedRenderers = GetComponentsInChildren<Renderer>(true);
+        cachedColliders = GetComponentsInChildren<Collider>(true);
+    }
+
+    private bool IsBackstageState(MonsterActionState s) =>
+        s == MonsterActionState.BackstageTravel || s == MonsterActionState.BackstageIdle;
+
+    private bool ShouldHideMeshesInState(MonsterActionState s) =>
+        hideMeshesWhileBackstage && s == MonsterActionState.BackstageIdle;
+
+    private void ApplyBackstagePresentationForState(MonsterActionState s)
+    {
+        bool hide = ShouldHideMeshesInState(s);
+        bool disableCollision = s == MonsterActionState.BackstageIdle;
+
+        if (cachedRenderers != null)
+        {
+            foreach (var r in cachedRenderers)
+            {
+                if (!r) continue;
+                if (r is ParticleSystemRenderer) continue;
+                r.enabled = !hide;
+            }
+        }
+
+        if (cachedColliders != null)
+        {
+            foreach (var c in cachedColliders)
+            {
+                if (!c) continue;
+                if (c.isTrigger) continue;
+                c.enabled = !disableCollision;
+            }
+        }
+    }
+
+    private void PlayLocomotion(bool moving, bool sprinting)
+    {
+        var clip = moving ? runningClip : idleClip;
+
+        float animSpeed = 1f;
+        if (moving && sprinting && clip == runningClip) animSpeed = 1.5f;
+
+        if (clip) PlayClip(clip, animSpeed);
+    }
+
+    private void PlayHuntBreathing(bool loop)
+    {
+        if (!audioSource || !huntingBreatheAudio) return;
+
+        if (!loop)
+        {
+            if (audioSource.clip == huntingBreatheAudio && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+                audioSource.loop = false;
+            }
+            return;
+        }
+
+        if (audioSource.clip == huntingBreatheAudio && audioSource.isPlaying && audioSource.loop)
+            return;
+
+        audioSource.Stop();
+        audioSource.volume = 1f * Game.Settings.MasterVolume;
+        audioSource.loop = true;
+        audioSource.clip = huntingBreatheAudio;
+        audioSource.spatialBlend = 1f;
+        audioSource.pitch = Random.Range(0.95f, 1.05f);
+        audioSource.Play();
+    }
+
+    private void PlayClip(AnimationClip clip, float animSpeed)
     {
         if (!animancer) return;
 
@@ -1511,47 +1326,76 @@ public class MonsterController : MonoBehaviour
         }
     }
 
-    void PlayAudio(AudioClip clip, float volume = 1f, bool loop = false, float spatialBlend = 1f)
-    {
-        if (!audioSource || !clip) return;
-        if (audioSource.clip == clip && loop && audioSource.loop && audioSource.isPlaying) return;
-
-        audioSource.Stop();
-        audioSource.volume = volume * Game.Settings.MasterVolume;
-        audioSource.loop = loop;
-        if (audioSource.clip != clip) audioSource.clip = clip;
-        audioSource.spatialBlend = spatialBlend;
-        audioSource.pitch = Random.Range(0.95f, 1.05f);
-        audioSource.Play();
-    }
-
-    void PlayOneShot(AudioClip clip, float volume = 1f, bool randomPitch = true, float spatialBlend = 1f)
+    private void PlayOneShot(AudioClip clip, float volume = 1f, bool randomPitch = true)
     {
         if (!audioSource || !clip) return;
 
         float oldPitch = audioSource.pitch;
         if (randomPitch) audioSource.pitch = Random.Range(0.95f, 1.05f);
 
-        audioSource.spatialBlend = spatialBlend;
-
+        audioSource.spatialBlend = 1f;
         audioSource.PlayOneShot(clip, volume * Game.Settings.MasterVolume);
 
         audioSource.pitch = oldPitch;
     }
 
-    void TurnTowards(Vector3 dir)
+    private void KillingSequence(Vector3 toPlayerFlat)
     {
-        dir.y = 0f;
-        if (dir.sqrMagnitude < 0.0001f) return;
+        StopAgent();
 
-        var target = Quaternion.LookRotation(dir);
-        var a = transform.eulerAngles;
-        var b = target.eulerAngles;
+        float t = Time.time - killingStartedAt;
 
-        transform.rotation = Quaternion.Euler(
-            0f,
-            Mathf.LerpAngle(a.y, b.y, turnSpeed * Time.deltaTime),
-            0f
-        );
+        float animSpeed = killingNormalSpeed;
+        if (t >= killingSlowStart && t < killingSlowEnd)
+            animSpeed = killingSlowSpeed;
+
+        if (killingClip)
+            PlayClip(killingClip, animSpeed);
+
+        if (!killingSfxPlayed && killingSfx && t >= killingSfxAt)
+        {
+            killingSfxPlayed = true;
+            PlayOneShot(killingSfx, killingSfxVolume, killingSfxRandomPitch);
+        }
+
+        if (toPlayerFlat.sqrMagnitude > 0.001f)
+        {
+            toPlayerFlat.y = 0f;
+            var targetRot = Quaternion.LookRotation(toPlayerFlat.normalized);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
+        }
+
+        if (t > killingEndTime)
+        {
+            var gameUI = FindFirstObjectByType<GameUI>();
+            if (gameUI != null)
+                gameUI.ShowDeadUI();
+        }
+    }
+
+    private void TeleportTo(Vector3 p)
+    {
+        if (TryGetNavPoint(p, 10f, out var navPos))
+            agent.Warp(navPos);
+        else
+            transform.position = p;
+
+        agent.ResetPath();
+        destination = transform.position;
+
+        lastPos = transform.position;
+        stuckFor = 0f;
+        stuckDetours = 0;
+        nextDestinationUpdateAt = 0f;
+    }
+
+    // -----------------------------
+    // Utils
+    // -----------------------------
+    private static float SqrXZ(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x;
+        float dz = a.z - b.z;
+        return dx * dx + dz * dz;
     }
 }

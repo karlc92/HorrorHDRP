@@ -519,8 +519,8 @@ GameObject:
   - component: {fileID: 8520140278410623513}
   - component: {fileID: 8499826287805038252}
   - component: {fileID: 1437131996811636474}
-  - component: {fileID: 861010035088565212}
   - component: {fileID: 4021916554366903858}
+  - component: {fileID: 3252586342981795104}
   m_Layer: 7
   m_Name: Monster
   m_TagString: Untagged
@@ -557,7 +557,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterController
   state: 1
-  deadBg: {fileID: 0}
+  player: {fileID: 0}
+  playerTargetOverride: {fileID: 0}
   idleClip: {fileID: -203655887218126122, guid: b309e8d83c2e8854abc359d890b0bc09, type: 3}
   runningClip: {fileID: -203655887218126122, guid: da4707a3f740c794aaeedc226d0503d4, type: 3}
   killingClip: {fileID: -203655887218126122, guid: bed17f48dfd2c7d4e8c96720982582ac, type: 3}
@@ -574,33 +575,46 @@ MonoBehaviour:
   - {fileID: -203655887218126122, guid: 2a7a15a6a8b5a0240a31074ed9a8e5ae, type: 3}
   - {fileID: -203655887218126122, guid: d0b5dab3fe5612c4cb28a9486d879fad, type: 3}
   speed: 2.5
+  sprintMultiplier: 2
+  turnSpeed: 4
+  roamCenter: {x: 0, y: 0, z: 0}
   roamRadius: 20
   minRoamDistance: 3
+  roamPickAttempts: 12
   chaseDistance: 10
   killDistance: 1.5
   arriveDistance: 1.2
-  repathInterval: 1.5
-  huntRepathInterval: 0.2
-  turnSpeed: 4
-  emoteChancePerSecond: 0.03
-  emoteDuration: 0
-  idleTimeAfterHunting: 3
+  destinationUpdateInterval: 0.15
   losMask:
     serializedVersion: 2
     m_Bits: 375
   monsterLayer: 7
+  losProbeRadius: 0.5
+  losTreatTriggersAsOccluders: 1
   losGrace: 0.5
+  investigateFromRoamDuration: 2
   lostHuntTimeout: 4
   offMeshTolerance: 1.5
-  maxPathFails: 2
+  requireLosForOffmeshHunts: 1
+  emoteChancePerSecond: 0.03
+  emoteDuration: 0
+  idleTimeAfterHunting: 3
+  giveUpCooldown: 0.75
+  giveUpCooldownNoLos: 2
   stuckTime: 0.8
   unstuckCooldown: 0.5
-  maxStuckDetours: 3
-  unstuckRayDistance: 1.2
+  unstuckProbeDistance: 1.2
   unstuckDetourDistance: 3
-  unstuckDetourDuration: 0.9
-  roamPickAttempts: 12
-  giveUpCooldown: 0.75
+  maxStuckDetours: 3
+  wantsBackstage: 0
+  hideMeshesWhileBackstage: 1
+  frontstageRevealDistance: 60
+  frontstageRevealDistanceJitter: 0.15
+  frontstageTeleportAttempts: 20
+  frontstageTeleportRequireSameNavAreaAsPlayer: 1
+  backstageMinDistanceFromPlayer: 0
+  enforceBackstageDistance: 1
+  backstagePickAttempts: 20
   killingSlowStart: 0.5
   killingSlowEnd: 1.5
   killingSlowSpeed: 1.9
@@ -612,6 +626,7 @@ MonoBehaviour:
   killingSfxRandomPitch: 1
   debug: 0
   debugInterval: 0.5
+  agent: {fileID: 3252586342981795104}
 --- !u!143 &1437131996811636474
 CharacterController:
   m_ObjectHideFlags: 0
@@ -637,34 +652,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1.5, z: 0}
---- !u!114 &861010035088565212
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1620482150679316165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 373b52eb9bf8c40f785bb6947a1aee66, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AstarPathfindingProject::Pathfinding.Seeker
-  version: 1073741824
-  drawGizmos: 1
-  detailedGizmos: 0
-  startEndModifier:
-    addPoints: 0
-    exactStartPoint: 3
-    exactEndPoint: 3
-    useRaycasting: 0
-    mask:
-      serializedVersion: 2
-      m_Bits: 4294967295
-    useGraphRaycasting: 0
-  traversableTags: -1
-  tagPenalties: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-  graphMask:
-    value: -1
 --- !u!82 &4021916554366903858
 AudioSource:
   m_ObjectHideFlags: 0
@@ -834,6 +821,28 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!195 &3252586342981795104
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1620482150679316165}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 0
+  m_AutoRepath: 1
+  m_Height: 3
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &1626982683353781534
 GameObject:
   m_ObjectHideFlags: 0
@@ -1203,7 +1212,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2500688630771906236
 Transform:
   m_ObjectHideFlags: 0

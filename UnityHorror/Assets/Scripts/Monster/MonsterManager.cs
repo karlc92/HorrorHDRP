@@ -1,10 +1,14 @@
-using Pathfinding;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 /// <summary>
 /// "Director" / brain driver for the monster.
 /// Owns a serializable monster brain state (saveable as JSON) and pushes levers on MonsterController.
+///
+/// Behavior fix:
+/// - While the monster is actively engaged (Investigating/Hunting/Killing), threat does NOT decay
+///   and the director will NOT send the monster backstage. This prevents "gives up even with LOS".
 /// </summary>
 public class MonsterManager : MonoBehaviour
 {
@@ -24,43 +28,26 @@ public class MonsterManager : MonoBehaviour
     [SerializeField] private int backStageThreshold = 10;
 
     [Header("Roaming Scaling (Threat -> Roam)")]
-    [Tooltip("Roam radius when ThreatLevel is 0 (low threat = wider roaming).")]
     [SerializeField] private float roamRadiusAtThreat0 = 18f;
-
-    [Tooltip("Roam radius when ThreatLevel is 100 (high threat = tight roaming near the hint).")]
     [SerializeField] private float roamRadiusAtThreat100 = 6f;
 
-    [Tooltip("Min roam distance when ThreatLevel is 0.")]
     [SerializeField] private float minRoamDistanceAtThreat0 = 4f;
-
-    [Tooltip("Min roam distance when ThreatLevel is 100.")]
     [SerializeField] private float minRoamDistanceAtThreat100 = 1.25f;
 
     [Header("Player Location Hint (Threat -> Accuracy)")]
-    [Tooltip("Max error distance (Threat=0).")]
     [SerializeField] private float maxHintErrorDistance = 25f;
-
-    [Tooltip("Min error distance (Threat=100).")]
     [SerializeField] private float minHintErrorDistance = 0f;
 
-    [Tooltip("How often the monster 're-estimates' the player position (seconds).")]
     [SerializeField] private float hintUpdateInterval = 0.75f;
-
-    [Tooltip("How quickly the hint blends toward the newest estimate.")]
     [SerializeField] private float hintSmoothing = 6f;
 
     [Header("Back Stage")]
-    [Tooltip("How far away (approx) to park the monster when sent Back Stage.")]
     [SerializeField] private float backstageDistance = 60f;
-
-    [Tooltip("Minimum acceptable distance from the player for a backstage point.")]
     [SerializeField] private float backstageMinDistance = 45f;
-
-    [Tooltip("How many attempts to find a suitable backstage point.")]
     [SerializeField] private int backstagePickAttempts = 20;
 
-    [Tooltip("If true, picks backstage points on the same navmesh area as the monster.")]
-    [SerializeField] private bool backstageRequireSameNavArea = true;
+    [Tooltip("If true, requires backstage points to be connected (path complete) from the monster's current position.")]
+    [SerializeField] private bool backstageRequireConnected = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = false;
@@ -89,22 +76,15 @@ public class MonsterManager : MonoBehaviour
 
         player = FindFirstObjectByType<PlayerController>();
 
-        // Initialize internal float threat accumulator from state (so decay is smooth).
         threatValue = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0f, 100f);
         Game.State.MonsterBrainState.ThreatLevel = Mathf.Clamp(Game.State.MonsterBrainState.ThreatLevel, 0, 100);
 
-        // If the hint hasn't been set yet, seed it to something reasonable.
         if (Game.State.MonsterBrainState.PlayerLocationHint == Vector3.zero)
-        {
             Game.State.MonsterBrainState.PlayerLocationHint = player ? player.transform.position : controller.transform.position;
-        }
 
         hintTarget = Game.State.MonsterBrainState.PlayerLocationHint;
         nextHintAt = Time.time;
 
-        // Apply initial stage.
-        // If this was loaded while the monster was already parked backstage and hidden,
-        // force that state so it doesn't briefly appear walking.
         if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.MonsterBackstageIdle)
         {
             controller.ForceBackstageIdle(player ? player.transform.position : controller.transform.position);
@@ -114,6 +94,7 @@ public class MonsterManager : MonoBehaviour
         {
             ApplyStage(immediate: true);
         }
+
         PushLevers();
     }
 
@@ -125,13 +106,28 @@ public class MonsterManager : MonoBehaviour
             if (!player) return;
         }
 
-        DecayThreat();
-        AutoStageTransitions();
+        bool engaged =
+            controller.state == MonsterController.MonsterActionState.Investigating ||
+            controller.state == MonsterController.MonsterActionState.Hunting ||
+            controller.state == MonsterController.MonsterActionState.Killing;
+
+        if (engaged)
+        {
+            // Stay front-stage while engaged and keep threat from decaying under the back-stage threshold.
+            Game.State.MonsterBrainState.MonsterFrontStage = true;
+
+            threatValue = Mathf.Max(threatValue, frontStageThreshold);
+            Game.State.MonsterBrainState.ThreatLevel = Mathf.Max(Game.State.MonsterBrainState.ThreatLevel, frontStageThreshold);
+        }
+        else
+        {
+            DecayThreat();
+            AutoStageTransitions();
+        }
+
         UpdatePlayerLocationHint();
         PushLevers();
 
-        // Persist the monster's *actual* parked backstage state for save/load.
-        // (This is separate from MonsterFrontStage, which is the director's intent.)
         if (Game.State != null && Game.State.MonsterBrainState != null)
             Game.State.MonsterBrainState.MonsterBackstageIdle = controller.state == MonsterController.MonsterActionState.BackstageIdle;
 
@@ -146,10 +142,6 @@ public class MonsterManager : MonoBehaviour
             AddThreat(10f);
     }
 
-    /// <summary>
-    /// Called after a save has been loaded while already in the gameplay scene.
-    /// Resyncs internal caches (threatValue, hint timers) and applies the loaded stage immediately.
-    /// </summary>
     public void ApplyLoadedState()
     {
         if (Game.State == null || Game.State.MonsterBrainState == null || !controller) return;
@@ -163,7 +155,6 @@ public class MonsterManager : MonoBehaviour
         hintTarget = Game.State.MonsterBrainState.PlayerLocationHint;
         nextHintAt = Time.time;
 
-        // Restore stage.
         if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.MonsterBackstageIdle)
         {
             controller.ForceBackstageIdle(player ? player.transform.position : controller.transform.position);
@@ -190,10 +181,6 @@ public class MonsterManager : MonoBehaviour
         Game.State.MonsterBrainState.MonsterRotation = controller.transform.rotation;
     }
 
-    // -----------------------------
-    // External API (other systems)
-    // -----------------------------
-
     public void AddThreat(float amount)
     {
         threatValue = Mathf.Clamp(threatValue + amount, 0f, 100f);
@@ -218,11 +205,6 @@ public class MonsterManager : MonoBehaviour
         ApplyStage(immediate: false);
     }
 
-
-    // -----------------------------
-    // Brain logic
-    // -----------------------------
-
     private void DecayThreat()
     {
         if (threatDecayPerSecond <= 0f) return;
@@ -236,7 +218,6 @@ public class MonsterManager : MonoBehaviour
 
     private void AutoStageTransitions()
     {
-        // Hysteresis (60 up, 10 down) to avoid ping-pong.
         if (!Game.State.MonsterBrainState.MonsterFrontStage && Game.State.MonsterBrainState.ThreatLevel >= frontStageThreshold)
         {
             if (debugLog) Debug.Log($"[MonsterManager] Threat {Game.State.MonsterBrainState.ThreatLevel} >= {frontStageThreshold} => Front Stage");
@@ -260,29 +241,10 @@ public class MonsterManager : MonoBehaviour
 
             Vector3 playerPos = player.transform.position;
 
-            // Add planar noise (XZ) that shrinks as threat rises.
             Vector2 off2 = Random.insideUnitCircle * error;
             Vector3 noisy = playerPos + new Vector3(off2.x, 0f, off2.y);
 
-            // Keep the hint on walkable space on the player's connected navmesh area.
-            // This avoids snapping to disconnected interior islands through thin walls.
-            if (AstarPath.active)
-            {
-                var playerNN = AstarPath.active.GetNearest(playerPos, NNConstraint.Walkable);
-                if (playerNN.node != null && playerNN.node.Walkable)
-                {
-                    if (!TryProjectToWalkableOnArea(noisy, playerNN.node.Area, out hintTarget))
-                        hintTarget = playerNN.position;
-                }
-                else
-                {
-                    hintTarget = ProjectToWalkable(noisy);
-                }
-            }
-            else
-            {
-                hintTarget = noisy;
-            }
+            hintTarget = ProjectToNavmeshNearPlayer(noisy, playerPos);
         }
 
         if (hintSmoothing <= 0f)
@@ -298,25 +260,19 @@ public class MonsterManager : MonoBehaviour
 
     private void PushLevers()
     {
-        // Threat -> roam parameters
         float t = Mathf.Clamp01(Game.State.MonsterBrainState.ThreatLevel / 100f);
 
         float radius = Mathf.Lerp(roamRadiusAtThreat0, roamRadiusAtThreat100, t);
         float minDist = Mathf.Lerp(minRoamDistanceAtThreat0, minRoamDistanceAtThreat100, t);
 
-        // Keep minDist sane relative to radius.
         radius = Mathf.Max(0f, radius);
         minDist = Mathf.Clamp(minDist, 0f, radius);
 
         controller.roamRadius = radius;
         controller.minRoamDistance = minDist;
 
-        // Drive roaming center from hint whenever we're not hunting (controller handles this).
         controller.SetRoamCenter(Game.State.MonsterBrainState.PlayerLocationHint);
 
-        // Stage intent.
-        // Note: The monster can temporarily enter Hunting even while "backstage" (e.g. if the player runs into it).
-        // We therefore only send stage commands when the intent changes, not based on the controller's current state.
         controller.frontstageRevealDistance = backstageDistance;
         controller.backstageMinDistanceFromPlayer = backstageMinDistance;
 
@@ -327,7 +283,6 @@ public class MonsterManager : MonoBehaviour
         }
         else
         {
-            // Only pick a backstage target once per backstage intent.
             if (!controller.WantsBackstage)
             {
                 currentBackstageTarget = PickBackstageDestination(controller.transform.position, player.transform.position);
@@ -340,7 +295,6 @@ public class MonsterManager : MonoBehaviour
     {
         if (!player) return;
 
-        // Keep controller distances in sync with our director parameters.
         controller.frontstageRevealDistance = backstageDistance;
         controller.backstageMinDistanceFromPlayer = backstageMinDistance;
 
@@ -358,76 +312,57 @@ public class MonsterManager : MonoBehaviour
             controller.ForcePickNewRoamDestination();
     }
 
-    // -----------------------------
-    // Helpers
-    // -----------------------------
-
-    private bool TryProjectToWalkableOnArea(Vector3 p, uint area, out Vector3 projected)
+    private static bool TryGetNavPoint(Vector3 p, float maxDistance, out Vector3 navPoint)
     {
-        projected = p;
-        if (!AstarPath.active) return false;
-
-        var best = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
-        if (best.node != null && best.node.Walkable && best.node.Area == area)
+        if (NavMesh.SamplePosition(p, out var hit, Mathf.Max(0.01f, maxDistance), NavMesh.AllAreas))
         {
-            projected = best.position;
+            navPoint = hit.position;
             return true;
         }
 
-        float baseStep = 1.0f;
-        int rings = 3;
-        int dirs = 16;
-
-        float bestSqr = float.PositiveInfinity;
-        Vector3 bestPos = Vector3.zero;
-        bool found = false;
-
-        for (int r = 1; r <= rings; r++)
-        {
-            float radius = baseStep * r;
-            for (int i = 0; i < dirs; i++)
-            {
-                float a = (i / (float)dirs) * 360f;
-                var q = Quaternion.Euler(0f, a, 0f);
-                Vector3 sample = p + q * (Vector3.forward * radius);
-
-                var nn = AstarPath.active.GetNearest(sample, NNConstraint.Walkable);
-                if (nn.node == null || !nn.node.Walkable) continue;
-                if (nn.node.Area != area) continue;
-
-                float dx = p.x - nn.position.x;
-                float dz = p.z - nn.position.z;
-                float sqr = dx * dx + dz * dz;
-
-                if (sqr < bestSqr)
-                {
-                    bestSqr = sqr;
-                    bestPos = nn.position;
-                    found = true;
-                }
-            }
-        }
-
-        if (found)
-        {
-            projected = bestPos;
-            return true;
-        }
-
+        navPoint = default;
         return false;
     }
 
-    private Vector3 ProjectToWalkable(Vector3 p)
+    private static bool IsPathComplete(Vector3 fromWorld, Vector3 toWorld)
     {
-        if (!AstarPath.active) return p;
-        var nn = AstarPath.active.GetNearest(p, NNConstraint.Walkable);
-        return nn.position;
+        if (!TryGetNavPoint(fromWorld, 6f, out var from)) return false;
+        if (!TryGetNavPoint(toWorld, 6f, out var to)) return false;
+
+        var path = new NavMeshPath();
+        if (!NavMesh.CalculatePath(from, to, NavMesh.AllAreas, path))
+            return false;
+
+        return path.status == NavMeshPathStatus.PathComplete;
+    }
+
+    private Vector3 ProjectToNavmeshNearPlayer(Vector3 p, Vector3 playerPos)
+    {
+        if (TryGetNavPoint(playerPos, 6f, out var playerNav))
+        {
+            if (TryGetNavPoint(p, 12f, out var nav) && IsPathComplete(playerNav, nav))
+                return nav;
+
+            for (int i = 0; i < 6; i++)
+            {
+                Vector2 off2 = Random.insideUnitCircle * 6f;
+                Vector3 cand = p + new Vector3(off2.x, 0f, off2.y);
+                if (TryGetNavPoint(cand, 12f, out var nav2) && IsPathComplete(playerNav, nav2))
+                    return nav2;
+            }
+
+            return playerNav;
+        }
+
+        if (TryGetNavPoint(p, 12f, out var any))
+            return any;
+
+        return p;
     }
 
     private Vector3 PickBackstageDestination(Vector3 monsterPos, Vector3 playerPos)
     {
-        // Fallback if we have no A* graph.
-        if (!AstarPath.active)
+        if (!TryGetNavPoint(monsterPos, 20f, out var monsterNav) || !TryGetNavPoint(playerPos, 20f, out var playerNav))
         {
             Vector2 dir2 = Random.insideUnitCircle;
             if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
@@ -435,49 +370,37 @@ public class MonsterManager : MonoBehaviour
             return playerPos + new Vector3(dir2.x, 0f, dir2.y) * backstageDistance;
         }
 
-        uint requiredArea = uint.MaxValue;
-
-        // Prefer the controller's anchored nav area so we don't accidentally treat a nearby disconnected
-        // island (e.g. inside a building) as the monster's "current" area while it's slightly off-mesh.
-        if (controller != null && controller.TryGetNavAreaAnchor(out var anchoredArea))
-        {
-            requiredArea = anchoredArea;
-        }
-        else
-        {
-            var start = AstarPath.active.GetNearest(monsterPos, NNConstraint.Walkable);
-            requiredArea = start.node != null ? start.node.Area : uint.MaxValue;
-        }
-
         for (int i = 0; i < Mathf.Max(1, backstagePickAttempts); i++)
         {
-            // Random direction with small distance jitter.
             Vector2 dir2 = Random.insideUnitCircle;
             if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
             dir2.Normalize();
 
             float dist = backstageDistance * Random.Range(0.85f, 1.15f);
-            Vector3 candidate = playerPos + new Vector3(dir2.x, 0f, dir2.y) * dist;
+            Vector3 candidate = playerNav + new Vector3(dir2.x, 0f, dir2.y) * dist;
 
-            var nn = AstarPath.active.GetNearest(candidate, NNConstraint.Walkable);
-            if (nn.node == null || !nn.node.Walkable) continue;
-
-            if (backstageRequireSameNavArea && requiredArea != uint.MaxValue && nn.node.Area != requiredArea)
+            if (!TryGetNavPoint(candidate, 12f, out var navCandidate))
                 continue;
 
-            float d = Vector3.Distance(new Vector3(nn.position.x, 0f, nn.position.z), new Vector3(playerPos.x, 0f, playerPos.z));
-            if (d < backstageMinDistance) continue;
+            if (Vector3.Distance(new Vector3(navCandidate.x, 0f, navCandidate.z), new Vector3(playerPos.x, 0f, playerPos.z)) < backstageMinDistance)
+                continue;
 
-            return nn.position;
+            if (backstageRequireConnected && !IsPathComplete(monsterNav, navCandidate))
+                continue;
+
+            return navCandidate;
         }
 
-        // Worst-case fallback: walkable projection of directly-away-from-player.
-        Vector3 away = monsterPos - playerPos;
+        Vector3 away = monsterNav - playerNav;
         away.y = 0f;
         if (away.sqrMagnitude < 0.0001f) away = Vector3.forward;
         away.Normalize();
 
-        Vector3 fallback = playerPos + away * backstageDistance;
-        return ProjectToWalkable(fallback);
+        Vector3 fallback = playerNav + away * backstageDistance;
+
+        if (TryGetNavPoint(fallback, 20f, out var navFallback))
+            return navFallback;
+
+        return fallback;
     }
 }
