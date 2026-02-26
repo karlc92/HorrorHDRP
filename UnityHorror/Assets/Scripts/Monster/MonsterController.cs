@@ -344,7 +344,8 @@ public class MonsterController : MonoBehaviour
         if (Time.time >= nextPerceptionAt)
         {
             nextPerceptionAt = Time.time + Mathf.Max(0.01f, perceptionInterval);
-            bool losNow = HasLineOfSightTwoRaycasts(monsterPos);
+            bool losNow = HasLineOfSight(monsterPos);
+            Debug.Log("Has LOS? " + losNow);
 
             if (losNow)
             {
@@ -374,11 +375,10 @@ public class MonsterController : MonoBehaviour
     }
 
     /// <summary>
-    /// LOS is TRUE only if BOTH raycasts hit the player:
-    /// (1) ray to playerTargetOverride (or player.raycastTarget when override is null)
-    /// (2) ray to player.transform.position
+    /// LOS is TRUE only if raycast hit the player:
+    /// Ray to playerTargetOverride (or player.raycastTarget when override is null)
     /// </summary>
-    private bool HasLineOfSightTwoRaycasts(Vector3 monsterPos)
+    private bool HasLineOfSight(Vector3 monsterPos)
     {
         if (!player) return false;
 
@@ -388,7 +388,7 @@ public class MonsterController : MonoBehaviour
 
         Vector3 eye = monsterPos + Vector3.up * Mathf.Max(0.6f, agent.height * 0.8f);
 
-        return RaycastHitsPlayer(eye, p1) && RaycastHitsPlayer(eye, p2);
+        return RaycastHitsPlayer(eye, p1);// && RaycastHitsPlayer(eye, p2);
     }
 
     private bool RaycastHitsPlayer(Vector3 origin, Vector3 targetPoint)
