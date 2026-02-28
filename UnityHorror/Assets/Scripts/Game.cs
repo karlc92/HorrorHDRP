@@ -4,6 +4,18 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Implement this on scene objects that need to synchronize runtime state into Game.State
+/// immediately before saving, and/or rebuild runtime caches immediately after loading.
+/// This prevents Game.SaveGame / Game.LoadGame from needing to know about every system's
+/// internal fields (robust as the project grows).
+/// </summary>
+public interface IGameSaveParticipant
+{
+    void OnBeforeGameSaved(GameState state);
+    void OnAfterGameLoaded(GameState state);
+}
+
 public static class Game
 {
     public const string GameSceneName = "GameScene";
@@ -79,6 +91,8 @@ public static class Game
 
         if (State == null) State = new GameState();
         if (State.MonsterBrainState == null) State.MonsterBrainState = new MonsterBrainState();
+
+        NotifyBeforeSave();
 
         State.Slot = slot;
 
@@ -157,7 +171,7 @@ public static class Game
 
     private static void ApplyLoadedStateToScene()
     {
-        Console.Print("Trying to apply loadedState: "+JsonUtility.ToJson(State));
+        Console.Print("Trying to apply loadedState: " + JsonUtility.ToJson(State));
         // Player
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerController>();
         if (player)
@@ -174,12 +188,7 @@ public static class Game
         var monster = UnityEngine.Object.FindFirstObjectByType<MonsterController>();
         if (monster && State.MonsterBrainState != null)
         {
-            monster.ApplySavedPose(State.MonsterBrainState.MonsterPosition, State.MonsterBrainState.MonsterRotation);
-
-            // If the monster was saved while parked backstage + hidden, force that immediately
-            // so it doesn't briefly appear traveling on load.
-            if (!State.MonsterBrainState.MonsterFrontStage && State.MonsterBrainState.MonsterBackstageIdle && player)
-                monster.ForceBackstageIdle(player.transform.position);
+            monster.ApplyLoadedBrainState(State.MonsterBrainState);
         }
         else if (!monster)
         {
@@ -187,13 +196,36 @@ public static class Game
             Console.Print("[Game] ApplyLoadedStateToScene: No MonsterController found in scene.");
         }
 
-        // If we're loading while already in the gameplay scene, resync runtime caches that aren't serialized.
-        // (Threat accumulator, hint timers, etc.)
-        var monsterManager = UnityEngine.Object.FindFirstObjectByType<MonsterManager>();
-        if (monsterManager)
-            monsterManager.ApplyLoadedState();
+        // Allow systems to rebuild non-serialized runtime caches.
+        NotifyAfterLoad();
 
         Physics.SyncTransforms();
+    }
+
+    private static void NotifyBeforeSave()
+    {
+        // Sync runtime state into Game.State right before serializing.
+        foreach (var mb in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        {
+            if (mb is IGameSaveParticipant p)
+            {
+                try { p.OnBeforeGameSaved(State); }
+                catch (Exception e) { Debug.LogError($"[Game] OnBeforeGameSaved error on {mb.name}.\n{e}"); }
+            }
+        }
+    }
+
+    private static void NotifyAfterLoad()
+    {
+        // Give scene objects a chance to rebuild non-serialized caches.
+        foreach (var mb in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        {
+            if (mb is IGameSaveParticipant p)
+            {
+                try { p.OnAfterGameLoaded(State); }
+                catch (Exception e) { Debug.LogError($"[Game] OnAfterGameLoaded error on {mb.name}.\n{e}"); }
+            }
+        }
     }
 
     // -----------------------------

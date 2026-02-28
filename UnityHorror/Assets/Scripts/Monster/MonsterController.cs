@@ -17,7 +17,7 @@ using Animancer;
 ///   Player is considered visible only if BOTH raycasts hit the player.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
-public class MonsterController : MonoBehaviour
+public class MonsterController : MonoBehaviour, IGameSaveParticipant
 {
     public enum MonsterActionState
     {
@@ -108,9 +108,14 @@ public class MonsterController : MonoBehaviour
     [Tooltip("If <= 0, uses chosen emote clip length.")]
     public float emoteDuration = 1.5f;
 
-    [Header("Director / Stage")]
-    [SerializeField] private bool wantsBackstage = false;
-    public bool WantsBackstage => wantsBackstage;
+    [Header("Brain Binding")]
+    [Tooltip("If true, the controller will auto-bind to Game.State.MonsterBrainState in Awake (recommended).")]
+    public bool autoBindToGameState = true;
+
+    private MonsterBrainState brain;
+    public MonsterBrainState Brain => brain != null ? brain : (autoBindToGameState && Game.State != null ? Game.State.MonsterBrainState : null);
+
+    public bool WantsBackstage => Brain != null ? !Brain.MonsterFrontStage : false;
 
     [Header("Backstage Presentation")]
     [SerializeField] private bool hideMeshesWhileBackstage = true;
@@ -219,6 +224,9 @@ public class MonsterController : MonoBehaviour
         // Prevent initial grace from incorrectly giving LOS at time ~0.
         lastLosAt = -999f;
 
+        if (autoBindToGameState)
+            BindBrainState(Game.State != null ? Game.State.MonsterBrainState : null);
+
         PresentationUpdate();
     }
 
@@ -230,6 +238,10 @@ public class MonsterController : MonoBehaviour
             if (!player) return;
         }
 
+        // If we were created before Game.State existed (or state was replaced during load), re-bind lazily.
+        if (autoBindToGameState && (brain == null || !ReferenceEquals(brain, Game.State != null ? Game.State.MonsterBrainState : null)))
+            BindBrainState(Game.State != null ? Game.State.MonsterBrainState : null);
+
         // After the killing sequence completes, the game is over and the monster should do nothing.
         if (gameOver)
             return;
@@ -237,6 +249,9 @@ public class MonsterController : MonoBehaviour
         EnsureOnNavMesh();
 
         var perception = PerceptionUpdate();
+
+        // Keep brain as the primary source-of-truth by enforcing stage directives here.
+        ApplyStageDirective(perception);
 
         // BackstageIdle is hard override: hidden, no collision, no movement.
         if (state == MonsterActionState.BackstageIdle)
@@ -271,6 +286,75 @@ public class MonsterController : MonoBehaviour
     // -----------------------------
     // Director API (MonsterManager)
     // -----------------------------
+    public void BindBrainState(MonsterBrainState brainState)
+    {
+        if (brainState == null)
+            return;
+
+        brain = brainState;
+
+        // Backwards-compat: older saves won't have the newer fields.
+        // "Upgrade" missing fields WITHOUT clobbering loaded pose/intent.
+        bool upgrading = !brain.Initialized;
+        if (upgrading)
+        {
+            brain.Initialized = true;
+
+            // Preserve loaded pose if present; otherwise seed from scene.
+            if (brain.MonsterPosition == default)
+                brain.MonsterPosition = transform.position;
+            if (brain.MonsterRotation == default)
+                brain.MonsterRotation = transform.rotation;
+
+            // Derive a sensible mode from the legacy flags.
+            if (brain.MonsterBackstageIdle)
+                brain.Mode = MonsterBrainState.MonsterBrainMode.BackstageIdle;
+            else if (!brain.MonsterFrontStage)
+                brain.Mode = MonsterBrainState.MonsterBrainMode.BackstageTravel;
+            else
+                brain.Mode = MonsterBrainState.MonsterBrainMode.Roaming;
+
+            // Seed new navigation fields.
+            brain.RoamDestination = brain.MonsterPosition;
+            brain.InvestigateTarget = brain.PlayerLocationHint != default ? brain.PlayerLocationHint : brain.MonsterPosition;
+            brain.LastKnownPlayerPos = brain.InvestigateTarget;
+
+            // If the director wants us backstage but a destination wasn't stored, pick a conservative fallback
+            // (manager may immediately repick it once the player exists).
+            brain.BackstageDestination = brain.MonsterPosition;
+
+            brain.InvestigateTimeRemaining = 0f;
+            brain.EmoteTimeRemaining = 0f;
+
+            brain.HuntingReturnMode = brain.MonsterFrontStage
+                ? MonsterBrainState.MonsterBrainMode.Roaming
+                : MonsterBrainState.MonsterBrainMode.BackstageTravel;
+            brain.InvestigateReturnMode = brain.HuntingReturnMode;
+        }
+
+        // Align runtime caches to the brain (brain is the source-of-truth).
+        SyncRuntimeFromBrain(teleport: false);
+    }
+
+    /// <summary>
+    /// Applies a loaded brain state onto this controller, including pose + transient timers.
+    /// Intended to be called by Game after scene load.
+    /// </summary>
+    public void ApplyLoadedBrainState(MonsterBrainState brainState)
+    {
+        BindBrainState(brainState);
+
+        if (brain == null)
+            return;
+
+        // Pose first.
+        TeleportTo(brain.MonsterPosition);
+        transform.rotation = brain.MonsterRotation;
+
+        SyncRuntimeFromBrain(teleport: false);
+        PresentationUpdate();
+    }
+
     public void SetRoamCenter(Vector3 center, bool forceNewDestination = false)
     {
         roamCenter = center;
@@ -286,9 +370,9 @@ public class MonsterController : MonoBehaviour
 
         // Pick a new roam destination immediately to avoid "idle forever" edge cases after transitions.
         if (TryPickRoamDestination(transform.position, roamCenter, out var picked))
-            roamDestination = picked;
+            SetRoamDestination(picked);
         else
-            roamDestination = ProjectToNavmesh(transform.position);
+            SetRoamDestination(ProjectToNavmesh(transform.position));
     }
 
     public void ApplySavedPose(Vector3 position, Quaternion rotation)
@@ -299,10 +383,10 @@ public class MonsterController : MonoBehaviour
 
     public void ForceBackstageIdle(Vector3 _playerPos)
     {
-        wantsBackstage = true;
+        SetFrontStageIntent(false);
         if (state == MonsterActionState.Killing) return;
 
-        backstageDestination = transform.position;
+        SetBackstageDestination(transform.position);
         SetState(MonsterActionState.BackstageIdle);
         StopAgent();
         PresentationUpdate();
@@ -310,16 +394,16 @@ public class MonsterController : MonoBehaviour
 
     public void SendBackstage(Vector3 target)
     {
-        wantsBackstage = true;
+        SetFrontStageIntent(false);
         if (state == MonsterActionState.Killing) return;
 
-        backstageDestination = ProjectToNavmesh(target);
+        SetBackstageDestination(ProjectToNavmesh(target));
         SetState(MonsterActionState.BackstageTravel);
     }
 
     public void SendFrontstage(Vector3 playerPos)
     {
-        wantsBackstage = false;
+        SetFrontStageIntent(true);
 
         bool wasBackstage = IsBackstage;
         if (!wasBackstage) return;
@@ -342,6 +426,157 @@ public class MonsterController : MonoBehaviour
     }
 
     public bool IsBackstage => state == MonsterActionState.BackstageTravel || state == MonsterActionState.BackstageIdle;
+
+    // -----------------------------
+    // Brain sync helpers
+    // -----------------------------
+    private void SetFrontStageIntent(bool frontStage)
+    {
+        var b = Brain;
+        if (b != null)
+            b.MonsterFrontStage = frontStage;
+    }
+
+    private void SetRoamDestination(Vector3 dest)
+    {
+        roamDestination = dest;
+        var b = Brain;
+        if (b != null)
+            b.RoamDestination = dest;
+    }
+
+    private void SetBackstageDestination(Vector3 dest)
+    {
+        backstageDestination = dest;
+        var b = Brain;
+        if (b != null)
+            b.BackstageDestination = dest;
+    }
+
+    private void SetInvestigateTarget(Vector3 target)
+    {
+        investigateTarget = target;
+        var b = Brain;
+        if (b != null)
+            b.InvestigateTarget = target;
+    }
+
+    private void SetLastKnownPlayerPos(Vector3 pos)
+    {
+        lastKnownPlayerPos = pos;
+        var b = Brain;
+        if (b != null)
+            b.LastKnownPlayerPos = pos;
+    }
+
+    private void SetHuntingReturnState(MonsterActionState s)
+    {
+        huntingReturnState = s;
+        var b = Brain;
+        if (b != null)
+            b.HuntingReturnMode = (MonsterBrainState.MonsterBrainMode)s;
+    }
+
+    private void SetInvestigateReturnState(MonsterActionState s)
+    {
+        investigateReturnState = s;
+        var b = Brain;
+        if (b != null)
+            b.InvestigateReturnMode = (MonsterBrainState.MonsterBrainMode)s;
+    }
+
+    private void ApplyStageDirective(Perception p)
+    {
+        var b = Brain;
+        if (b == null) return;
+
+        // Invariant: engaged modes are always front-stage.
+        if (state == MonsterActionState.Investigating || state == MonsterActionState.Hunting || state == MonsterActionState.Killing)
+            b.MonsterFrontStage = true;
+
+        if (b.MonsterFrontStage)
+        {
+            // If the director wants us front-stage, ensure we are not parked backstage.
+            if (IsBackstage && state != MonsterActionState.Killing)
+                SendFrontstage(p.PlayerPos);
+        }
+        else
+        {
+            // If the director wants us backstage, ensure we are traveling (or parked) backstage.
+            if (!IsBackstage && state != MonsterActionState.Killing)
+            {
+                Vector3 target = b.BackstageDestination;
+                SendBackstage(target);
+            }
+            else if (state == MonsterActionState.BackstageTravel)
+            {
+                // Keep runtime destination aligned to the brain (eg. manager repicked a backstage point).
+                SetBackstageDestination(ProjectToNavmesh(b.BackstageDestination));
+            }
+        }
+    }
+
+    private void SyncRuntimeFromBrain(bool teleport)
+    {
+        var b = Brain;
+        if (b == null) return;
+
+        if (teleport)
+        {
+            TeleportTo(b.MonsterPosition);
+            transform.rotation = b.MonsterRotation;
+        }
+
+        // Apply mode without running transition side-effects.
+        MonsterActionState brainState = (MonsterActionState)b.Mode;
+        if (state != brainState)
+        {
+            state = brainState;
+            nextDestinationUpdateAt = 0f;
+            if (agent && agent.enabled)
+                agent.ResetPath();
+            PresentationUpdate();
+        }
+
+        // Pull targets / timers.
+        roamDestination = b.RoamDestination;
+        backstageDestination = b.BackstageDestination;
+        investigateTarget = b.InvestigateTarget;
+        lastKnownPlayerPos = b.LastKnownPlayerPos;
+
+        huntingReturnState = (MonsterActionState)b.HuntingReturnMode;
+        investigateReturnState = (MonsterActionState)b.InvestigateReturnMode;
+
+        investigateEndsAt = (state == MonsterActionState.Investigating) ? Time.time + Mathf.Max(0f, b.InvestigateTimeRemaining) : 0f;
+        emoteEndsAt = (state == MonsterActionState.Emote) ? Time.time + Mathf.Max(0f, b.EmoteTimeRemaining) : 0f;
+    }
+
+    private void FlushBrainPoseAndMode()
+    {
+        var b = Brain;
+        if (b == null) return;
+
+        b.MonsterPosition = transform.position;
+        b.MonsterRotation = transform.rotation;
+        b.Mode = (MonsterBrainState.MonsterBrainMode)state;
+        b.MonsterBackstageIdle = state == MonsterActionState.BackstageIdle;
+    }
+
+    private void FlushBrainTransientTimers()
+    {
+        var b = Brain;
+        if (b == null) return;
+
+        b.InvestigateTimeRemaining = state == MonsterActionState.Investigating ? Mathf.Max(0f, investigateEndsAt - Time.time) : 0f;
+        b.EmoteTimeRemaining = state == MonsterActionState.Emote ? Mathf.Max(0f, emoteEndsAt - Time.time) : 0f;
+    }
+
+    private void LateUpdate()
+    {
+        // Ensure saves always serialize a consistent, up-to-date brain without relying on Update order.
+        FlushBrainPoseAndMode();
+        FlushBrainTransientTimers();
+    }
 
     // -----------------------------
     // Perception
@@ -368,7 +603,7 @@ public class MonsterController : MonoBehaviour
             {
                 hasLos = true;
                 lastLosAt = Time.time;
-                lastKnownPlayerPos = ProjectToNavmesh(player.transform.position);
+                SetLastKnownPlayerPos(ProjectToNavmesh(player.transform.position));
             }
             else
             {
@@ -379,7 +614,7 @@ public class MonsterController : MonoBehaviour
 
         // If we are currently seeing them, keep lastKnownPlayerPos fresh even between perception ticks.
         if (hasLos)
-            lastKnownPlayerPos = ProjectToNavmesh(player.transform.position);
+            SetLastKnownPlayerPos(ProjectToNavmesh(player.transform.position));
 
         return new Perception
         {
@@ -510,7 +745,7 @@ public class MonsterController : MonoBehaviour
             case MonsterActionState.Hunting:
                 if (p.HasLOS)
                 {
-                    lastKnownPlayerPos = ProjectToNavmesh(p.PlayerPos);
+                    SetLastKnownPlayerPos(ProjectToNavmesh(p.PlayerPos));
                 }
                 else
                 {
@@ -533,7 +768,7 @@ public class MonsterController : MonoBehaviour
                     if (required <= 0.01f || SqrXZ(transform.position, p.PlayerPos) >= required * required)
                         SetState(MonsterActionState.BackstageIdle);
                     else
-                        backstageDestination = ProjectToNavmesh(p.PlayerPos + FlatDirAway(transform.position, p.PlayerPos) * required);
+                        SetBackstageDestination(ProjectToNavmesh(p.PlayerPos + FlatDirAway(transform.position, p.PlayerPos) * required));
                 }
                 break;
         }
@@ -541,15 +776,20 @@ public class MonsterController : MonoBehaviour
 
     private void EnterHunting(MonsterActionState returnTo)
     {
-        huntingReturnState = returnTo;
+        SetHuntingReturnState(returnTo);
         SetState(MonsterActionState.Hunting);
     }
 
     private void EnterInvestigating(Vector3 target, float timeout, MonsterActionState returnTo)
     {
-        investigateTarget = ProjectToNavmesh(target);
+        SetInvestigateTarget(ProjectToNavmesh(target));
         investigateEndsAt = Time.time + Mathf.Max(0.1f, timeout);
-        investigateReturnState = returnTo;
+        SetInvestigateReturnState(returnTo);
+
+        var b = Brain;
+        if (b != null)
+            b.InvestigateTimeRemaining = Mathf.Max(0f, investigateEndsAt - Time.time);
+
         SetState(MonsterActionState.Investigating);
     }
 
@@ -567,12 +807,20 @@ public class MonsterController : MonoBehaviour
             float d = emoteDuration > 0f ? emoteDuration : clip.length;
             emoteEndsAt = Time.time + Mathf.Max(0f, d);
 
+            var b = Brain;
+            if (b != null)
+                b.EmoteTimeRemaining = Mathf.Max(0f, emoteEndsAt - Time.time);
+
             if (emoteAudioSound.Count > 0)
                 PlayOneShot(emoteAudioSound[Random.Range(0, emoteAudioSound.Count)], 1f, randomPitch: true);
         }
         else
         {
             emoteEndsAt = Time.time + Mathf.Max(0f, emoteDuration);
+
+            var b = Brain;
+            if (b != null)
+                b.EmoteTimeRemaining = Mathf.Max(0f, emoteEndsAt - Time.time);
         }
     }
 
@@ -596,6 +844,14 @@ public class MonsterController : MonoBehaviour
 
         state = next;
         if (debug) Debug.Log($"[Monster] State -> {state}");
+
+        // Brain is the source-of-truth for save/load.
+        var b = Brain;
+        if (b != null)
+        {
+            b.Mode = (MonsterBrainState.MonsterBrainMode)state;
+            b.MonsterBackstageIdle = state == MonsterActionState.BackstageIdle;
+        }
 
         // Reset throttles when we change states (avoids "why isn't it moving" after transitions).
         nextDestinationUpdateAt = 0f;
@@ -630,7 +886,7 @@ public class MonsterController : MonoBehaviour
                 if (HasArrived() || !agent.hasPath)
                 {
                     if (TryPickRoamDestination(transform.position, roamCenter, out var picked))
-                        roamDestination = picked;
+                        SetRoamDestination(picked);
                 }
                 MoveAgentTo(roamDestination, speed);
                 break;
@@ -743,9 +999,9 @@ public class MonsterController : MonoBehaviour
 
             // Force a fresh roam destination immediately (and ensure it's reachable from our current navmesh island).
             if (TryPickRoamDestination(transform.position, roamCenter, out var picked))
-                roamDestination = picked;
+                SetRoamDestination(picked);
             else
-                roamDestination = ProjectToNavmesh(transform.position);
+                SetRoamDestination(ProjectToNavmesh(transform.position));
 
             MoveAgentTo(roamDestination, speed);
         }
@@ -1008,7 +1264,7 @@ public class MonsterController : MonoBehaviour
             transform.position = p;
 
         agent.ResetPath();
-        roamDestination = transform.position;
+        SetRoamDestination(transform.position);
         nextDestinationUpdateAt = 0f;
     }
 
@@ -1112,5 +1368,29 @@ public class MonsterController : MonoBehaviour
         if (v.sqrMagnitude < 0.0001f)
             v = Vector3.forward;
         return v.normalized;
+    }
+
+    // -----------------------------
+    // Save/load hooks
+    // -----------------------------
+    public void OnBeforeGameSaved(GameState _state)
+    {
+        var b = Brain;
+        if (b != null)
+        {
+            // Invariant: engaged modes are always front-stage.
+            if (state == MonsterActionState.Investigating || state == MonsterActionState.Hunting || state == MonsterActionState.Killing)
+                b.MonsterFrontStage = true;
+        }
+
+        FlushBrainPoseAndMode();
+        FlushBrainTransientTimers();
+    }
+
+    public void OnAfterGameLoaded(GameState _state)
+    {
+        // The brain instance may have been replaced during load.
+        if (autoBindToGameState && Game.State != null)
+            BindBrainState(Game.State.MonsterBrainState);
     }
 }
