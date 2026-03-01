@@ -58,7 +58,7 @@ public class DialogueManager : MonoBehaviour
             return;
         }
 
-        var sequencePath = "Dialogue/" + Game.Settings.Language.ToString() + "/" + sequenceName + "/"+sequenceName;
+        var sequencePath = "Dialogue/" + Game.Settings.Language.ToString() + "/" + sequenceName + "/" + sequenceName;
         var sequenceObject = ResourceCache.Get<GameObject>(sequencePath);
         if (sequenceObject == null)
         {
@@ -92,10 +92,46 @@ public class DialogueManager : MonoBehaviour
                 if (clip == null)
                     continue;
 
+                var c = dialogueText.color;
+                c.a = 0f;
+                dialogueText.color = c;
+
                 targetAudioSource.Stop();
                 targetAudioSource.volume = 0.5f * Game.Settings.MasterVolume;
                 targetAudioSource.clip = clip;
                 targetAudioSource.Play();
+
+                var fadeDuration = 0.15f;
+                if (clip.length > 0f)
+                    fadeDuration = Mathf.Min(fadeDuration, clip.length * 0.5f);
+
+                var t = 0f;
+                while (t < fadeDuration)
+                {
+                    t += Time.deltaTime;
+                    c.a = Mathf.Clamp01(t / fadeDuration);
+                    dialogueText.color = c;
+                    yield return null;
+                }
+
+                c.a = 1f;
+                dialogueText.color = c;
+
+                var fadeOutStart = Mathf.Max(clip.length - fadeDuration, 0f);
+                while (targetAudioSource.isPlaying && targetAudioSource.time < fadeOutStart)
+                    yield return null;
+
+                t = 0f;
+                while (t < fadeDuration && targetAudioSource.isPlaying)
+                {
+                    t += Time.deltaTime;
+                    c.a = 1f - Mathf.Clamp01(t / fadeDuration);
+                    dialogueText.color = c;
+                    yield return null;
+                }
+
+                c.a = 0f;
+                dialogueText.color = c;
 
                 while (targetAudioSource.isPlaying)
                     yield return null;
