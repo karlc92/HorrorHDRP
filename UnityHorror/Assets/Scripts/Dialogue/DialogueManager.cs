@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -9,6 +10,10 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI dialogueText;
 
     private bool dialogSequencePlaying = false;
+    private Coroutine playRoutine = null;
+    private AudioSource currentAudioSource = null;
+    private RawImage dialogueBgImage = null;
+    private float dialogueBgBaseAlpha = 1f;
 
     public static DialogueManager Instance { get; private set; }
     void Awake()
@@ -21,6 +26,12 @@ public class DialogueManager : MonoBehaviour
 
         Instance = this;
 
+        if (dialogueBg != null)
+            dialogueBgImage = dialogueBg.GetComponentInChildren<RawImage>(true);
+
+        if (dialogueBgImage != null)
+            dialogueBgBaseAlpha = dialogueBgImage.color.a;
+
         if (dialogueBg.activeSelf)
         {
             dialogueBg.SetActive(false);
@@ -31,6 +42,42 @@ public class DialogueManager : MonoBehaviour
     {
         if (Instance == this)
             Instance = null;
+    }
+
+    public void StopDialogueSequence()
+    {
+        if (playRoutine != null)
+        {
+            StopCoroutine(playRoutine);
+            playRoutine = null;
+        }
+
+        if (currentAudioSource != null)
+        {
+            currentAudioSource.Stop();
+            currentAudioSource.clip = null;
+            currentAudioSource = null;
+        }
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = string.Empty;
+            var c = dialogueText.color;
+            c.a = 0f;
+            dialogueText.color = c;
+        }
+
+        if (dialogueBgImage != null)
+        {
+            var bgc = dialogueBgImage.color;
+            bgc.a = 0f;
+            dialogueBgImage.color = bgc;
+        }
+
+        if (dialogueBg != null && dialogueBg.activeSelf)
+            dialogueBg.SetActive(false);
+
+        dialogSequencePlaying = false;
     }
 
     public void PlayDialogueSequence(string sequenceName, AudioSource externalAudioSource = null)
@@ -52,7 +99,7 @@ public class DialogueManager : MonoBehaviour
             targetAudioSource = audioSource;
         }
 
-        if (audioSource == null || dialogueText == null || dialogueBg == null)
+        if (targetAudioSource == null || dialogueText == null || dialogueBg == null)
         {
             Console.Print("DialogueManager is missing references");
             return;
@@ -73,12 +120,55 @@ public class DialogueManager : MonoBehaviour
             return;
         }
 
+        dialogueText.text = "";
         dialogSequencePlaying = true;
-        StartCoroutine(PlaySequence());
+        currentAudioSource = targetAudioSource;
+        playRoutine = StartCoroutine(PlaySequence());
 
         IEnumerator PlaySequence()
         {
+            var bgImage = dialogueBgImage != null ? dialogueBgImage : dialogueBg.GetComponentInChildren<RawImage>(true);
+            var bgFadeDuration = 0.15f;
+            var bgTargetAlpha = dialogueBgBaseAlpha;
+
+            if (bgImage != null)
+            {
+                var bgc = bgImage.color;
+                bgc.a = 0f;
+                bgImage.color = bgc;
+            }
+
             dialogueBg.SetActive(true);
+
+            IEnumerator FadeBg(float from, float to, float duration)
+            {
+                if (bgImage == null)
+                    yield break;
+
+                if (duration <= 0f)
+                {
+                    var c0 = bgImage.color;
+                    c0.a = to;
+                    bgImage.color = c0;
+                    yield break;
+                }
+
+                var t0 = 0f;
+                var c = bgImage.color;
+                while (t0 < duration)
+                {
+                    t0 += Time.unscaledDeltaTime;
+                    c.a = Mathf.Lerp(from, to, Mathf.Clamp01(t0 / duration));
+                    bgImage.color = c;
+                    yield return null;
+                }
+
+                c.a = to;
+                bgImage.color = c;
+            }
+
+            if (bgImage != null)
+                yield return FadeBg(0f, bgTargetAlpha, bgFadeDuration);
 
             var lineCount = sequence.TextLines != null ? sequence.TextLines.Count : 0;
             var clipCount = sequence.AudioClips != null ? sequence.AudioClips.Count : 0;
@@ -96,7 +186,9 @@ public class DialogueManager : MonoBehaviour
                 c.a = 0f;
                 dialogueText.color = c;
 
-                targetAudioSource.Stop();
+                if (targetAudioSource.isPlaying)
+                    targetAudioSource.Stop();
+
                 targetAudioSource.volume = 0.5f * Game.Settings.MasterVolume;
                 targetAudioSource.clip = clip;
                 targetAudioSource.Play();
@@ -105,11 +197,9 @@ public class DialogueManager : MonoBehaviour
                 if (clip.length > 0f)
                     fadeDuration = Mathf.Min(fadeDuration, clip.length * 0.5f);
 
-                var t = 0f;
-                while (t < fadeDuration)
+                while (targetAudioSource.isPlaying && targetAudioSource.time < fadeDuration)
                 {
-                    t += Time.deltaTime;
-                    c.a = Mathf.Clamp01(t / fadeDuration);
+                    c.a = Mathf.Clamp01(targetAudioSource.time / fadeDuration);
                     dialogueText.color = c;
                     yield return null;
                 }
@@ -121,12 +211,15 @@ public class DialogueManager : MonoBehaviour
                 while (targetAudioSource.isPlaying && targetAudioSource.time < fadeOutStart)
                     yield return null;
 
-                t = 0f;
-                while (t < fadeDuration && targetAudioSource.isPlaying)
+                while (targetAudioSource.isPlaying)
                 {
-                    t += Time.deltaTime;
-                    c.a = 1f - Mathf.Clamp01(t / fadeDuration);
+                    var remaining = clip.length - targetAudioSource.time;
+                    c.a = Mathf.Clamp01(remaining / fadeDuration);
                     dialogueText.color = c;
+
+                    if (remaining <= 0f)
+                        break;
+
                     yield return null;
                 }
 
@@ -140,8 +233,15 @@ public class DialogueManager : MonoBehaviour
             targetAudioSource.Stop();
             targetAudioSource.clip = null;
             dialogueText.text = string.Empty;
+
+            if (bgImage != null)
+                yield return FadeBg(bgTargetAlpha, 0f, bgFadeDuration);
+
             dialogueBg.SetActive(false);
+
             dialogSequencePlaying = false;
+            currentAudioSource = null;
+            playRoutine = null;
         }
     }
 }

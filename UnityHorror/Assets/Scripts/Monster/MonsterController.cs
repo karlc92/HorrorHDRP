@@ -1084,6 +1084,7 @@ public class MonsterController : MonoBehaviour, IGameSaveParticipant
 
         if (!killingSfxPlayed && killingSfx && t >= killingSfxAt)
         {
+            DialogueManager.Instance.StopDialogueSequence();
             killingSfxPlayed = true;
             PlayOneShot(killingSfx, killingSfxVolume, killingSfxRandomPitch, 0f);
         }
