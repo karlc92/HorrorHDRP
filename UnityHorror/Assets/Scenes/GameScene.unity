@@ -493,7 +493,6 @@ MonoBehaviour:
   m_Script: {fileID: 466722074}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.SceneObjectIDMapSceneAsset
-  m_Entries: []
 --- !u!4 &120422616
 Transform:
   m_ObjectHideFlags: 19
@@ -4111,6 +4110,79 @@ Transform:
   - {fileID: 2062350909}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1970192450
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2831650651690597066, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_Name
+      value: 1970sMuscleCar#6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -19.73
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.652
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 13.93
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.69107157
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7227864
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 92.57
+      objectReference: {fileID: 0}
+    - target: {fileID: 2831650651690597067, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7118111828054202032, guid: 3ec26033a41943e47980a74211a323da, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3ec26033a41943e47980a74211a323da, type: 3}
 --- !u!1 &1973990206
 GameObject:
   m_ObjectHideFlags: 1
@@ -6063,3 +6135,4 @@ SceneRoots:
   - {fileID: 93034068986602254}
   - {fileID: 1061739312929358873}
   - {fileID: 5730868203513448074}
+  - {fileID: 1970192450}
