@@ -725,6 +725,135 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!1 &578468358
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 578468360}
+  - component: {fileID: 578468359}
+  m_Layer: 0
+  m_Name: AmbientAudioSource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!82 &578468359
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578468358}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: bcfda2d91656fe140a80b36195b8ec61, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!4 &578468360
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578468358}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2110038483}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &586683014
 GameObject:
   m_ObjectHideFlags: 0
@@ -19829,24 +19958,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IntroCinematic
   backgroundImage: {fileID: 1426900569}
   introText: {fileID: 646546707}
-  textToType: 'They say it don''t be like it is but it do.
+  textToType: 'MAY 6TH, 1993
 
-    And it really do.'
+    LOCATION: INDETERMINATE'
   initialBlackScreenDuration: 2
   charactersPerSecond: 10
-  typingSpeedVariation: 0.1
+  typingSpeedVariation: 0.2
   holdAfterFullText: 3
-  backgroundFadeOutDuration: 1
-  textStayAfterFade: 2
+  backgroundFadeOutDuration: 0.5
+  textStayAfterFade: 1.5
   commaPauseExtra: 0.08
   sentencePauseExtra: 0.18
   ellipsisPauseExtra: 0.24
   lineBreakPauseExtra: 0.12
   audioSource: {fileID: 2110038481}
   typewriterClip: {fileID: 8300000, guid: de57278cfecd99248bafd2f991a8cbe6, type: 3}
-  typewriterVolume: 1
+  typewriterVolume: 0.5
   randomizeTypePitch: 1
   typePitchRange: {x: 0.96, y: 1.04}
+  ambientAudioSource: {fileID: 578468359}
+  ambientTrack: {fileID: 8300000, guid: bcfda2d91656fe140a80b36195b8ec61, type: 3}
+  ambientVolume: 0.2
+  ambientLoop: 1
   cameraShots:
   - cameraToUse: {fileID: 931304021}
     duration: 5
@@ -19880,7 +20013,7 @@ MonoBehaviour:
         m_Calls: []
     timedEvents: []
   - cameraToUse: {fileID: 521900305}
-    duration: 4
+    duration: 6
     preDelay: 0
     shouldLerp: 1
     lerpStartPoint: {fileID: 151294067}
@@ -19917,7 +20050,7 @@ MonoBehaviour:
         m_Calls: []
     timedEvents: []
   - cameraToUse: {fileID: 1104288509}
-    duration: 5
+    duration: 10
     preDelay: 0
     shouldLerp: 0
     lerpStartPoint: {fileID: 0}
@@ -19956,7 +20089,8 @@ Transform:
   m_LocalPosition: {x: 308.6114, y: 0, z: -148.21962}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 578468360}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &710969918342240123

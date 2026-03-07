@@ -13,7 +13,6 @@ public class IntroCinematic : MonoBehaviour
     {
         [Range(0f, 1f)]
         public float normalizedTime = 0.5f;
-
         public UnityEvent onTriggered;
     }
 
@@ -65,12 +64,18 @@ public class IntroCinematic : MonoBehaviour
     [SerializeField, Min(0f)] private float ellipsisPauseExtra = 0.24f;
     [SerializeField, Min(0f)] private float lineBreakPauseExtra = 0.12f;
 
-    [Header("Audio")]
+    [Header("Audio - Typewriter")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip typewriterClip;
     [SerializeField, Range(0f, 1f)] private float typewriterVolume = 1f;
     [SerializeField] private bool randomizeTypePitch = true;
     [SerializeField] private Vector2 typePitchRange = new Vector2(0.96f, 1.04f);
+
+    [Header("Audio - Ambient")]
+    [SerializeField] private AudioSource ambientAudioSource;
+    [SerializeField] private AudioClip ambientTrack;
+    [SerializeField, Range(0f, 1f)] private float ambientVolume = 1f;
+    [SerializeField] private bool ambientLoop = true;
 
     [Header("Camera Sequence")]
     [SerializeField] private List<CameraShot> cameraShots = new List<CameraShot>();
@@ -85,6 +90,8 @@ public class IntroCinematic : MonoBehaviour
     [SerializeField] private UnityEvent onSequenceFinishedBeforeLoad;
 
     private Coroutine sequenceRoutine;
+    private float ambientFadeMultiplier = 1f;
+    private bool isAmbientFadingIn = false;
 
     private void Awake()
     {
@@ -97,6 +104,11 @@ public class IntroCinematic : MonoBehaviour
         Play();
     }
 
+    private void Update()
+    {
+        UpdateAmbientVolume();
+    }
+
     public void Play()
     {
         if (sequenceRoutine != null)
@@ -104,6 +116,7 @@ public class IntroCinematic : MonoBehaviour
             StopCoroutine(sequenceRoutine);
         }
 
+        StopAmbientAudio();
         ResetVisualState();
         ForceDisableAllCamerasExceptFirst();
         sequenceRoutine = StartCoroutine(PlaySequence());
@@ -124,8 +137,6 @@ public class IntroCinematic : MonoBehaviour
     {
         onSequenceStarted?.Invoke();
 
-        // Force the intro into a known state:
-        // all cameras disabled except the first configured camera.
         ForceDisableAllCamerasExceptFirst();
 
         yield return new WaitForSeconds(initialBlackScreenDuration);
@@ -135,6 +146,8 @@ public class IntroCinematic : MonoBehaviour
             yield return StartCoroutine(TypeText(textToType));
             yield return new WaitForSeconds(holdAfterFullText);
         }
+
+        StartAmbientAudioFadeIn();
 
         if (backgroundImage != null)
         {
@@ -154,7 +167,8 @@ public class IntroCinematic : MonoBehaviour
 
         for (int i = 0; i < cameraShots.Count; i++)
         {
-            yield return StartCoroutine(PlayShot(cameraShots[i]));
+            bool keepCameraActiveAtEnd = (i == cameraShots.Count - 1);
+            yield return StartCoroutine(PlayShot(cameraShots[i], keepCameraActiveAtEnd));
         }
 
         onSequenceFinishedBeforeLoad?.Invoke();
@@ -225,11 +239,81 @@ public class IntroCinematic : MonoBehaviour
             audioSource.pitch = Random.Range(typePitchRange.x, typePitchRange.y);
         }
 
-        audioSource.PlayOneShot(typewriterClip, typewriterVolume);
+        audioSource.PlayOneShot(typewriterClip, typewriterVolume * GetMasterVolume());
         audioSource.pitch = originalPitch;
     }
 
-    private IEnumerator PlayShot(CameraShot shot)
+    private void StartAmbientAudioFadeIn()
+    {
+        if (ambientAudioSource == null || ambientTrack == null)
+            return;
+
+        ambientAudioSource.clip = ambientTrack;
+        ambientAudioSource.loop = ambientLoop;
+        ambientFadeMultiplier = 0f;
+        isAmbientFadingIn = true;
+        UpdateAmbientVolume();
+
+        if (!ambientAudioSource.isPlaying)
+        {
+            ambientAudioSource.Play();
+        }
+
+        StartCoroutine(FadeInAmbientAudio(backgroundFadeOutDuration));
+    }
+
+    private IEnumerator FadeInAmbientAudio(float duration)
+    {
+        duration = Mathf.Max(0.01f, duration);
+
+        float elapsed = 0f;
+        ambientFadeMultiplier = 0f;
+        isAmbientFadingIn = true;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            ambientFadeMultiplier = Mathf.Clamp01(elapsed / duration);
+            UpdateAmbientVolume();
+            yield return null;
+        }
+
+        ambientFadeMultiplier = 1f;
+        isAmbientFadingIn = false;
+        UpdateAmbientVolume();
+    }
+
+    private void StopAmbientAudio()
+    {
+        isAmbientFadingIn = false;
+        ambientFadeMultiplier = 1f;
+
+        if (ambientAudioSource == null)
+            return;
+
+        if (ambientAudioSource.isPlaying)
+        {
+            ambientAudioSource.Stop();
+        }
+
+        ambientAudioSource.clip = null;
+        ambientAudioSource.volume = 0f;
+    }
+
+    private void UpdateAmbientVolume()
+    {
+        if (ambientAudioSource == null || !ambientAudioSource.isPlaying)
+            return;
+
+        ambientAudioSource.volume = ambientVolume * ambientFadeMultiplier * GetMasterVolume();
+    }
+
+    private float GetMasterVolume()
+    {
+        return Game.Settings.MasterVolume;
+    }
+
+    private IEnumerator PlayShot(CameraShot shot, bool keepCameraActiveAtEnd)
     {
         if (shot == null || shot.cameraToUse == null)
             yield break;
@@ -307,7 +391,11 @@ public class IntroCinematic : MonoBehaviour
         }
 
         shot.onShotFinished?.Invoke();
-        shot.cameraToUse.gameObject.SetActive(false);
+
+        if (!keepCameraActiveAtEnd)
+        {
+            shot.cameraToUse.gameObject.SetActive(false);
+        }
     }
 
     private Vector3 GetShotStartPosition(CameraShot shot, Vector3 fallback)
@@ -344,8 +432,6 @@ public class IntroCinematic : MonoBehaviour
 
     private IEnumerator FadeAndLoadScene()
     {
-        SetAllCamerasInactive();
-
         if (backgroundImage != null)
         {
             backgroundImage.gameObject.SetActive(true);
