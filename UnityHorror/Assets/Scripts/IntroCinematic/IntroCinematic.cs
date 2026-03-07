@@ -111,6 +111,8 @@ public class IntroCinematic : MonoBehaviour
 
     public void Play()
     {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         if (sequenceRoutine != null)
         {
             StopCoroutine(sequenceRoutine);
