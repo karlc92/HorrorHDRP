@@ -51,10 +51,19 @@ public class IntroCinematic : MonoBehaviour
     [TextArea(3, 8)]
     [SerializeField] private string textToType = "The city never slept. Neither did the road.";
     [SerializeField] private float initialBlackScreenDuration = 2f;
-    [SerializeField] private float characterDelay = 0.045f;
+
+    [SerializeField, Min(0.01f)] private float charactersPerSecond = 22f;
+    [SerializeField, Range(0f, 0.5f)] private float typingSpeedVariation = 0.1f;
+
     [SerializeField] private float holdAfterFullText = 3f;
     [SerializeField] private float backgroundFadeOutDuration = 1f;
     [SerializeField] private float textStayAfterFade = 2f;
+
+    [Header("Natural Typing Pauses")]
+    [SerializeField, Min(0f)] private float commaPauseExtra = 0.08f;
+    [SerializeField, Min(0f)] private float sentencePauseExtra = 0.18f;
+    [SerializeField, Min(0f)] private float ellipsisPauseExtra = 0.24f;
+    [SerializeField, Min(0f)] private float lineBreakPauseExtra = 0.12f;
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -79,24 +88,13 @@ public class IntroCinematic : MonoBehaviour
 
     private void Awake()
     {
-        if (introText != null)
-        {
-            introText.text = string.Empty;
-            introText.gameObject.SetActive(true);
-        }
-
-        SetAllCamerasInactive();
-
-        if (backgroundImage != null)
-        {
-            SetImageAlpha(backgroundImage, 1f);
-            backgroundImage.gameObject.SetActive(true);
-        }
+        ResetVisualState();
+        ForceDisableAllCamerasExceptFirst();
     }
 
     private void Start()
     {
-        sequenceRoutine = StartCoroutine(PlaySequence());
+        Play();
     }
 
     public void Play()
@@ -106,6 +104,8 @@ public class IntroCinematic : MonoBehaviour
             StopCoroutine(sequenceRoutine);
         }
 
+        ResetVisualState();
+        ForceDisableAllCamerasExceptFirst();
         sequenceRoutine = StartCoroutine(PlaySequence());
     }
 
@@ -124,49 +124,48 @@ public class IntroCinematic : MonoBehaviour
     {
         onSequenceStarted?.Invoke();
 
-        // Start on black screen.
+        // Force the intro into a known state:
+        // all cameras disabled except the first configured camera.
+        ForceDisableAllCamerasExceptFirst();
+
         yield return new WaitForSeconds(initialBlackScreenDuration);
 
-        // Type intro text.
         if (introText != null)
         {
             yield return StartCoroutine(TypeText(textToType));
             yield return new WaitForSeconds(holdAfterFullText);
         }
 
-        // Fade black background away.
         if (backgroundImage != null)
         {
             yield return StartCoroutine(FadeImageAlpha(backgroundImage, 1f, 0f, backgroundFadeOutDuration));
         }
 
-        // Keep text visible briefly after fade.
         if (introText != null)
         {
             yield return new WaitForSeconds(textStayAfterFade);
             introText.gameObject.SetActive(false);
         }
 
-        // Wait before camera sequence begins.
         if (delayBeforeFirstShot > 0f)
         {
             yield return new WaitForSeconds(delayBeforeFirstShot);
         }
 
-        // Play all camera shots in order.
         for (int i = 0; i < cameraShots.Count; i++)
         {
             yield return StartCoroutine(PlayShot(cameraShots[i]));
         }
 
         onSequenceFinishedBeforeLoad?.Invoke();
-
-        // Fade black back in, then load game scene.
         yield return StartCoroutine(FadeAndLoadScene());
     }
 
     private IEnumerator TypeText(string fullText)
     {
+        if (introText == null)
+            yield break;
+
         introText.text = string.Empty;
 
         for (int i = 0; i < fullText.Length; i++)
@@ -174,15 +173,44 @@ public class IntroCinematic : MonoBehaviour
             char c = fullText[i];
             introText.text += c;
 
-            // Spaces appear instantly with no sound and no delay.
             if (c == ' ')
             {
                 continue;
             }
 
             PlayTypeSound();
-            yield return new WaitForSeconds(characterDelay);
+
+            float delay = GetCharacterDelay(c, i, fullText);
+            yield return new WaitForSeconds(delay);
         }
+    }
+
+    private float GetCharacterDelay(char c, int index, string fullText)
+    {
+        float variedMultiplier = Random.Range(1f - typingSpeedVariation, 1f + typingSpeedVariation);
+        float actualCharactersPerSecond = Mathf.Max(0.01f, charactersPerSecond * variedMultiplier);
+        float delay = 1f / actualCharactersPerSecond;
+
+        if (c == ',' || c == ';' || c == ':')
+        {
+            delay += commaPauseExtra;
+        }
+        else if (c == '.' || c == '!' || c == '?')
+        {
+            bool isEllipsis =
+                c == '.' &&
+                index + 2 < fullText.Length &&
+                fullText[index + 1] == '.' &&
+                fullText[index + 2] == '.';
+
+            delay += isEllipsis ? ellipsisPauseExtra : sentencePauseExtra;
+        }
+        else if (c == '\n' || c == '\r')
+        {
+            delay += lineBreakPauseExtra;
+        }
+
+        return delay;
     }
 
     private void PlayTypeSound()
@@ -213,43 +241,27 @@ public class IntroCinematic : MonoBehaviour
 
         SetAllCamerasInactive();
         shot.cameraToUse.gameObject.SetActive(true);
-
         shot.onShotStarted?.Invoke();
 
         Transform camTransform = shot.cameraToUse.transform;
-        Vector3 startPos = camTransform.position;
-        Quaternion startRot = camTransform.rotation;
-
-        Vector3 targetStartPos = startPos;
-        Quaternion targetStartRot = startRot;
-        Vector3 targetEndPos = startPos;
-        Quaternion targetEndRot = startRot;
 
         if (shot.shouldLerp)
         {
-            if (shot.lerpStartPoint != null)
-            {
-                targetStartPos = shot.lerpStartPoint.position;
-                targetStartRot = shot.lerpStartPoint.rotation;
-            }
-
-            if (shot.lerpEndPoint != null)
-            {
-                targetEndPos = shot.lerpEndPoint.position;
-                targetEndRot = shot.lerpEndPoint.rotation;
-            }
-            else
-            {
-                targetEndPos = targetStartPos;
-                targetEndRot = targetStartRot;
-            }
-
-            camTransform.SetPositionAndRotation(targetStartPos, targetStartRot);
+            Vector3 initialStartPos = GetShotStartPosition(shot, camTransform.position);
+            Quaternion initialStartRot = GetShotStartRotation(shot, camTransform.rotation);
+            camTransform.SetPositionAndRotation(initialStartPos, initialStartRot);
         }
 
         List<ShotTimedEvent> sortedEvents = new List<ShotTimedEvent>(shot.timedEvents);
         sortedEvents.Sort((a, b) => a.normalizedTime.CompareTo(b.normalizedTime));
+
         int nextEventIndex = 0;
+
+        while (nextEventIndex < sortedEvents.Count && sortedEvents[nextEventIndex].normalizedTime <= 0f)
+        {
+            sortedEvents[nextEventIndex].onTriggered?.Invoke();
+            nextEventIndex++;
+        }
 
         float elapsed = 0f;
         float duration = Mathf.Max(0.01f, shot.duration);
@@ -261,9 +273,16 @@ public class IntroCinematic : MonoBehaviour
 
             if (shot.shouldLerp)
             {
-                float curvedT = shot.lerpCurve != null ? shot.lerpCurve.Evaluate(normalized) : normalized;
-                camTransform.position = Vector3.LerpUnclamped(targetStartPos, targetEndPos, curvedT);
-                camTransform.rotation = Quaternion.SlerpUnclamped(targetStartRot, targetEndRot, curvedT);
+                float curveT = shot.lerpCurve != null ? shot.lerpCurve.Evaluate(normalized) : normalized;
+
+                Vector3 liveStartPos = GetShotStartPosition(shot, camTransform.position);
+                Quaternion liveStartRot = GetShotStartRotation(shot, camTransform.rotation);
+
+                Vector3 liveEndPos = GetShotEndPosition(shot, liveStartPos);
+                Quaternion liveEndRot = GetShotEndRotation(shot, liveStartRot);
+
+                camTransform.position = Vector3.LerpUnclamped(liveStartPos, liveEndPos, curveT);
+                camTransform.rotation = Quaternion.SlerpUnclamped(liveStartRot, liveEndRot, curveT);
             }
 
             while (nextEventIndex < sortedEvents.Count &&
@@ -278,11 +297,49 @@ public class IntroCinematic : MonoBehaviour
 
         if (shot.shouldLerp)
         {
-            camTransform.SetPositionAndRotation(targetEndPos, targetEndRot);
+            Vector3 finalStartPos = GetShotStartPosition(shot, camTransform.position);
+            Quaternion finalStartRot = GetShotStartRotation(shot, camTransform.rotation);
+
+            Vector3 finalEndPos = GetShotEndPosition(shot, finalStartPos);
+            Quaternion finalEndRot = GetShotEndRotation(shot, finalStartRot);
+
+            camTransform.SetPositionAndRotation(finalEndPos, finalEndRot);
         }
 
         shot.onShotFinished?.Invoke();
         shot.cameraToUse.gameObject.SetActive(false);
+    }
+
+    private Vector3 GetShotStartPosition(CameraShot shot, Vector3 fallback)
+    {
+        if (shot != null && shot.lerpStartPoint != null)
+            return shot.lerpStartPoint.position;
+
+        return fallback;
+    }
+
+    private Quaternion GetShotStartRotation(CameraShot shot, Quaternion fallback)
+    {
+        if (shot != null && shot.lerpStartPoint != null)
+            return shot.lerpStartPoint.rotation;
+
+        return fallback;
+    }
+
+    private Vector3 GetShotEndPosition(CameraShot shot, Vector3 fallback)
+    {
+        if (shot != null && shot.lerpEndPoint != null)
+            return shot.lerpEndPoint.position;
+
+        return fallback;
+    }
+
+    private Quaternion GetShotEndRotation(CameraShot shot, Quaternion fallback)
+    {
+        if (shot != null && shot.lerpEndPoint != null)
+            return shot.lerpEndPoint.rotation;
+
+        return fallback;
     }
 
     private IEnumerator FadeAndLoadScene()
@@ -299,13 +356,41 @@ public class IntroCinematic : MonoBehaviour
         SceneManager.LoadScene(gameSceneName);
     }
 
+    private void ResetVisualState()
+    {
+        if (introText != null)
+        {
+            introText.text = string.Empty;
+            introText.gameObject.SetActive(true);
+        }
+
+        if (backgroundImage != null)
+        {
+            backgroundImage.gameObject.SetActive(true);
+            SetImageAlpha(backgroundImage, 1f);
+        }
+    }
+
+    private void ForceDisableAllCamerasExceptFirst()
+    {
+        for (int i = 0; i < cameraShots.Count; i++)
+        {
+            Camera cam = cameraShots[i] != null ? cameraShots[i].cameraToUse : null;
+            if (cam != null)
+            {
+                cam.gameObject.SetActive(i == 0);
+            }
+        }
+    }
+
     private void SetAllCamerasInactive()
     {
         for (int i = 0; i < cameraShots.Count; i++)
         {
-            if (cameraShots[i] != null && cameraShots[i].cameraToUse != null)
+            Camera cam = cameraShots[i] != null ? cameraShots[i].cameraToUse : null;
+            if (cam != null)
             {
-                cameraShots[i].cameraToUse.gameObject.SetActive(false);
+                cam.gameObject.SetActive(false);
             }
         }
     }

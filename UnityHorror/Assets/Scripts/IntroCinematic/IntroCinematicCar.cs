@@ -15,10 +15,17 @@ public class IntroCinematicCar : MonoBehaviour
     [SerializeField] private List<GameObject> wheels = new List<GameObject>();
     [SerializeField] private float wheelRotationSpeed = 360f;
 
+    private AudioSource audioSource;
+
     public bool IsMoving
     {
         get => isMoving;
         set => isMoving = value;
+    }
+
+    public void StartCar()
+    {
+        isMoving = true;
     }
 
     private void Start()
@@ -27,10 +34,17 @@ public class IntroCinematicCar : MonoBehaviour
         {
             transform.position = startPoint.position;
         }
+
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
     {
+        if (isMoving && !audioSource.isPlaying)
+        {
+            audioSource.volume = Game.Settings.MasterVolume * 1f;
+            audioSource.Play();
+        }
         if (!isMoving || startPoint == null || endPoint == null)
             return;
 
