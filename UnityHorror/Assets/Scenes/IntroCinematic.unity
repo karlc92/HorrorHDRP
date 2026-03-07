@@ -16757,7 +16757,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6759834799169827215, guid: dac275a26291c404db843f95e1b79076, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8950500157497028666, guid: dac275a26291c404db843f95e1b79076, type: 3}
       propertyPath: m_LocalPosition.x
@@ -19609,9 +19609,9 @@ MeshRenderer:
   - {fileID: 2100000, guid: 8398e8319f1cd8f4da2c54c62623e3bf, type: 2}
   - {fileID: 2100000, guid: 3dc783f2923b9294e85ef138c962880c, type: 2}
   - {fileID: 2100000, guid: 9f7fc906f5617fa4ba4357329cef16da, type: 2}
-  - {fileID: 2100000, guid: e650c36360106e64699c7afa9112deb9, type: 2}
+  - {fileID: 2100000, guid: f08e48e9053c9d54dba9305cbd277c6f, type: 2}
   - {fileID: 2100000, guid: db29d8b2710d529469d607d97ee1eab2, type: 2}
-  - {fileID: 2100000, guid: a140911577edb244892e4562b7229c2c, type: 2}
+  - {fileID: 2100000, guid: 4a8302bcd01dffe4db0ecb2594f52cd1, type: 2}
   - {fileID: 2100000, guid: 8c5d119d39e29684dbd6175f067ffadd, type: 2}
   - {fileID: 2100000, guid: c4fde4dcfddc6d948a1e3a4cd76c4009, type: 2}
   - {fileID: 2100000, guid: 766db23c7cb36aa4e99885b626a6358a, type: 2}
