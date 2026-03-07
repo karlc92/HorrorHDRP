@@ -78,7 +78,7 @@ public static class Game
             MonsterBrainState = new MonsterBrainState(),
         };
 
-        SceneManager.LoadScene(GameSceneName);
+        SceneManager.LoadScene("IntroCinematic");
     }
 
     public static bool SaveGame(int slot)

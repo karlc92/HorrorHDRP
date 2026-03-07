@@ -19960,7 +19960,9 @@ MonoBehaviour:
   introText: {fileID: 646546707}
   textToType: 'MAY 6TH, 1993
 
-    LOCATION: INDETERMINATE'
+    LOCATION: INDETERMINATE
+
+    ROBERT: ITALIAN'
   initialBlackScreenDuration: 2
   charactersPerSecond: 10
   typingSpeedVariation: 0.2
