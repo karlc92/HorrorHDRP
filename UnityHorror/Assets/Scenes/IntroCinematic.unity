@@ -21405,6 +21405,14 @@ MonoBehaviour:
   endPoint: {fileID: 845517774}
   moveSpeed: 25
   isMoving: 0
+  useSuspensionBob: 1
+  bobTarget: {fileID: 6003346956544922047}
+  bobAmplitude: 0.02
+  bobFrequency: 0.1
+  secondaryBobInfluence: 0.2
+  secondaryBobFrequency: 1.7
+  bobSmoothing: 0.12
+  bobNoiseOffset: 17.31
   wheels:
   - {fileID: 1254185492017893334}
   - {fileID: 2106918699810708547}
