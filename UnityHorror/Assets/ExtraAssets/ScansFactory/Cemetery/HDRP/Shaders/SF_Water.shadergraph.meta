@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 98fd1e546f1524e4098f1abf73683ede
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336004
+  packageName: Cemetery - Forgotten Churchyard
+  packageVersion: 1.0
+  assetPath: Assets/ScansFactory/Cemetery/HDRP/Shaders/SF_Water.shadergraph
+  uploadId: 798066

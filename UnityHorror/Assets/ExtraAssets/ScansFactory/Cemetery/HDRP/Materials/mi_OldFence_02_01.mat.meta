@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 81af14f84e2755e4fa63e8c7ea712ffa
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336004
+  packageName: Cemetery - Forgotten Churchyard
+  packageVersion: 1.0
+  assetPath: Assets/ScansFactory/Cemetery/HDRP/Materials/mi_OldFence_02_01.mat
+  uploadId: 798066

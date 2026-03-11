@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1ecae78030d2fb24292555bceeb2324c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336004
+  packageName: Cemetery - Forgotten Churchyard
+  packageVersion: 1.0
+  assetPath: Assets/ScansFactory/Cemetery/HDRP/Materials/mi_GraveSculpture_09_01.mat
+  uploadId: 798066

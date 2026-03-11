@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c82087ec59ff1934e8a29880b60e6c7d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336004
+  packageName: Cemetery - Forgotten Churchyard
+  packageVersion: 1.0
+  assetPath: Assets/ScansFactory/Cemetery/HDRP/Effects/Water_01/Materials/mi_Water_01_02_opaque.mat
+  uploadId: 798066
