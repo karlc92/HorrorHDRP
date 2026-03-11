@@ -165,7 +165,7 @@ public sealed class PlayerController : MonoBehaviour
             if (bobTarget.gameObject.activeSelf)
                 bobTarget.gameObject.SetActive(false);
         }
-        else
+        else if (deathCamera != null)
         {
             if (deathCamera.gameObject.activeSelf)
                 deathCamera.gameObject.SetActive(false);
