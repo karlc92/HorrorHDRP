@@ -5,10 +5,18 @@ public abstract class TaskHook : MonoBehaviour
     public string HookId;
     public Zone Zone;
 
+    protected virtual void OnEnable()
+    {
+        TaskManager.Instance?.RegisterHook(this);
+    }
+
+    protected virtual void OnDisable()
+    {
+        TaskManager.Instance?.UnregisterHook(this);
+    }
+
     protected void ReportHookEvent(string eventName)
     {
-        // Hook-to-task routing will be fleshed out once scene bindings are wired in.
-        if (TaskManager.Instance == null)
-            return;
+        TaskManager.Instance?.ReportHookEvent(this, eventName);
     }
 }

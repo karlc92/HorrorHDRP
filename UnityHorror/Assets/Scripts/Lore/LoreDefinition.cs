@@ -4,6 +4,7 @@ using UnityEngine;
 public class LoreDefinition : ScriptableObject
 {
     public string LoreId;
+    [IdReference(typeof(Zone), nameof(Zone.ZoneId))]
     public string PrimaryZoneId;
     public string TitleKeyOverride;
     public string BodyKeyOverride;

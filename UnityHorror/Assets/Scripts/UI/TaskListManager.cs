@@ -27,20 +27,8 @@ public class TaskListManager : MonoBehaviour
 
     public IReadOnlyList<TaskListEntryViewData> GetCurrentEntries()
     {
-        var entries = new List<TaskListEntryViewData>();
-        var taskStates = TaskManager.Instance != null ? TaskManager.Instance.GetCurrentNightTasks() : System.Array.Empty<TaskRuntimeState>();
-
-        foreach (var task in taskStates)
-        {
-            entries.Add(new TaskListEntryViewData
-            {
-                TaskInstanceId = task.TaskInstanceId,
-                TitleKey = $"task.{task.TaskDefinitionId}.title",
-                DetailKey = $"task.{task.TaskDefinitionId}.detail.{task.CurrentStageIndex}",
-                Completed = task.Completed,
-            });
-        }
-
-        return entries;
+        return TaskManager.Instance != null
+            ? TaskManager.Instance.GetCurrentNightTaskEntries()
+            : new List<TaskListEntryViewData>();
     }
 }

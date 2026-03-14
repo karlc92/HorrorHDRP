@@ -59,6 +59,12 @@ public class GameState
         if (Run.Plan == null)
             Run.Plan = new RunPlan();
 
+        if (Run.Inventory == null)
+            Run.Inventory = new InventoryState();
+
+        if (Run.CleanseObstructionGroups == null)
+            Run.CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>();
+
         return Run;
     }
 }

@@ -69,6 +69,7 @@ public sealed class PlayerController : MonoBehaviour
     InputAction sprintAction; // Button
     InputAction crouchAction; // Button
     InputAction interactAction; // Button
+    InputAction dropAction; // Button
 
     bool isCrouched;
     Vector3 crouchOffsetLocal;
@@ -77,6 +78,7 @@ public sealed class PlayerController : MonoBehaviour
     Vector3 headPivotBaseLocalPos;
 
     Interactable hoveredInteractable;
+    Interactable activeInteractable;
 
     void Awake()
     {
@@ -114,6 +116,7 @@ public sealed class PlayerController : MonoBehaviour
         sprintAction?.Enable();
         crouchAction?.Enable();
         interactAction?.Enable();
+        dropAction?.Enable();
     }
 
     void OnDisable()
@@ -123,6 +126,7 @@ public sealed class PlayerController : MonoBehaviour
         sprintAction?.Disable();
         crouchAction?.Disable();
         interactAction?.Disable();
+        dropAction?.Disable();
     }
 
     void SetupInput()
@@ -153,6 +157,10 @@ public sealed class PlayerController : MonoBehaviour
         // Interact: E
         interactAction = new InputAction("Interact", InputActionType.Button);
         interactAction.AddBinding("<Keyboard>/e");
+
+        // Drop carry item: G
+        dropAction = new InputAction("Drop", InputActionType.Button);
+        dropAction.AddBinding("<Keyboard>/g");
     }
 
     void Update()
@@ -175,15 +183,16 @@ public sealed class PlayerController : MonoBehaviour
         }
 
         if (PreventInput())
+        {
+            CancelActiveInteraction();
             return;
+        }
 
         Look();
         UpdateCrouch();
         MoveAndGravity();
         CameraBob();
-
-        if (interactAction != null && interactAction.WasPressedThisFrame())
-            TryInteract();
+        UpdateInteraction();
 
     }
 
@@ -224,7 +233,7 @@ public sealed class PlayerController : MonoBehaviour
         float x = move.x;
         float z = move.y;
 
-        bool isSprinting = sprintAction.IsPressed() && !isCrouched;
+        bool isSprinting = sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
 
         bool movingBackwards = z < 0;
         float backwardsMult = (movingBackwards ? 0.35f : 1);
@@ -250,7 +259,7 @@ public sealed class PlayerController : MonoBehaviour
 
     void UpdateCrouch()
     {
-        bool wantsCrouch = crouchAction != null && crouchAction.IsPressed();
+        bool wantsCrouch = crouchAction != null && crouchAction.IsPressed() && CanCrouchCurrentCarry();
 
         // NEW LOGIC:
         // - If holding crouch -> crouch.
@@ -337,7 +346,7 @@ public sealed class PlayerController : MonoBehaviour
         }
 
         bool movingOnGround = grounded && planarSpeed01 > 0.01f;
-        bool isSprinting = sprintAction.IsPressed() && !isCrouched;
+        bool isSprinting = sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
         bool movingBackwards = moveAction.ReadValue<Vector2>().y < 0f;
         float backwardsMult = (movingBackwards ? 0.75f : 1);
 
@@ -374,7 +383,7 @@ public sealed class PlayerController : MonoBehaviour
         // (Fallback raycast remains in place for safety.)
         if (hoveredInteractable != null)
         {
-            hoveredInteractable.Interact();
+            StartInteraction(hoveredInteractable);
             return;
         }
 
@@ -389,7 +398,7 @@ public sealed class PlayerController : MonoBehaviour
         {
             Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
             if (interactable != null)
-                interactable.Interact();
+                StartInteraction(interactable);
         }
     }
 
@@ -418,6 +427,9 @@ public sealed class PlayerController : MonoBehaviour
             next = hit.collider.GetComponentInParent<Interactable>();
 
         // Only update the outline system when the hovered interactable changes.
+        if (activeInteractable != null && next != activeInteractable)
+            CancelActiveInteraction();
+
         if (next == hoveredInteractable)
             return;
 
@@ -483,5 +495,64 @@ public sealed class PlayerController : MonoBehaviour
     {
         float t = 1f - Mathf.Exp(-sharpness * Time.deltaTime);
         return Vector3.Lerp(current, target, t);
+    }
+
+    void UpdateInteraction()
+    {
+        if (interactAction == null)
+            return;
+
+        if (activeInteractable != null)
+        {
+            bool stillHolding = interactAction.IsPressed();
+            bool stillFocused = hoveredInteractable == activeInteractable;
+
+            if (!stillHolding || !stillFocused || !activeInteractable.CanInteract())
+            {
+                CancelActiveInteraction();
+            }
+            else
+            {
+                activeInteractable.TickInteraction(Time.deltaTime);
+                if (!activeInteractable.IsInteracting)
+                    activeInteractable = null;
+            }
+        }
+
+        if (interactAction.WasPressedThisFrame())
+            TryInteract();
+
+        if (dropAction != null && dropAction.WasPressedThisFrame())
+            TaskManager.Instance?.TryDropActiveDelivery(this);
+    }
+
+    void StartInteraction(Interactable interactable)
+    {
+        if (interactable == null || !interactable.CanInteract())
+            return;
+
+        interactable.BeginInteraction();
+
+        if (interactable.Mode == InteractionMode.Hold && interactable.IsInteracting)
+            activeInteractable = interactable;
+    }
+
+    void CancelActiveInteraction()
+    {
+        if (activeInteractable == null)
+            return;
+
+        activeInteractable.CancelInteraction();
+        activeInteractable = null;
+    }
+
+    bool CanSprintCurrentCarry()
+    {
+        return TaskManager.Instance == null || TaskManager.Instance.CanSprintWithForcedDelivery();
+    }
+
+    bool CanCrouchCurrentCarry()
+    {
+        return TaskManager.Instance == null || TaskManager.Instance.CanCrouchWithForcedDelivery();
     }
 }

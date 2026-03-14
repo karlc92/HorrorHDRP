@@ -90,6 +90,7 @@ public class RunManager : MonoBehaviour
         if (!CanEndNight() || Game.State?.Run == null)
             return false;
 
+        TaskManager.Instance?.OnNightEnded();
         Game.State.Run.CurrentNightNumber++;
         if (Game.State.Run.Plan != null && Game.State.Run.CurrentNightNumber > Game.State.Run.Plan.Nights.Count)
         {
@@ -119,6 +120,11 @@ public class RunManager : MonoBehaviour
             JsonUtility.ToJson(run.NightStartSnapshot.MonsterBrainState ?? new MonsterBrainState()));
         run.CurrentNightState = JsonUtility.FromJson<NightRuntimeState>(
             JsonUtility.ToJson(run.NightStartSnapshot.NightState ?? new NightRuntimeState()));
+        run.CleanseObstructionGroups = JsonUtility.FromJson<CleanseObstructionSnapshotWrapper>(
+            JsonUtility.ToJson(new CleanseObstructionSnapshotWrapper
+            {
+                Groups = run.NightStartSnapshot.CleanseObstructionGroups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>()
+            }))?.Groups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>();
         run.NightStarted = run.CurrentNightState != null && run.CurrentNightState.NightStarted;
         ApplyCurrentNightPlan();
         Game.SaveGameState();
@@ -160,6 +166,11 @@ public class RunManager : MonoBehaviour
             PlayerRot = playerStartPoint != null ? playerStartPoint.rotation : run.PlayerRot,
             MonsterBrainState = JsonUtility.FromJson<MonsterBrainState>(JsonUtility.ToJson(run.MonsterBrainState ?? new MonsterBrainState())),
             NightState = JsonUtility.FromJson<NightRuntimeState>(JsonUtility.ToJson(run.CurrentNightState ?? new NightRuntimeState())),
+            CleanseObstructionGroups = JsonUtility.FromJson<CleanseObstructionSnapshotWrapper>(
+                JsonUtility.ToJson(new CleanseObstructionSnapshotWrapper
+                {
+                    Groups = run.CleanseObstructionGroups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>()
+                }))?.Groups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>(),
         };
     }
 
@@ -176,5 +187,12 @@ public class RunManager : MonoBehaviour
             bool active = plan.ActiveZoneIds == null || plan.ActiveZoneIds.Count == 0 || plan.ActiveZoneIds.Contains(zone.ZoneId);
             zone.ApplyActiveState(active);
         }
+    }
+
+    [System.Serializable]
+    private class CleanseObstructionSnapshotWrapper
+    {
+        public System.Collections.Generic.List<CleanseObstructionGroupState> Groups =
+            new System.Collections.Generic.List<CleanseObstructionGroupState>();
     }
 }

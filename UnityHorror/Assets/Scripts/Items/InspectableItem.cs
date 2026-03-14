@@ -33,7 +33,7 @@ public class InspectableItem : Interactable
 
     }
 
-    public void NotifyInspectionClosed()
+    public virtual void NotifyInspectionClosed()
     {
         Inspecting = false;
         WorldModel.SetActive(!Inspecting);

@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
 
 [CustomEditor(typeof(RunDebugView))]
 public class RunDebugViewEditor : Editor
@@ -61,9 +62,23 @@ public class RunDebugViewEditor : Editor
             {
                 EditorGUILayout.LabelField("Definition", task.TaskDefinitionId);
                 EditorGUILayout.LabelField("Instance", task.TaskInstanceId);
-                EditorGUILayout.LabelField("Stage", task.CurrentStageIndex.ToString());
+                EditorGUILayout.LabelField("Current Group", task.CurrentGroupIndex.ToString());
                 EditorGUILayout.LabelField("Completed", task.Completed.ToString());
                 EditorGUILayout.LabelField("Required", task.RequiredForNightCompletion.ToString());
+
+                if (task.Stages != null && task.Stages.Count > 0)
+                {
+                    var activeStages = task.Stages
+                        .Where(s => s != null && s.GroupIndex == task.CurrentGroupIndex)
+                        .OrderBy(s => s.StageIndex);
+
+                    foreach (var stage in activeStages)
+                    {
+                        EditorGUILayout.LabelField(
+                            $"Stage {stage.StageIndex} ({stage.StageId})",
+                            $"Completed={stage.Completed} Progress={stage.Progress:0.##}");
+                    }
+                }
             }
         }
 

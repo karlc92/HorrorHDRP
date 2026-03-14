@@ -81,8 +81,10 @@ public static class Game
             MonsterBrainState = new MonsterBrainState(),
             CurrentNightState = new NightRuntimeState(),
             NightStartSnapshot = new NightSnapshot(),
+            Inventory = new InventoryState(),
             Plan = new RunPlan(),
             NightStarted = false,
+            CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>(),
         };
 
         SaveGameState();
@@ -135,6 +137,10 @@ public static class Game
                 State.Run.Plan = new RunPlan();
             if (State.Run.NightStartSnapshot == null)
                 State.Run.NightStartSnapshot = new NightSnapshot();
+            if (State.Run.Inventory == null)
+                State.Run.Inventory = new InventoryState();
+            if (State.Run.CleanseObstructionGroups == null)
+                State.Run.CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>();
         }
 
         NotifyBeforeSave();
@@ -176,6 +182,8 @@ public static class Game
                 State.Run.CurrentNightState ??= new NightRuntimeState();
                 State.Run.Plan ??= new RunPlan();
                 State.Run.NightStartSnapshot ??= new NightSnapshot();
+                State.Run.Inventory ??= new InventoryState();
+                State.Run.CleanseObstructionGroups ??= new System.Collections.Generic.List<CleanseObstructionGroupState>();
             }
 
             Console.Print("Loaded game state");
