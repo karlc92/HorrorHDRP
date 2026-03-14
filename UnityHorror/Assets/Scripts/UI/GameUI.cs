@@ -28,7 +28,7 @@ public class GameUI : MonoBehaviour
     {
         if (deadMenuActivationTimer != -1 && deadMenuActivationTimer < Time.time && !deadMenu.activeSelf)
         {
-            loadPreviousSaveButton.SetActive(Game.HasSaveFile(Game.State.Slot));
+            loadPreviousSaveButton.SetActive(Game.HasActiveRun());
             deadMenu.SetActive(true);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -42,7 +42,7 @@ public class GameUI : MonoBehaviour
 
     public void LoadPreviousSave()
     {
-        Game.LoadGame(Game.State.Slot);
+        Game.ContinueRun();
     }
 
     public void ShowNotification(string text, float duration = 3f, float notificationVolume = 0.5f)

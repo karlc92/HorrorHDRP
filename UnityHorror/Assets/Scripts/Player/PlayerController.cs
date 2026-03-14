@@ -184,6 +184,7 @@ public sealed class PlayerController : MonoBehaviour
 
         if (interactAction != null && interactAction.WasPressedThisFrame())
             TryInteract();
+
     }
 
     private void FixedUpdate()

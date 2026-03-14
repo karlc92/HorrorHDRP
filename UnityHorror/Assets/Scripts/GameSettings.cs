@@ -11,5 +11,5 @@ public class GameSettings
     public float MasterVolume { get; set; } = 1;
     public bool Subtitles { get; set; } = true;
     public Languages Language = Languages.English;
-    
+    public bool UseNonEnglishDialogueAudio { get; set; } = false;
 }

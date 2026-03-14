@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -59,7 +57,7 @@ public class MainMenuUI : MonoBehaviour
 
     public string GetSavedDataDisplay(int slot)
     {
-        if (!Game.HasSaveFile(slot))
+        if (!Game.HasActiveRun())
             return $"New Game";
 
         if (TryReadSaveState(slot, out var state))
@@ -74,13 +72,13 @@ public class MainMenuUI : MonoBehaviour
 
     public void SlotButtonClick(int slot)
     {
-        if (Game.HasSaveFile(slot))
+        if (Game.HasActiveRun())
         {
-            Game.LoadGame(slot);
+            Game.ContinueRun();
         }
         else
         {
-            Game.StartNewGame(slot);
+            Game.StartNewRun();
         }
     }
 
@@ -90,7 +88,7 @@ public class MainMenuUI : MonoBehaviour
 
         try
         {
-            string path = Path.Combine(Application.persistentDataPath, $"{Game.SaveFilePrefix}{slot}.json");
+            string path = Game.GetSavePath();
             if (!File.Exists(path))
                 return false;
 
@@ -99,7 +97,7 @@ public class MainMenuUI : MonoBehaviour
                 return false;
 
             state = JsonUtility.FromJson<GameState>(json);
-            return state != null;
+            return state != null && state.Run != null;
         }
         catch
         {
