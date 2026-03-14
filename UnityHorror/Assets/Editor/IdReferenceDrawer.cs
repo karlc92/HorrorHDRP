@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -29,13 +30,13 @@ public class IdReferenceDrawer : PropertyDrawer
 
         if (property.propertyType == SerializedPropertyType.String)
         {
-            DrawStringPopup(position, property, label, options);
+            DrawStringPopup(position, property, label, attributeData, options);
             return;
         }
 
         if (IsStringArray(property))
         {
-            DrawStringArray(position, property, label, options);
+            DrawStringArray(position, property, label, attributeData, options);
             return;
         }
 
@@ -47,7 +48,12 @@ public class IdReferenceDrawer : PropertyDrawer
         return property.isArray && property.propertyType != SerializedPropertyType.String;
     }
 
-    private static void DrawStringPopup(Rect position, SerializedProperty property, GUIContent label, List<string> options)
+    private static void DrawStringPopup(
+        Rect position,
+        SerializedProperty property,
+        GUIContent label,
+        IdReferenceAttribute attributeData,
+        List<string> options)
     {
         EditorGUI.BeginProperty(position, label, property);
 
@@ -58,14 +64,19 @@ public class IdReferenceDrawer : PropertyDrawer
         string displayText = string.IsNullOrWhiteSpace(property.stringValue) ? "<None>" : property.stringValue;
         if (GUI.Button(buttonRect, displayText, EditorStyles.popup))
         {
-            var optionsWithContext = BuildOptionEntries((IdReferenceAttribute)attribute, property.stringValue);
+            var optionsWithContext = BuildOptionEntries(attributeData, property.stringValue);
             OpenSearchWindow(buttonRect, label.text, property.serializedObject, property.propertyPath, property.stringValue, optionsWithContext);
         }
 
         EditorGUI.EndProperty();
     }
 
-    private static void DrawStringArray(Rect position, SerializedProperty property, GUIContent label, List<string> options)
+    private static void DrawStringArray(
+        Rect position,
+        SerializedProperty property,
+        GUIContent label,
+        IdReferenceAttribute attributeData,
+        List<string> options)
     {
         var foldoutRect = new Rect(position.x, position.y, position.width, LineHeight);
         property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label, true);
@@ -84,7 +95,7 @@ public class IdReferenceDrawer : PropertyDrawer
         {
             var element = property.GetArrayElementAtIndex(i);
             var elementRect = new Rect(position.x, y, position.width, LineHeight);
-            DrawStringPopup(elementRect, element, new GUIContent($"Element {i}"), options);
+            DrawStringPopup(elementRect, element, new GUIContent($"Element {i}"), attributeData, options);
             y += LineHeight + VerticalSpacing;
         }
 

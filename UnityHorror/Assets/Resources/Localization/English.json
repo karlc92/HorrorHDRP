@@ -1,0 +1,209 @@
+{
+    "Language": "English",
+    "Entries": [
+        {
+            "Key": "task.sample.chapel_service.condition.pulpit",
+            "Value": "Remain at the pulpit"
+        },
+        {
+            "Key": "task.sample.chapel_service.condition.pulpit_done",
+            "Value": "Pulpit held"
+        },
+        {
+            "Key": "task.sample.chapel_service.group.0.stage.0",
+            "Value": "Carry the prayer book from the bench to the pulpit."
+        },
+        {
+            "Key": "task.sample.chapel_service.group.0.stage.1",
+            "Value": "Restore the chapel lights before the service begins."
+        },
+        {
+            "Key": "task.sample.chapel_service.group.1.stage.0",
+            "Value": "Read from the pulpit until the service is complete."
+        },
+        {
+            "Key": "task.sample.chapel_service.point.chandelier",
+            "Value": "Restore the chandelier light"
+        },
+        {
+            "Key": "task.sample.chapel_service.point.left",
+            "Value": "Relight the left side candle"
+        },
+        {
+            "Key": "task.sample.chapel_service.point.right",
+            "Value": "Relight the right side candle"
+        },
+        {
+            "Key": "task.sample.chapel_service.title",
+            "Value": "Restore the chapel service"
+        },
+        {
+            "Key": "task.sample.false_marker.clue.epitaph",
+            "Value": "The true marker mentions no saint by name, only a penitent caretaker."
+        },
+        {
+            "Key": "task.sample.false_marker.clue.note",
+            "Value": "A bench note says the false stone was carved after the flood to calm the mourners."
+        },
+        {
+            "Key": "task.sample.false_marker.group.0.stage.0",
+            "Value": "Study the grave markers and select the one that bears the chapel's false dedication."
+        },
+        {
+            "Key": "task.sample.false_marker.title",
+            "Value": "Identify the false chapel marker"
+        },
+        {
+            "Key": "task.sample.lantern_wake.condition.lantern",
+            "Value": "Keep the funeral lantern active"
+        },
+        {
+            "Key": "task.sample.lantern_wake.condition.lantern_done",
+            "Value": "Funeral lantern active"
+        },
+        {
+            "Key": "task.sample.lantern_wake.condition.volume",
+            "Value": "Remain at the wake grave"
+        },
+        {
+            "Key": "task.sample.lantern_wake.condition.volume_done",
+            "Value": "Wake grave held"
+        },
+        {
+            "Key": "task.sample.lantern_wake.group.0.stage.0",
+            "Value": "Restore the wake candles beside the church benches."
+        },
+        {
+            "Key": "task.sample.lantern_wake.group.1.stage.0",
+            "Value": "Carry the funeral lantern to the wake grave without letting it go dark."
+        },
+        {
+            "Key": "task.sample.lantern_wake.group.2.stage.0",
+            "Value": "Complete the final prayer beside the wake grave."
+        },
+        {
+            "Key": "task.sample.lantern_wake.point.bench_left",
+            "Value": "Relight the left bench candle"
+        },
+        {
+            "Key": "task.sample.lantern_wake.point.bench_right",
+            "Value": "Relight the right bench candle"
+        },
+        {
+            "Key": "task.sample.lantern_wake.title",
+            "Value": "Prepare the lantern wake"
+        },
+        {
+            "Key": "task.sample.memorial_candles.group.0.stage.0",
+            "Value": "Restore the memorial candles around the rain-blackened grave."
+        },
+        {
+            "Key": "task.sample.memorial_candles.point.center",
+            "Value": "Relight the central memorial candle"
+        },
+        {
+            "Key": "task.sample.memorial_candles.point.north",
+            "Value": "Relight the north memorial candle"
+        },
+        {
+            "Key": "task.sample.memorial_candles.point.south",
+            "Value": "Relight the south memorial candle"
+        },
+        {
+            "Key": "task.sample.memorial_candles.title",
+            "Value": "Relight the memorial candles"
+        },
+        {
+            "Key": "task.sample.penitent_grave.clue.bench",
+            "Value": "A soaked note says his marker was repaired with plain stone after the bell tower cracked."
+        },
+        {
+            "Key": "task.sample.penitent_grave.clue.epitaph",
+            "Value": "The penitent asked to be buried facing the chapel, not the gate."
+        },
+        {
+            "Key": "task.sample.penitent_grave.condition.volume",
+            "Value": "Remain within the grave's prayer circle"
+        },
+        {
+            "Key": "task.sample.penitent_grave.condition.volume_done",
+            "Value": "Prayer circle held"
+        },
+        {
+            "Key": "task.sample.penitent_grave.group.0.stage.0",
+            "Value": "Identify the penitent's grave from the scattered clues."
+        },
+        {
+            "Key": "task.sample.penitent_grave.group.1.stage.0",
+            "Value": "Return the bone casket to the penitent's grave."
+        },
+        {
+            "Key": "task.sample.penitent_grave.group.2.stage.0",
+            "Value": "Keep vigil over the grave until the prayer settles."
+        },
+        {
+            "Key": "task.sample.penitent_grave.title",
+            "Value": "Set the penitent to rest"
+        },
+        {
+            "Key": "task.sample.pulpit_watch.condition.volume",
+            "Value": "Remain within the pulpit prayer space"
+        },
+        {
+            "Key": "task.sample.pulpit_watch.condition.volume_done",
+            "Value": "Pulpit prayer space held"
+        },
+        {
+            "Key": "task.sample.pulpit_watch.group.0.stage.0",
+            "Value": "Begin the watch at the pulpit and remain there until the prayer is complete."
+        },
+        {
+            "Key": "task.sample.pulpit_watch.title",
+            "Value": "Keep watch at the pulpit"
+        },
+        {
+            "Key": "task.sample.rooted_bench.group.0.stage.0",
+            "Value": "Trigger the rooted growth near the church bench and burn it back before it settles."
+        },
+        {
+            "Key": "task.sample.rooted_bench.title",
+            "Value": "Burn back the rooted bench growth"
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.group.0.stage.0",
+            "Value": "Bring consecrated oil to the rooted reliquary."
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.group.1.stage.0",
+            "Value": "Trigger the reliquary growth and cleanse it before the roots settle."
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.group.2.stage.0",
+            "Value": "Restore the candles around the reliquary in sequence."
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.point.east",
+            "Value": "Relight the east reliquary candle"
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.point.shrine",
+            "Value": "Restore the shrine lantern"
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.point.west",
+            "Value": "Relight the west reliquary candle"
+        },
+        {
+            "Key": "task.sample.rooted_reliquary.title",
+            "Value": "Free the rooted reliquary"
+        },
+        {
+            "Key": "task.sample.sanctified_candle_delivery.group.0.stage.0",
+            "Value": "Carry the sanctified candle to the altar while it remains lit."
+        },
+        {
+            "Key": "task.sample.sanctified_candle_delivery.title",
+            "Value": "Carry the sanctified candle to the altar"
+        }
+    ]
+}
