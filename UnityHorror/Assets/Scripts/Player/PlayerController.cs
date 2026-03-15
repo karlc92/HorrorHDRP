@@ -397,7 +397,7 @@ public sealed class PlayerController : MonoBehaviour
         if (Physics.Raycast(origin, dir, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
         {
             Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
-            if (interactable != null)
+            if (interactable != null && interactable.IsValidInteractionTarget())
                 StartInteraction(interactable);
         }
     }
@@ -424,7 +424,11 @@ public sealed class PlayerController : MonoBehaviour
 
         Interactable next = null;
         if (Physics.Raycast(origin, dir, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
+        {
             next = hit.collider.GetComponentInParent<Interactable>();
+            if (next != null && !next.IsValidInteractionTarget())
+                next = null;
+        }
 
         // Only update the outline system when the hovered interactable changes.
         if (activeInteractable != null && next != activeInteractable)
@@ -502,6 +506,12 @@ public sealed class PlayerController : MonoBehaviour
         if (interactAction == null)
             return;
 
+        if (TaskListManager.Instance != null && TaskListManager.Instance.IsOpen)
+        {
+            CancelActiveInteraction();
+            return;
+        }
+
         if (activeInteractable != null)
         {
             bool stillHolding = interactAction.IsPressed();
@@ -528,7 +538,7 @@ public sealed class PlayerController : MonoBehaviour
 
     void StartInteraction(Interactable interactable)
     {
-        if (interactable == null || !interactable.CanInteract())
+        if (interactable == null || !interactable.IsValidInteractionTarget())
             return;
 
         interactable.BeginInteraction();

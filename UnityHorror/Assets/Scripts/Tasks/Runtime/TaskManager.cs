@@ -177,6 +177,53 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
         return GetActiveDeliverStage()?.AllowCrouch ?? true;
     }
 
+    public T GetHookById<T>(string hookId) where T : TaskHook
+    {
+        return GetHook<T>(hookId);
+    }
+
+    public bool IsHookCurrentlyValid(TaskHook hook)
+    {
+        if (hook == null || Game.State?.Run?.CurrentNightState == null)
+            return false;
+
+        foreach (var taskState in GetCurrentNightTasks())
+        {
+            if (taskState == null || taskState.Completed)
+                continue;
+
+            if (!definitionsById.TryGetValue(taskState.TaskDefinitionId, out var definition) || definition?.StageGroups == null)
+                continue;
+
+            int groupIndex = taskState.CurrentGroupIndex;
+            if (groupIndex < 0 || groupIndex >= definition.StageGroups.Count)
+                continue;
+
+            var group = definition.StageGroups[groupIndex];
+            if (group?.Stages == null)
+                continue;
+
+            foreach (var stageDefinition in group.Stages)
+            {
+                if (stageDefinition == null)
+                    continue;
+
+                var stageState = taskState.Stages?.FirstOrDefault(s =>
+                    s != null &&
+                    s.GroupIndex == groupIndex &&
+                    string.Equals(s.StageId, stageDefinition.StageId, StringComparison.OrdinalIgnoreCase));
+
+                if (stageState == null || stageState.Completed)
+                    continue;
+
+                if (IsHookValidForStage(stageDefinition, stageState, hook))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     public void RegisterHook(TaskHook hook)
     {
         if (hook == null || string.IsNullOrWhiteSpace(hook.HookId))
@@ -277,6 +324,8 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
         if (string.IsNullOrWhiteSpace(groupId))
             return;
 
+        bool completedViaRuntimeTask = false;
+
         foreach (var task in GetCurrentNightTasks())
         {
             if (task?.Stages == null)
@@ -287,12 +336,27 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
                 if (stage == null || !string.Equals(stage.RuntimeBindingId, groupId, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                stage.Completed = true;
                 stage.Progress = 1f;
+
+                if (settledBadly)
+                {
+                    var cleanseStage = GetStageDefinition(task.TaskDefinitionId, stage.StageId) as CleanseStageDefinition;
+                    var triggerHook = GetHook<CleanseTriggerHook>(cleanseStage?.TriggerHookId);
+                    triggerHook?.NotifySettled();
+                }
+
+                if (tasksByInstanceId.TryGetValue(task.TaskInstanceId, out var runtimeTask) && runtimeTask != null)
+                {
+                    completedViaRuntimeTask |= runtimeTask.TryCompleteStage(stage.StageId);
+                    continue;
+                }
+
+                stage.Completed = true;
             }
         }
 
-        RebuildTasksFromRunState();
+        if (!completedViaRuntimeTask)
+            RebuildTasksFromRunState();
 
         if (!settledBadly)
             RemoveCleanseGroup(groupId);
@@ -323,6 +387,11 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
     }
 
     public void OnAfterGameLoaded(GameState state)
+    {
+        RefreshFromRunState();
+    }
+
+    public void RefreshFromRunState()
     {
         RebuildTasksFromRunState();
         RestoreDroppedDeliverPickups();
@@ -617,6 +686,7 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
 
         var instance = Instantiate(prefab, spawnPosition, sourceHook.transform.rotation);
         instance.name = $"{prefab.name}_Dropped_{stageState.StageId}";
+        instance.SetActive(true);
 
         var droppedHook = instance.GetComponentInChildren<DeliverPickupHook>();
         if (droppedHook != null)
@@ -684,8 +754,8 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
         if (string.IsNullOrWhiteSpace(hookId))
             return null;
 
-        if (!hooksById.TryGetValue(hookId, out var hook))
-            return null;
+        if (!hooksById.TryGetValue(hookId, out var hook) || hook == null)
+            hook = FindHookInLoadedScene<T>(hookId);
 
         return hook as T;
     }
@@ -773,5 +843,104 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
         var hook = GetHook<DeliverPickupHook>(hookId);
         if (hook != null)
             hook.gameObject.SetActive(isActive);
+    }
+
+    private T FindHookInLoadedScene<T>(string hookId) where T : TaskHook
+    {
+        if (string.IsNullOrWhiteSpace(hookId))
+            return null;
+
+        foreach (var hook in Resources.FindObjectsOfTypeAll<T>())
+        {
+            if (hook == null || string.IsNullOrWhiteSpace(hook.HookId))
+                continue;
+
+            if (!string.Equals(hook.HookId, hookId, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!hook.gameObject.scene.IsValid() || !hook.gameObject.scene.isLoaded)
+                continue;
+
+            hooksById[hookId] = hook;
+            return hook;
+        }
+
+        return null;
+    }
+
+    private bool IsHookValidForStage(TaskStageDefinition stageDefinition, TaskStageRuntimeState stageState, TaskHook hook)
+    {
+        if (stageDefinition == null || stageState == null || hook == null)
+            return false;
+
+        if (stageDefinition is RiddleStageDefinition riddleStage)
+        {
+            if (hook is RiddleAnswerHook answerHook)
+                return string.Equals(riddleStage.CorrectHookId, answerHook.HookId, StringComparison.OrdinalIgnoreCase)
+                    || (riddleStage.CandidateHookIds?.Any(id => string.Equals(id, answerHook.HookId, StringComparison.OrdinalIgnoreCase)) ?? false);
+
+            if (hook is RiddleClueHook clueHook)
+                return riddleStage.AdditionalClues?.Any(c => c != null && string.Equals(c.HookId, clueHook.HookId, StringComparison.OrdinalIgnoreCase)) ?? false;
+
+            return false;
+        }
+
+        if (stageDefinition is RestoreStageDefinition restoreStage)
+        {
+            if (hook is not InteractionTaskHook interactionHook || restoreStage.RequiredPoints == null)
+                return false;
+
+            int pointIndex = restoreStage.RequiredPoints.FindIndex(p => p != null && string.Equals(p.HookId, interactionHook.HookId, StringComparison.OrdinalIgnoreCase));
+            if (pointIndex < 0 || stageState.CompletedHookIds.Contains(interactionHook.HookId))
+                return false;
+
+            return !restoreStage.EnforceSequence || pointIndex == stageState.CompletedHookIds.Count;
+        }
+
+        if (stageDefinition is CleanseStageDefinition cleanseStage)
+        {
+            return !stageState.Activated
+                && hook is CleanseTriggerHook triggerHook
+                && string.Equals(cleanseStage.TriggerHookId, triggerHook.HookId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (stageDefinition is HoldStageDefinition holdStage)
+        {
+            return !stageState.Activated
+                && hook is InteractionTaskHook activationHook
+                && string.Equals(holdStage.ActivationHookId, activationHook.HookId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (stageDefinition is DeliverStageDefinition deliverStage)
+        {
+            if (hook is DeliverPickupHook pickupHook)
+            {
+                bool isRuntimeDroppedPickup = runtimeDeliverPickupsByStageId.TryGetValue(stageState.StageId, out var runtimePickup)
+                    && runtimePickup != null
+                    && pickupHook.transform.IsChildOf(runtimePickup.transform);
+                return !stageState.Completed
+                    && !stageState.IsDeliverCarried
+                    && string.Equals(deliverStage.PickupHookId, pickupHook.HookId, StringComparison.OrdinalIgnoreCase)
+                    && (!stageState.HasDroppedDeliverPickup || isRuntimeDroppedPickup)
+                    && (InventoryManager.Instance == null || !InventoryManager.Instance.HasForcedDeliveryItem);
+            }
+
+            if (hook is DeliverDepositHook depositHook)
+            {
+                if (!string.Equals(deliverStage.DeliveryHookId, depositHook.HookId, StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                var inventory = InventoryManager.Instance;
+                if (inventory == null || !inventory.HasActiveItem(deliverStage.HeldItem.ItemId))
+                    return false;
+
+                if (!string.IsNullOrWhiteSpace(deliverStage.RequiredItemConditionId))
+                    return inventory.GetCondition(deliverStage.HeldItem.ItemId, deliverStage.RequiredItemConditionId);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -42,6 +42,7 @@ public class RunManager : MonoBehaviour
         run.CurrentNightState = TaskManager.CreateNightRuntimeStateForPlan(GetCurrentNightPlan());
         run.NightStarted = false;
         CaptureNightStartSnapshot();
+        TaskManager.Instance?.RefreshFromRunState();
         ApplyCurrentNightPlan();
         Game.SaveGameState();
     }
@@ -103,6 +104,7 @@ public class RunManager : MonoBehaviour
         Game.State.Run.CurrentNightState = TaskManager.CreateNightRuntimeStateForPlan(GetCurrentNightPlan());
         Game.State.Run.NightStarted = false;
         CaptureNightStartSnapshot();
+        TaskManager.Instance?.RefreshFromRunState();
         ApplyCurrentNightPlan();
         Game.SaveGameState();
         return true;
@@ -126,6 +128,7 @@ public class RunManager : MonoBehaviour
                 Groups = run.NightStartSnapshot.CleanseObstructionGroups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>()
             }))?.Groups ?? new System.Collections.Generic.List<CleanseObstructionGroupState>();
         run.NightStarted = run.CurrentNightState != null && run.CurrentNightState.NightStarted;
+        TaskManager.Instance?.RefreshFromRunState();
         ApplyCurrentNightPlan();
         Game.SaveGameState();
         Game.ContinueRun();

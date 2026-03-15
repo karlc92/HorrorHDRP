@@ -6,9 +6,19 @@ public class RiddleClueInspectableItem : InspectableItem
 {
     [SerializeField] private RiddleClueHook clueHook;
 
-    private void Reset()
+    protected override void Reset()
     {
+        base.Reset();
         clueHook = GetComponent<RiddleClueHook>();
+    }
+
+    public override bool CanInteract()
+    {
+        if (!base.CanInteract())
+            return false;
+
+        clueHook ??= GetComponent<RiddleClueHook>();
+        return clueHook != null && (TaskManager.Instance == null || TaskManager.Instance.IsHookCurrentlyValid(clueHook));
     }
 
     public override void NotifyInspectionClosed()

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 public static class SampleTaskScenePopulator
 {
+    private const int InteractableLayer = 9;
     private const string SampleRootName = "SampleTasks_Auto";
     private const string EnvironmentRootName = "Environment";
     private const string PlayerStartName = "PlayerStartPoint";
@@ -221,29 +223,33 @@ public static class SampleTaskScenePopulator
 
     private static GameObject CreateRiddleAnswer(Transform parent, string hookId, Zone zone, Vector3 position, string visualPrefabPath, Vector3 visualScale, Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("RiddleAnswer_" + Sanitize(hookId), parent, position, new Vector3(1.6f, 2f, 1.6f));
+        var root = CreateInteractionRoot("RiddleAnswer_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<RiddleAnswerHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<RiddleAnswerInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1.4f, 0.8f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1.4f, 0.8f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.6f, 2f, 1.6f));
+        AddNotificationListener(root, hook.OnSelected, $"You inspect {FormatObjectName(hookId)}.");
         return root;
     }
 
     private static GameObject CreateRiddleClue(Transform parent, string hookId, Zone zone, Vector3 position, string visualPrefabPath, string description)
     {
-        var root = CreateInteractionRoot("RiddleClue_" + Sanitize(hookId), parent, position, new Vector3(1.2f, 0.9f, 1.2f));
+        var root = CreateInteractionRoot("RiddleClue_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<RiddleClueHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
 
         var visual = AttachThemedVisual(root.transform, visualPrefabPath, Vector3.one, Vector3.zero, PrimitiveType.Cube, new Vector3(0.8f, 0.1f, 0.6f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.2f, 0.9f, 1.2f));
 
         var inspectable = Undo.AddComponent<RiddleClueInspectableItem>(root);
         inspectable.WorldModel = visual;
         inspectable.InspectPrefab = visual;
         inspectable.Description = description;
         inspectable.InspectScaleMultiplier = 1.75f;
+        AddNotificationListener(root, hook.OnInspectionClosed, $"Clue noted: {description}");
         return root;
     }
 
@@ -256,12 +262,17 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3? visualRotation = null)
     {
-        var root = CreateInteractionRoot("RestorePoint_" + Sanitize(hookId), parent, position, new Vector3(1.2f, 1.2f, 1.2f));
+        var root = CreateInteractionRoot("RestorePoint_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<InteractionTaskHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<RestoreInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation ?? Vector3.zero, PrimitiveType.Cylinder, new Vector3(0.6f, 0.8f, 0.6f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation ?? Vector3.zero, PrimitiveType.Cylinder, new Vector3(0.6f, 0.8f, 0.6f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.2f, 1.2f, 1.2f));
+        AddNotificationListener(root, hook.OnInteracted, $"You tend {FormatObjectName(hookId)}.");
+        AddNotificationListener(root, hook.OnStepSucceeded, $"{FormatObjectName(hookId)} restored.");
+        AddNotificationListener(root, hook.OnStepFailed, $"{FormatObjectName(hookId)} is not ready yet.");
+        AddNotificationListener(root, hook.OnTaskCompleted, "Restoration complete.");
         return root;
     }
 
@@ -274,12 +285,15 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("CleanseTrigger_" + Sanitize(hookId), parent, position, new Vector3(1.4f, 1.4f, 1.4f));
+        var root = CreateInteractionRoot("CleanseTrigger_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<CleanseTriggerHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<CleanseTriggerInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Sphere, new Vector3(1f, 1f, 1f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Sphere, new Vector3(1f, 1f, 1f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.4f, 1.4f, 1.4f));
+        AddNotificationListener(root, hook.OnTriggered, "The corruption begins to spread.");
+        AddNotificationListener(root, hook.OnSettled, "The corruption settles and becomes a lasting obstruction.");
         return root;
     }
 
@@ -292,11 +306,12 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("CleanseOrigin_" + Sanitize(hookId), parent, position, new Vector3(1.6f, 0.8f, 1.6f));
+        var root = CreateInteractionRoot("CleanseOrigin_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<CleanseTriggerHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cylinder, new Vector3(0.8f, 0.1f, 0.8f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cylinder, new Vector3(0.8f, 0.1f, 0.8f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.6f, 0.8f, 1.6f));
         return root;
     }
 
@@ -309,12 +324,15 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("HoldActivation_" + Sanitize(hookId), parent, position, new Vector3(1.5f, 1.8f, 1.5f));
+        var root = CreateInteractionRoot("HoldActivation_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<InteractionTaskHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<InteractionHookInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1f, 1f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1f, 1f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.5f, 1.8f, 1.5f));
+        AddNotificationListener(root, hook.OnInteracted, $"You begin {FormatObjectName(hookId)}.");
+        AddNotificationListener(root, hook.OnTaskCompleted, $"{FormatObjectName(hookId)} complete.");
         return root;
     }
 
@@ -357,12 +375,15 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("DeliverPickup_" + Sanitize(hookId), parent, position, new Vector3(1.4f, 1.4f, 1.4f));
+        var root = CreateInteractionRoot("DeliverPickup_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<DeliverPickupHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<DeliverPickupInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1f, 1f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cube, new Vector3(1f, 1f, 1f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.4f, 1.4f, 1.4f));
+        AddNotificationListener(root, hook.OnPickedUp, $"Picked up {FormatObjectName(hookId)}.");
+        AddNotificationListener(root, hook.OnDropped, $"{FormatObjectName(hookId)} dropped.");
         return root;
     }
 
@@ -375,21 +396,22 @@ public static class SampleTaskScenePopulator
         Vector3 visualScale,
         Vector3 visualRotation)
     {
-        var root = CreateInteractionRoot("DeliverDeposit_" + Sanitize(hookId), parent, position, new Vector3(1.8f, 1.8f, 1.8f));
+        var root = CreateInteractionRoot("DeliverDeposit_" + Sanitize(hookId), parent, position);
         var hook = Undo.AddComponent<DeliverDepositHook>(root);
         hook.HookId = hookId;
         hook.Zone = zone;
         Undo.AddComponent<DeliverDepositInteractable>(root);
-        AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cylinder, new Vector3(1f, 1f, 1f));
+        var visual = AttachThemedVisual(root.transform, visualPrefabPath, visualScale, visualRotation, PrimitiveType.Cylinder, new Vector3(1f, 1f, 1f));
+        EnsureInteractionCollider(root, visual, new Vector3(1.8f, 1.8f, 1.8f));
+        AddNotificationListener(root, hook.OnDelivered, $"{FormatObjectName(hookId)} delivered.");
+        AddNotificationListener(root, hook.OnInvalidDelivery, $"{FormatObjectName(hookId)} cannot be delivered yet.");
         return root;
     }
 
-    private static GameObject CreateInteractionRoot(string name, Transform parent, Vector3 worldPosition, Vector3 colliderSize)
+    private static GameObject CreateInteractionRoot(string name, Transform parent, Vector3 worldPosition)
     {
         var go = CreateGameObject(name, parent, SampleGround(worldPosition));
-        var collider = Undo.AddComponent<BoxCollider>(go);
-        collider.size = colliderSize;
-        collider.center = new Vector3(0f, colliderSize.y * 0.5f, 0f);
+        go.layer = InteractableLayer;
         return go;
     }
 
@@ -414,6 +436,7 @@ public static class SampleTaskScenePopulator
         Vector3 fallbackScale)
     {
         GameObject visual = null;
+        Vector3 localPositionOffset = GetVisualLocalPositionOffset(prefabPath, localScale);
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab != null)
         {
@@ -422,10 +445,10 @@ public static class SampleTaskScenePopulator
             {
                 Undo.RegisterCreatedObjectUndo(visual, $"Create {prefab.name}");
                 visual.transform.SetParent(parent, false);
-                visual.transform.localPosition = Vector3.zero;
+                visual.transform.localPosition = localPositionOffset;
                 visual.transform.localRotation = Quaternion.Euler(localEulerAngles);
                 visual.transform.localScale = localScale;
-                DisableCollidersRecursively(visual);
+                SetLayerRecursively(visual, InteractableLayer);
                 return visual;
             }
         }
@@ -434,12 +457,37 @@ public static class SampleTaskScenePopulator
         Undo.RegisterCreatedObjectUndo(visual, $"Create {parent.name}Visual");
         visual.name = "WorldModel";
         visual.transform.SetParent(parent, false);
-        visual.transform.localPosition = Vector3.zero;
+        visual.transform.localPosition = localPositionOffset;
         visual.transform.localRotation = Quaternion.Euler(localEulerAngles);
         visual.transform.localScale = fallbackScale;
+        SetLayerRecursively(visual, InteractableLayer);
         if (visual.TryGetComponent<Collider>(out var collider))
             Object.DestroyImmediate(collider);
         return visual;
+    }
+
+    private static void EnsureInteractionCollider(GameObject root, GameObject visual, Vector3 fallbackColliderSize)
+    {
+        if (root == null || visual == null)
+            return;
+
+        var meshColliders = visual.GetComponentsInChildren<MeshCollider>(true);
+        if (meshColliders != null && meshColliders.Length > 0)
+        {
+            foreach (var meshCollider in meshColliders)
+            {
+                if (meshCollider != null)
+                    meshCollider.enabled = true;
+            }
+
+            return;
+        }
+
+        DisableCollidersRecursively(visual);
+
+        var collider = Undo.AddComponent<BoxCollider>(root);
+        collider.size = fallbackColliderSize;
+        collider.center = new Vector3(0f, fallbackColliderSize.y * 0.5f, 0f);
     }
 
     private static void DisableCollidersRecursively(GameObject root)
@@ -448,7 +496,10 @@ public static class SampleTaskScenePopulator
             return;
 
         foreach (var collider in root.GetComponentsInChildren<Collider>(true))
-            collider.enabled = false;
+        {
+            if (collider != null)
+                collider.enabled = false;
+        }
     }
 
     private static GameObject CreateGameObject(string name, Transform parent, Vector3 worldPosition)
@@ -524,5 +575,51 @@ public static class SampleTaskScenePopulator
     private static string Sanitize(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? "Unnamed" : value.Replace('.', '_');
+    }
+
+    private static Vector3 GetVisualLocalPositionOffset(string prefabPath, Vector3 localScale)
+    {
+        float scaleY = Mathf.Max(0.01f, localScale.y);
+
+        if (string.Equals(prefabPath, LanternPrefab))
+            return new Vector3(0f, 0.35f * scaleY, 0f);
+
+        if (string.Equals(prefabPath, ChandelierPrefab))
+            return new Vector3(0f, 1.75f * scaleY, 0f);
+
+        if (string.Equals(prefabPath, TorchPrefab))
+            return new Vector3(0f, 0.6f * scaleY, 0f);
+
+        return Vector3.zero;
+    }
+
+    private static void SetLayerRecursively(GameObject root, int layer)
+    {
+        if (root == null)
+            return;
+
+        foreach (var transform in root.GetComponentsInChildren<Transform>(true))
+            transform.gameObject.layer = layer;
+    }
+
+    private static void AddNotificationListener(GameObject target, UnityEngine.Events.UnityEvent unityEvent, string message)
+    {
+        if (target == null || unityEvent == null || string.IsNullOrWhiteSpace(message))
+            return;
+
+        var relay = Undo.AddComponent<NotificationEventRelay>(target);
+        relay.Configure(message);
+        UnityEventTools.AddPersistentListener(unityEvent, relay.ShowConfiguredNotification);
+        EditorUtility.SetDirty(target);
+        EditorUtility.SetDirty(relay);
+    }
+
+    private static string FormatObjectName(string rawId)
+    {
+        if (string.IsNullOrWhiteSpace(rawId))
+            return "the task object";
+
+        string value = rawId.Replace('.', ' ').Replace('_', ' ').Trim();
+        return char.ToUpperInvariant(value[0]) + value.Substring(1);
     }
 }

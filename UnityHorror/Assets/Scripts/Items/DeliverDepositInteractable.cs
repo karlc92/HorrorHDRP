@@ -6,9 +6,19 @@ public class DeliverDepositInteractable : Interactable
 {
     private DeliverDepositHook depositHook;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         depositHook = GetComponent<DeliverDepositHook>();
+    }
+
+    public override bool CanInteract()
+    {
+        if (!base.CanInteract())
+            return false;
+
+        depositHook ??= GetComponent<DeliverDepositHook>();
+        return depositHook != null && (TaskManager.Instance == null || TaskManager.Instance.IsHookCurrentlyValid(depositHook));
     }
 
     public override void Interact()

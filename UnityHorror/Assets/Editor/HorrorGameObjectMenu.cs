@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 public static class HorrorGameObjectMenu
 {
     private const string ZoneMaterialPath = "Assets/Materials/ZoneMaterial.mat";
+    private const int InteractableLayer = 9;
 
     [MenuItem("GameObject/3D Object/Horror/Zone", false, 10)]
     private static void CreateZone(MenuCommand menuCommand)
@@ -25,6 +26,7 @@ public static class HorrorGameObjectMenu
     private static void CreateRiddleAnswer(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Riddle Answer", PrimitiveType.Cube, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<RiddleAnswerHook>();
         go.AddComponent<RiddleAnswerInteractable>();
     }
@@ -33,6 +35,7 @@ public static class HorrorGameObjectMenu
     private static void CreateRiddleClue(MenuCommand menuCommand)
     {
         var go = CreateGameObject("Riddle Clue", menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         var collider = go.AddComponent<BoxCollider>();
         collider.size = new Vector3(0.8f, 0.2f, 0.6f);
 
@@ -56,6 +59,7 @@ public static class HorrorGameObjectMenu
     private static void CreateRestorePoint(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Restore Point", PrimitiveType.Cylinder, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<InteractionTaskHook>();
         go.AddComponent<RestoreInteractable>();
     }
@@ -64,6 +68,7 @@ public static class HorrorGameObjectMenu
     private static void CreateCleanseTrigger(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Cleanse Trigger", PrimitiveType.Sphere, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<CleanseTriggerHook>();
         go.AddComponent<CleanseTriggerInteractable>();
     }
@@ -73,6 +78,7 @@ public static class HorrorGameObjectMenu
     {
         var go = CreatePrimitiveObject("Cleanse Origin Marker", PrimitiveType.Cylinder, menuCommand);
         go.transform.localScale = new Vector3(0.4f, 0.05f, 0.4f);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<CleanseTriggerHook>();
     }
 
@@ -80,6 +86,7 @@ public static class HorrorGameObjectMenu
     private static void CreateHoldActivation(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Hold Activation", PrimitiveType.Cube, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<InteractionTaskHook>();
         go.AddComponent<InteractionHookInteractable>();
     }
@@ -109,6 +116,7 @@ public static class HorrorGameObjectMenu
     private static void CreateDeliverPickup(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Deliver Pickup", PrimitiveType.Cube, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<DeliverPickupHook>();
         go.AddComponent<DeliverPickupInteractable>();
     }
@@ -117,6 +125,7 @@ public static class HorrorGameObjectMenu
     private static void CreateDeliverDeposit(MenuCommand menuCommand)
     {
         var go = CreatePrimitiveObject("Deliver Deposit", PrimitiveType.Cylinder, menuCommand);
+        SetLayerRecursively(go, InteractableLayer);
         go.AddComponent<DeliverDepositHook>();
         go.AddComponent<DeliverDepositInteractable>();
     }
@@ -197,5 +206,14 @@ public static class HorrorGameObjectMenu
         Undo.RegisterCreatedObjectUndo(go, $"Create {go.name}");
         Selection.activeObject = go;
         EditorSceneManager.MarkSceneDirty(go.scene);
+    }
+
+    private static void SetLayerRecursively(GameObject root, int layer)
+    {
+        if (root == null)
+            return;
+
+        foreach (var transform in root.GetComponentsInChildren<Transform>(true))
+            transform.gameObject.layer = layer;
     }
 }

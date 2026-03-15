@@ -41,6 +41,9 @@ public class ComposedTask : TaskBase
 
         stageState.IsDeliverCarried = false;
 
+        var pickupHook = TaskManager.Instance?.GetHookById<DeliverPickupHook>(stageDefinition.PickupHookId);
+        pickupHook?.NotifyDropped();
+
         if (stageDefinition.ResetToOriginOnDrop)
         {
             stageState.HasDroppedDeliverPickup = false;

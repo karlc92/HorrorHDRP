@@ -6,9 +6,19 @@ public class RiddleAnswerInteractable : Interactable
 {
     [SerializeField] private RiddleAnswerHook answerHook;
 
-    private void Reset()
+    protected override void Reset()
     {
+        base.Reset();
         answerHook = GetComponent<RiddleAnswerHook>();
+    }
+
+    public override bool CanInteract()
+    {
+        if (!base.CanInteract())
+            return false;
+
+        answerHook ??= GetComponent<RiddleAnswerHook>();
+        return answerHook != null && (TaskManager.Instance == null || TaskManager.Instance.IsHookCurrentlyValid(answerHook));
     }
 
     public override void Interact()
