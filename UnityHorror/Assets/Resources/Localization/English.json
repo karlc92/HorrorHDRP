@@ -19,7 +19,7 @@
         },
         {
             "Key": "task.sample.chapel_service.group.1.stage.0",
-            "Value": "Read from the pulpit until the service is complete."
+            "Value": "Read from the pulpit for {timeRemaining}."
         },
         {
             "Key": "task.sample.chapel_service.point.chandelier",
@@ -79,7 +79,7 @@
         },
         {
             "Key": "task.sample.lantern_wake.group.2.stage.0",
-            "Value": "Complete the final prayer beside the wake grave."
+            "Value": "Complete the final prayer beside the wake grave for {timeRemaining}."
         },
         {
             "Key": "task.sample.lantern_wake.point.bench_left",
@@ -139,7 +139,7 @@
         },
         {
             "Key": "task.sample.penitent_grave.group.2.stage.0",
-            "Value": "Keep vigil over the grave until the prayer settles."
+            "Value": "Keep vigil over the grave for {timeRemaining}."
         },
         {
             "Key": "task.sample.penitent_grave.title",
@@ -155,7 +155,7 @@
         },
         {
             "Key": "task.sample.pulpit_watch.group.0.stage.0",
-            "Value": "Begin the watch at the pulpit and remain there until the prayer is complete."
+            "Value": "Keep watch at the pulpit for {timeRemaining}."
         },
         {
             "Key": "task.sample.pulpit_watch.title",

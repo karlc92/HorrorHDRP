@@ -32,6 +32,7 @@ public static class RunGenerator
                 : new List<GeneratedLorePlan>());
 
             int targetBudget = GetNightBudget(settings, nightIndex);
+            int minimumTasks = Mathf.Max(1, settings != null ? settings.MinimumTasksPerNight : 1);
             int currentBudget = 0;
 
             var compatibleTasks = remainingTasks.ToList();
@@ -42,7 +43,7 @@ public static class RunGenerator
                 if (task == null)
                     continue;
 
-                if (currentBudget >= targetBudget && night.Tasks.Count > 0)
+                if (night.Tasks.Count >= minimumTasks && currentBudget >= targetBudget)
                     break;
 
                 var instanceId = $"task_instance.n{nightNumber}.{night.Tasks.Count + 1}.{SanitizeId(task.TaskId)}";

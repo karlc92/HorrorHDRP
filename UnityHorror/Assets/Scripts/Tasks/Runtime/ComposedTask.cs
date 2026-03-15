@@ -115,7 +115,11 @@ public class ComposedTask : TaskBase
 
             if (stageDefinition is HoldStageDefinition holdStage)
             {
-                AppendHoldDetails(details, holdStage);
+                AppendHoldDetails(
+                    details,
+                    holdStage,
+                    stageState,
+                    holdStage.GetDetailKey(Definition.TaskId, RuntimeState.CurrentGroupIndex, i));
                 continue;
             }
 
@@ -473,26 +477,28 @@ public class ComposedTask : TaskBase
         float deltaTime)
     {
         if (!stageState.Activated)
-            return;
+            stageState.Activated = true;
 
         bool conditionsMet = EvaluateHoldConditions(stageDefinition);
         float requiredSeconds = Math.Max(0.01f, stageDefinition.RequiredSeconds);
 
         if (conditionsMet)
         {
-            stageState.Progress += deltaTime / requiredSeconds;
+            stageState.HoldElapsedSeconds += deltaTime;
         }
         else if (stageDefinition.AllowProgressDecay && stageDefinition.DecayPerSecond > 0f)
         {
-            stageState.Progress -= stageDefinition.DecayPerSecond * deltaTime / requiredSeconds;
+            stageState.HoldElapsedSeconds -= stageDefinition.DecayPerSecond * deltaTime;
         }
 
-        stageState.Progress = Math.Clamp(stageState.Progress, 0f, 1f);
+        stageState.HoldElapsedSeconds = Math.Clamp(stageState.HoldElapsedSeconds, 0f, requiredSeconds);
+        stageState.Progress = stageState.HoldElapsedSeconds / requiredSeconds;
 
-        if (stageState.Progress < 1f)
+        if (stageState.HoldElapsedSeconds < requiredSeconds)
             return;
 
         stageState.Completed = true;
+        stageState.Progress = 1f;
         NotifyHoldTaskCompleted(stageDefinition);
         TryAdvanceGroup();
     }
@@ -530,6 +536,9 @@ public class ComposedTask : TaskBase
         TaskHook hook,
         string eventName)
     {
+        if (string.IsNullOrWhiteSpace(stageDefinition?.ActivationHookId))
+            return;
+
         if (stageState.Activated)
             return;
 
@@ -543,7 +552,8 @@ public class ComposedTask : TaskBase
             return;
 
         stageState.Activated = true;
-        stageState.Progress = Math.Max(stageState.Progress, 0.01f);
+        stageState.HoldElapsedSeconds = Math.Max(0f, stageState.HoldElapsedSeconds);
+        stageState.Progress = stageState.HoldElapsedSeconds / Math.Max(0.01f, stageDefinition.RequiredSeconds);
     }
 
     private void HandleDeliverStageEvent(
@@ -660,34 +670,21 @@ public class ComposedTask : TaskBase
 
     private static void AppendHoldDetails(
         System.Collections.Generic.List<TaskListDetailViewData> details,
-        HoldStageDefinition holdStage)
+        HoldStageDefinition holdStage,
+        TaskStageRuntimeState stageState,
+        string detailKey)
     {
-        if (details == null || holdStage?.Conditions == null)
+        if (details == null || holdStage == null || stageState == null)
             return;
 
-        foreach (var condition in holdStage.Conditions)
+        float requiredSeconds = Math.Max(0.01f, holdStage.RequiredSeconds);
+        float remainingSeconds = Math.Max(0f, requiredSeconds - stageState.HoldElapsedSeconds);
+        details.Add(new TaskListDetailViewData
         {
-            if (condition == null || string.IsNullOrWhiteSpace(condition.DetailKey))
-                continue;
-
-            bool satisfied = EvaluateHoldCondition(condition);
-            details.Add(new TaskListDetailViewData
-            {
-                Key = satisfied && !string.IsNullOrWhiteSpace(condition.SatisfiedDetailKey)
-                    ? condition.SatisfiedDetailKey
-                    : condition.DetailKey,
-                IsSatisfied = satisfied,
-            });
-        }
-    }
-
-    private static bool EvaluateHoldCondition(HoldConditionRequirementDefinition condition)
-    {
-        if (condition == null || string.IsNullOrWhiteSpace(condition.SourceId) || TaskManager.Instance == null)
-            return false;
-
-        var source = TaskManager.Instance.GetHoldConditionSource(condition.SourceId);
-        return source != null && source.Evaluate(condition);
+            Key = detailKey,
+            TimeRemainingSeconds = remainingSeconds,
+            IsSatisfied = false,
+        });
     }
 
     private TaskStageDefinition GetStageDefinition(TaskStageRuntimeState stageState)

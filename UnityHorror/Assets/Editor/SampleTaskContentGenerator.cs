@@ -533,7 +533,7 @@ public static class SampleTaskContentGenerator
         Put("task.sample.rooted_bench.title", "Burn back the rooted bench growth");
         Put("task.sample.rooted_bench.group.0.stage.0", "Trigger the rooted growth near the church bench and burn it back before it settles.");
         Put("task.sample.pulpit_watch.title", "Keep watch at the pulpit");
-        Put("task.sample.pulpit_watch.group.0.stage.0", "Begin the watch at the pulpit and remain there until the prayer is complete.");
+        Put("task.sample.pulpit_watch.group.0.stage.0", "Keep watch at the pulpit for {timeRemaining}.");
         Put("task.sample.pulpit_watch.condition.volume", "Remain within the pulpit prayer space");
         Put("task.sample.pulpit_watch.condition.volume_done", "Pulpit prayer space held");
         Put("task.sample.sanctified_candle_delivery.title", "Carry the sanctified candle to the altar");
@@ -543,7 +543,7 @@ public static class SampleTaskContentGenerator
         Put("task.sample.penitent_grave.clue.epitaph", "The penitent asked to be buried facing the chapel, not the gate.");
         Put("task.sample.penitent_grave.clue.bench", "A soaked note says his marker was repaired with plain stone after the bell tower cracked.");
         Put("task.sample.penitent_grave.group.1.stage.0", "Return the bone casket to the penitent's grave.");
-        Put("task.sample.penitent_grave.group.2.stage.0", "Keep vigil over the grave until the prayer settles.");
+        Put("task.sample.penitent_grave.group.2.stage.0", "Keep vigil over the grave for {timeRemaining}.");
         Put("task.sample.penitent_grave.condition.volume", "Remain within the grave's prayer circle");
         Put("task.sample.penitent_grave.condition.volume_done", "Prayer circle held");
         Put("task.sample.chapel_service.title", "Restore the chapel service");
@@ -552,7 +552,7 @@ public static class SampleTaskContentGenerator
         Put("task.sample.chapel_service.point.left", "Relight the left side candle");
         Put("task.sample.chapel_service.point.right", "Relight the right side candle");
         Put("task.sample.chapel_service.point.chandelier", "Restore the chandelier light");
-        Put("task.sample.chapel_service.group.1.stage.0", "Read from the pulpit until the service is complete.");
+        Put("task.sample.chapel_service.group.1.stage.0", "Read from the pulpit for {timeRemaining}.");
         Put("task.sample.chapel_service.condition.pulpit", "Remain at the pulpit");
         Put("task.sample.chapel_service.condition.pulpit_done", "Pulpit held");
         Put("task.sample.rooted_reliquary.title", "Free the rooted reliquary");
@@ -567,7 +567,7 @@ public static class SampleTaskContentGenerator
         Put("task.sample.lantern_wake.point.bench_left", "Relight the left bench candle");
         Put("task.sample.lantern_wake.point.bench_right", "Relight the right bench candle");
         Put("task.sample.lantern_wake.group.1.stage.0", "Carry the funeral lantern to the wake grave without letting it go dark.");
-        Put("task.sample.lantern_wake.group.2.stage.0", "Complete the final prayer beside the wake grave.");
+        Put("task.sample.lantern_wake.group.2.stage.0", "Complete the final prayer beside the wake grave for {timeRemaining}.");
         Put("task.sample.lantern_wake.condition.volume", "Remain at the wake grave");
         Put("task.sample.lantern_wake.condition.volume_done", "Wake grave held");
         Put("task.sample.lantern_wake.condition.lantern", "Keep the funeral lantern active");

@@ -142,7 +142,17 @@ public class TaskListManager : MonoBehaviour
                     if (detail == null)
                         continue;
 
-                    string detailText = ResolveText(detail.Key);
+                    string detailText = !string.IsNullOrWhiteSpace(detail.DisplayText)
+                        ? detail.DisplayText
+                        : ResolveText(detail.Key);
+
+                    if (detail.TimeRemainingSeconds.HasValue && !string.IsNullOrWhiteSpace(detailText))
+                    {
+                        detailText = detailText.Replace(
+                            "{timeRemaining}",
+                            $"{Mathf.Max(0f, detail.TimeRemainingSeconds.Value):0.0}s");
+                    }
+
                     sb.Append("    ");
                     sb.Append(detail.IsSatisfied ? "- [x] " : "- [ ] ");
                     sb.AppendLine(string.IsNullOrWhiteSpace(detailText) ? detail.Key : detailText);

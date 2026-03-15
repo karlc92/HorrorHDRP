@@ -18,4 +18,5 @@ public class TaskStageRuntimeState
     public bool HasDroppedDeliverPickup;
     public Vector3 DroppedDeliverPickupPosition;
     public List<HeldItemConditionState> DeliverItemConditionStates = new List<HeldItemConditionState>();
+    public float HoldElapsedSeconds;
 }

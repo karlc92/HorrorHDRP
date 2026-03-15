@@ -574,6 +574,9 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
 
     private void ApplyHoldHookInteractionConfiguration(HoldStageDefinition holdStage)
     {
+        if (string.IsNullOrWhiteSpace(holdStage?.ActivationHookId))
+            return;
+
         var activationHook = GetHook<InteractionTaskHook>(holdStage.ActivationHookId);
         if (activationHook == null)
             return;
@@ -906,6 +909,9 @@ public class TaskManager : MonoBehaviour, IGameSaveParticipant
 
         if (stageDefinition is HoldStageDefinition holdStage)
         {
+            if (string.IsNullOrWhiteSpace(holdStage.ActivationHookId))
+                return false;
+
             return !stageState.Activated
                 && hook is InteractionTaskHook activationHook
                 && string.Equals(holdStage.ActivationHookId, activationHook.HookId, StringComparison.OrdinalIgnoreCase);
