@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
+[AddComponentMenu("Horror/Tasks/Hold/Volume Hold Condition Source")]
 public class VolumeHoldConditionSource : HoldConditionSource
 {
     [SerializeField] private bool invertResult = false;

@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(InteractionTaskHook))]
+[AddComponentMenu("Horror/Items/Restore Interactable")]
 public class RestoreInteractable : Interactable
 {
     [SerializeField] private InteractionTaskHook interactionHook;

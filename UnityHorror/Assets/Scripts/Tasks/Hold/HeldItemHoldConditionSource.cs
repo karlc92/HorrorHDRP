@@ -1,3 +1,4 @@
+[UnityEngine.AddComponentMenu("Horror/Tasks/Hold/Held Item Hold Condition Source")]
 public class HeldItemHoldConditionSource : HoldConditionSource
 {
     public override bool Evaluate(HoldConditionRequirementDefinition requirement)

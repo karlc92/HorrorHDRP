@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(DeliverDepositHook))]
+[AddComponentMenu("Horror/Items/Deliver Deposit Interactable")]
 public class DeliverDepositInteractable : Interactable
 {
     private DeliverDepositHook depositHook;

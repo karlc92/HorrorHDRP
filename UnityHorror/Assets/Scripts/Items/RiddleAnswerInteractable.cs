@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(RiddleAnswerHook))]
+[AddComponentMenu("Horror/Items/Riddle Answer Interactable")]
 public class RiddleAnswerInteractable : Interactable
 {
     [SerializeField] private RiddleAnswerHook answerHook;

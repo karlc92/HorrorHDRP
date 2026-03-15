@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(DeliverPickupHook))]
+[AddComponentMenu("Horror/Items/Deliver Pickup Interactable")]
 public class DeliverPickupInteractable : Interactable
 {
     private DeliverPickupHook pickupHook;

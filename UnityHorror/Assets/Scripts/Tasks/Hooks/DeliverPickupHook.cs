@@ -1,5 +1,7 @@
+using UnityEngine;
 using UnityEngine.Events;
 
+[AddComponentMenu("Horror/Tasks/Hooks/Deliver Pickup Hook")]
 public class DeliverPickupHook : CarryTaskHook
 {
     public const string PickedUpEventName = "DeliverPickedUp";

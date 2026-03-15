@@ -1,5 +1,7 @@
+using UnityEngine;
 using UnityEngine.Events;
 
+[AddComponentMenu("Horror/Tasks/Hooks/Interaction Task Hook")]
 public class InteractionTaskHook : TaskHook
 {
     public const string InteractedEventName = "Interacted";

@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CleanseTriggerHook))]
+[AddComponentMenu("Horror/Items/Cleanse Trigger Interactable")]
 public class CleanseTriggerInteractable : Interactable
 {
     [SerializeField] private CleanseTriggerHook triggerHook;

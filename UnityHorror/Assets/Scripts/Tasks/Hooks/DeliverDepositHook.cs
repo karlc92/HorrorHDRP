@@ -1,5 +1,7 @@
+using UnityEngine;
 using UnityEngine.Events;
 
+[AddComponentMenu("Horror/Tasks/Hooks/Deliver Deposit Hook")]
 public class DeliverDepositHook : CarryTaskHook
 {
     public const string AttemptedEventName = "DeliverAttempted";

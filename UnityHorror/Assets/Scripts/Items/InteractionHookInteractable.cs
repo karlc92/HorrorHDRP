@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(InteractionTaskHook))]
+[AddComponentMenu("Horror/Items/Interaction Hook Interactable")]
 public class InteractionHookInteractable : Interactable
 {
     [SerializeField] private InteractionTaskHook interactionHook;
