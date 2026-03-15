@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public static class HorrorGameObjectMenu
 {
@@ -31,10 +32,24 @@ public static class HorrorGameObjectMenu
     [MenuItem("GameObject/3D Object/Horror/Riddle Clue", false, 12)]
     private static void CreateRiddleClue(MenuCommand menuCommand)
     {
-        var go = CreatePrimitiveObject("Riddle Clue", PrimitiveType.Cube, menuCommand);
+        var go = CreateGameObject("Riddle Clue", menuCommand);
+        var collider = go.AddComponent<BoxCollider>();
+        collider.size = new Vector3(0.8f, 0.2f, 0.6f);
+
         go.AddComponent<RiddleClueHook>();
+
+        var model = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        model.name = "WorldModel";
+        model.transform.SetParent(go.transform, false);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localScale = new Vector3(0.8f, 0.1f, 0.6f);
+        Object.DestroyImmediate(model.GetComponent<Collider>());
+
         var inspectable = go.AddComponent<RiddleClueInspectableItem>();
-        inspectable.WorldModel = go;
+        inspectable.WorldModel = model;
+        inspectable.InspectPrefab = model;
+        inspectable.Description = "Riddle clue placeholder.";
+        inspectable.InspectScaleMultiplier = 2f;
     }
 
     [MenuItem("GameObject/3D Object/Horror/Restore Point", false, 13)]
@@ -79,6 +94,7 @@ public static class HorrorGameObjectMenu
         if (collider != null)
             collider.isTrigger = true;
 
+        ApplyDebugVolumeVisuals(go, 0.5f);
         go.AddComponent<VolumeHoldConditionSource>();
     }
 
@@ -140,6 +156,11 @@ public static class HorrorGameObjectMenu
 
     private static void ApplyZoneVisuals(GameObject go)
     {
+        ApplyDebugVolumeVisuals(go, 0.35f);
+    }
+
+    private static void ApplyDebugVolumeVisuals(GameObject go, float alpha)
+    {
         if (go == null || !go.TryGetComponent<MeshRenderer>(out var renderer))
             return;
 
@@ -157,9 +178,9 @@ public static class HorrorGameObjectMenu
             0.95f,
             0.75f,
             1f,
-            0.25f,
-            0.25f);
-        color.a = 0.25f;
+            alpha,
+            alpha);
+        color.a = alpha;
 
         if (instanceMaterial.HasProperty("_BaseColor"))
             instanceMaterial.SetColor("_BaseColor", color);
@@ -167,6 +188,7 @@ public static class HorrorGameObjectMenu
             instanceMaterial.color = color;
 
         renderer.sharedMaterial = instanceMaterial;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
     }
 
     private static void FinalizeCreation(GameObject go, MenuCommand menuCommand)
