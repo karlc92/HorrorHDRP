@@ -1,0 +1,146 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8674014419965472837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 209202ae2b4f4ea45bb6aa8a698af62b, type: 3}
+  m_Name: restore_candles
+  m_EditorClassIdentifier: Assembly-CSharp::RestoreStageDefinition
+  StageId: restore_candles
+  Archetype: 1
+  DetailKeyOverride: task.sample.chapel_service.group.0.stage.1
+  EnforceSequence: 0
+  RequiredPoints:
+  - HookId: restore.chapel_service.candle_left
+    DetailKey: task.sample.chapel_service.point.left
+  - HookId: restore.chapel_service.candle_right
+    DetailKey: task.sample.chapel_service.point.right
+  - HookId: restore.chapel_service.chandelier
+    DetailKey: task.sample.chapel_service.point.chandelier
+--- !u!114 &-4797067742705026101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1955f50bad65bb64d9a5f5256fb31077, type: 3}
+  m_Name: read_service
+  m_EditorClassIdentifier: Assembly-CSharp::TaskStageGroupDefinition
+  GroupId: read_service
+  RunInParallel: 0
+  Stages:
+  - {fileID: 7306089509466451864}
+--- !u!114 &-3756883096544766008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 270cd9ada8946ac4f9b5528a5e6a7303, type: 3}
+  m_Name: deliver_prayer_book
+  m_EditorClassIdentifier: Assembly-CSharp::DeliverStageDefinition
+  StageId: deliver_prayer_book
+  Archetype: 4
+  DetailKeyOverride: task.sample.chapel_service.group.0.stage.0
+  HeldItem: {fileID: 11400000, guid: f3a2865f0cc4fd74ea44889a833cbb44, type: 2}
+  PickupHookId: deliver.prayer_book.bench
+  DeliveryHookId: deliver.prayer_book.pulpit
+  RequiredItemConditionId: 
+  PickupInteractionMode: 0
+  PickupHoldDurationSeconds: 1
+  ResetPickupHoldOnCancel: 1
+  DeliveryInteractionMode: 0
+  DeliveryHoldDurationSeconds: 1
+  ResetDeliveryHoldOnCancel: 1
+  AllowSprint: 1
+  AllowCrouch: 1
+  AllowDrop: 1
+  ResetToOriginOnDrop: 0
+  ResetItemConditionsOnDrop: 0
+  PickupPrefabOverride: {fileID: 0}
+  OnPickupConditionMutations: []
+  OnDropConditionMutations: []
+  OnDeliverConditionMutations: []
+  ApplyThreatOnDrop: 0
+  ThreatOnDrop: 0
+  ApplyThreatOnInvalidDelivery: 0
+  ThreatOnInvalidDelivery: 0
+--- !u!114 &-1481201814972772827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1955f50bad65bb64d9a5f5256fb31077, type: 3}
+  m_Name: prepare_service
+  m_EditorClassIdentifier: Assembly-CSharp::TaskStageGroupDefinition
+  GroupId: prepare_service
+  RunInParallel: 1
+  Stages:
+  - {fileID: -3756883096544766008}
+  - {fileID: -8674014419965472837}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5a0dcdda7a32a04f8518158cd1eea62, type: 3}
+  m_Name: Task_ChapelService
+  m_EditorClassIdentifier: Assembly-CSharp::ComposedTaskDefinition
+  TaskId: sample.chapel_service
+  Difficulty: 4
+  RequiredForNightCompletion: 1
+  RequiredZoneIds:
+  - chapel
+  StageGroups:
+  - {fileID: -1481201814972772827}
+  - {fileID: -4797067742705026101}
+  TitleKeyOverride: 
+--- !u!114 &7306089509466451864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758a5f32dcf3b0843a42b75a421f702c, type: 3}
+  m_Name: Hold
+  m_EditorClassIdentifier: Assembly-CSharp::HoldStageDefinition
+  StageId: read_service
+  Archetype: 3
+  DetailKeyOverride: task.sample.chapel_service.group.1.stage.0
+  ActivationHookId: hold.chapel_service.start
+  ActivationInteractionMode: 0
+  ActivationHoldDurationSeconds: 1
+  ResetActivationHoldOnCancel: 1
+  ConditionMode: 0
+  Conditions:
+  - SourceId: hold.chapel_service.pulpit
+    RequiredItemId: 
+    RequiredItemConditionId: 
+    DetailKey: task.sample.chapel_service.condition.pulpit
+    SatisfiedDetailKey: task.sample.chapel_service.condition.pulpit_done
+  RequiredSeconds: 30
+  AllowProgressDecay: 0
+  DecayPerSecond: 0

@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8938907040740151793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758a5f32dcf3b0843a42b75a421f702c, type: 3}
+  m_Name: Hold
+  m_EditorClassIdentifier: Assembly-CSharp::HoldStageDefinition
+  StageId: hold_pulpit_watch
+  Archetype: 3
+  DetailKeyOverride: task.sample.pulpit_watch.group.0.stage.0
+  ActivationHookId: hold.pulpit_watch.start
+  ActivationInteractionMode: 0
+  ActivationHoldDurationSeconds: 1
+  ResetActivationHoldOnCancel: 1
+  ConditionMode: 0
+  Conditions:
+  - SourceId: hold.pulpit_watch.volume
+    RequiredItemId: 
+    RequiredItemConditionId: 
+    DetailKey: task.sample.pulpit_watch.condition.volume
+    SatisfiedDetailKey: task.sample.pulpit_watch.condition.volume_done
+  RequiredSeconds: 25
+  AllowProgressDecay: 0
+  DecayPerSecond: 0
+--- !u!114 &-5934954735909472064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1955f50bad65bb64d9a5f5256fb31077, type: 3}
+  m_Name: hold_pulpit_watch
+  m_EditorClassIdentifier: Assembly-CSharp::TaskStageGroupDefinition
+  GroupId: hold_pulpit_watch
+  RunInParallel: 0
+  Stages:
+  - {fileID: -8938907040740151793}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5a0dcdda7a32a04f8518158cd1eea62, type: 3}
+  m_Name: Task_Hold_PulpitWatch
+  m_EditorClassIdentifier: Assembly-CSharp::ComposedTaskDefinition
+  TaskId: sample.pulpit_watch
+  Difficulty: 1
+  RequiredForNightCompletion: 1
+  RequiredZoneIds:
+  - chapel
+  StageGroups:
+  - {fileID: -5934954735909472064}
+  TitleKeyOverride: 
