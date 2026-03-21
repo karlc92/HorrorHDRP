@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ScansFactory
 {
@@ -18,13 +19,11 @@ namespace ScansFactory
 
         [Header("Extra")]
         public GameObject Flashlight;
-        
 
         private CharacterController characterController;
         private Vector3 moveDirection = Vector3.zero;
         private float rotationX = 0;
         private bool noClip = false;
-
 
         void Start()
         {
@@ -35,13 +34,13 @@ namespace ScansFactory
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.CapsLock))
+            if (Keyboard.current.capsLockKey.wasPressedThisFrame)
             {
                 noClip = !noClip;
                 characterController.enabled = !noClip;
             }
-            
-            if (Input.GetKeyDown(KeyCode.F))
+
+            if (Keyboard.current.fKey.wasPressedThisFrame)
             {
                 Flashlight.SetActive(!Flashlight.activeSelf);
             }
@@ -56,17 +55,22 @@ namespace ScansFactory
 
         void Movement()
         {
-            float speed = Input.GetKey(KeyCode.LeftShift) ? RunSpeed : WalkSpeed;
-            float inputX = Input.GetAxis("Horizontal");
-            float inputY = Input.GetAxis("Vertical");
+            float speed = Keyboard.current.leftShiftKey.isPressed ? RunSpeed : WalkSpeed;
 
-            Vector3 move = transform.right * inputX + transform.forward * inputY;
+            Vector2 input = Vector2.zero;
+            if (Keyboard.current.aKey.isPressed) input.x -= 1;
+            if (Keyboard.current.dKey.isPressed) input.x += 1;
+            if (Keyboard.current.sKey.isPressed) input.y -= 1;
+            if (Keyboard.current.wKey.isPressed) input.y += 1;
+
+            Vector3 move = transform.right * input.x + transform.forward * input.y;
             move = move.normalized * speed;
 
             if (characterController.isGrounded)
             {
                 moveDirection = move;
-                if (Input.GetKeyDown(KeyCode.Space))
+
+                if (Keyboard.current.spaceKey.wasPressedThisFrame)
                     moveDirection.y = JumpSpeed;
                 else
                     moveDirection.y = -Gravity * Time.deltaTime;
@@ -84,13 +88,22 @@ namespace ScansFactory
         void FlyMovement()
         {
             float speed = FlySpeed * Time.deltaTime;
-            float inputX = Input.GetAxis("Horizontal") * speed;
-            float inputY = Input.GetAxis("Vertical") * speed;
+
+            float inputX = 0;
+            float inputY = 0;
             float inputZ = 0;
 
-            if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.E))
+            if (Keyboard.current.aKey.isPressed) inputX -= 1;
+            if (Keyboard.current.dKey.isPressed) inputX += 1;
+            if (Keyboard.current.sKey.isPressed) inputY -= 1;
+            if (Keyboard.current.wKey.isPressed) inputY += 1;
+
+            inputX *= speed;
+            inputY *= speed;
+
+            if (Keyboard.current.spaceKey.isPressed || Keyboard.current.eKey.isPressed)
                 inputZ = speed;
-            else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.Q))
+            else if (Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.qKey.isPressed)
                 inputZ = -speed;
 
             Vector3 move = transform.right * inputX + transform.forward * inputY + transform.up * inputZ;
@@ -99,10 +112,13 @@ namespace ScansFactory
 
         void MouseLook()
         {
-            rotationX += -Input.GetAxis("Mouse Y") * LookSpeed;
+            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+
+            rotationX += -mouseDelta.y * LookSpeed * Time.deltaTime;
             rotationX = Mathf.Clamp(rotationX, -LookXLimit, LookXLimit);
+
             Camera.main.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
-            transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * LookSpeed, 0);
+            transform.rotation *= Quaternion.Euler(0, mouseDelta.x * LookSpeed * Time.deltaTime, 0);
         }
     }
 }
