@@ -1,0 +1,1165 @@
+fileFormatVersion: 2
+guid: 818624ddbd2d4f0439fcc390dccdc305
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects: {}
+  materials:
+    materialImportMode: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 1
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 3
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: CultistRig|IdleV1
+      takeName: CultistRig|IdleV1
+      internalID: -7128690157425591402
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|IdleV2
+      takeName: CultistRig|IdleV2
+      internalID: -942068738245444323
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|IdleV3
+      takeName: CultistRig|IdleV3
+      internalID: -8709756067920927721
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|Ritual
+      takeName: CultistRig|Ritual
+      internalID: -8848661661349831132
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|Run
+      takeName: CultistRig|Run
+      internalID: -3768409612851822800
+      firstFrame: 0
+      lastFrame: 19
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|Sit
+      takeName: CultistRig|Sit
+      internalID: 416852146355866465
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|SitDown
+      takeName: CultistRig|SitDown
+      internalID: -2092024782484052441
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|SitUp
+      takeName: CultistRig|SitUp
+      internalID: -4835348686586773986
+      firstFrame: 0
+      lastFrame: 49
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|TPose
+      takeName: CultistRig|TPose
+      internalID: 5873385965180846616
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WalkFast
+      takeName: CultistRig|WalkFast
+      internalID: -7818009793861493559
+      firstFrame: 0
+      lastFrame: 19
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WalkV1
+      takeName: CultistRig|WalkV1
+      internalID: 7545578986613250249
+      firstFrame: 0
+      lastFrame: 23
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WalkV2
+      takeName: CultistRig|WalkV2
+      internalID: -2150063356961237311
+      firstFrame: 0
+      lastFrame: 23
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WalkV3
+      takeName: CultistRig|WalkV3
+      internalID: -1420543856200462146
+      firstFrame: 0
+      lastFrame: 23
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponAttackV1
+      takeName: CultistRig|WeaponAttackV1
+      internalID: -1237291446812028157
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponAttackV2
+      takeName: CultistRig|WeaponAttackV2
+      internalID: 5951554529738981717
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponAttackV3
+      takeName: CultistRig|WeaponAttackV3
+      internalID: 1852131776045641519
+      firstFrame: 0
+      lastFrame: 59
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponEquipV1
+      takeName: CultistRig|WeaponEquipV1
+      internalID: 6001736742728057903
+      firstFrame: 0
+      lastFrame: 39
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponEquipV2
+      takeName: CultistRig|WeaponEquipV2
+      internalID: 2537496840908154148
+      firstFrame: 0
+      lastFrame: 49
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponHideV1
+      takeName: CultistRig|WeaponHideV1
+      internalID: 5901140932136521658
+      firstFrame: 0
+      lastFrame: 39
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponHideV2
+      takeName: CultistRig|WeaponHideV2
+      internalID: 594691081183639816
+      firstFrame: 0
+      lastFrame: 49
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponHold
+      takeName: CultistRig|WeaponHold
+      internalID: 8559867255006481942
+      firstFrame: 0
+      lastFrame: 9
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: CultistRig|WeaponSacrifice
+      takeName: CultistRig|WeaponSacrifice
+      internalID: -3724205372514255020
+      firstFrame: 0
+      lastFrame: 219
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 0
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 2
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton:
+    - name: CultistRig_NoBlendShapes(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Eyes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: CultistRig
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Hip
+      parentName: CultistRig
+      position: {x: 2.1092241e-16, y: 0.010285264, z: 0.97561747}
+      rotation: {x: 0.66543484, y: -0.00000008898448, z: -0.000000079326, w: 0.74645597}
+      scale: {x: 1, y: 0.9999999, z: 0.9999999}
+    - name: Spine
+      parentName: Hip
+      position: {x: -2.3316678e-16, y: 0.12736745, z: 0.000000007450581}
+      rotation: {x: 0.087387025, y: -3.5527137e-14, z: -0.000000020834708, w: 0.99617445}
+      scale: {x: 1, y: 1.0000001, z: 1.0000001}
+    - name: Chest
+      parentName: Spine
+      position: {x: -1.517883e-18, y: 0.1564859, z: 0.000000004656613}
+      rotation: {x: -0.10604774, y: 0.004591043, z: -0.000489611, w: 0.9943504}
+      scale: {x: 1, y: 1.0000013, z: 0.9999989}
+    - name: Neck
+      parentName: Chest
+      position: {x: -2.668088e-10, y: 0.30792418, z: 0.000000004687643}
+      rotation: {x: 0.29537436, y: -0.041404817, z: -0.010082253, w: 0.9544307}
+      scale: {x: 1.000004, y: 0.9999998, z: 1.0000019}
+    - name: Head
+      parentName: Neck
+      position: {x: -4.50612e-10, y: 0.09524688, z: -0.00000004282824}
+      rotation: {x: -0.1554331, y: 0.050688382, z: 0.0040639634, w: 0.9865368}
+      scale: {x: 0.99999636, y: 0.9999943, z: 1.0000063}
+    - name: Eye.L
+      parentName: Head
+      position: {x: -0.034672596, y: 0.0849226, z: 0.08080615}
+      rotation: {x: 0.6575504, y: -0.01897995, z: 0.00000008172355, w: 0.75317144}
+      scale: {x: 1.0000018, y: 1.0000036, z: 0.9999977}
+    - name: Eyeball.L
+      parentName: Eye.L
+      position: {x: 0.0000000011613053, y: -0.00000006511436, z: -0.00000005886803}
+      rotation: {x: -0.000000029802319, y: 0.0000000037252899, z: 0.0000000372529,
+        w: 1}
+      scale: {x: 0.9999996, y: 0.99999994, z: 0.99999994}
+    - name: EyelidUpper.L
+      parentName: Eye.L
+      position: {x: 0.0000000011613053, y: -0.00000006511436, z: -0.00000005886803}
+      rotation: {x: -0.11800833, y: 0.000000052154057, z: 0.0029738373, w: 0.9930082}
+      scale: {x: 1, y: 1.00001, z: 0.9999927}
+    - name: EyelidLower.L
+      parentName: Eye.L
+      position: {x: 0.0000000011613053, y: -0.00000006511436, z: -0.00000005886803}
+      rotation: {x: 0.15408918, y: 0.000000055879333, z: -0.003882986, w: 0.9880493}
+      scale: {x: 1, y: 0.9999936, z: 1.0000141}
+    - name: Eye.R
+      parentName: Head
+      position: {x: 0.030558499, y: 0.08492248, z: 0.08245001}
+      rotation: {x: 0.6573418, y: -0.00000013783573, z: 0.016565058, w: 0.7534105}
+      scale: {x: 1, y: 1.0000057, z: 0.99999934}
+    - name: Eyeball.R
+      parentName: Eye.R
+      position: {x: -0.0000000059446226, y: -0.000000078238806, z: -0.00000005466807}
+      rotation: {x: -0.000000029802319, y: -0.0000000037125782, z: -0.000000010563787,
+        w: 1}
+      scale: {x: 0.99999994, y: 1.0000043, z: 1.0000032}
+    - name: EyelidUpper.R
+      parentName: Eye.R
+      position: {x: -0.0000000059446226, y: -0.000000078238806, z: -0.00000005466807}
+      rotation: {x: -0.11800836, y: -0.000000043264958, z: -0.0029737984, w: 0.9930082}
+      scale: {x: 1.0000013, y: 1.0000138, z: 0.9999959}
+    - name: EyelidLower.R
+      parentName: Eye.R
+      position: {x: -0.0000000059446226, y: -0.000000078238806, z: -0.00000005466807}
+      rotation: {x: 0.15408897, y: -0.000000042232205, z: 0.0038830144, w: 0.9880494}
+      scale: {x: 1.0000013, y: 1.0000005, z: 1.0000196}
+    - name: Jaw
+      parentName: Head
+      position: {x: -0.00060468214, y: 0.03956913, z: 0.023995077}
+      rotation: {x: 0.8750839, y: -0.00000006705521, z: 0.022052204, w: 0.48346847}
+      scale: {x: 1.0000006, y: 0.9999929, z: 1.0000116}
+    - name: Shoulder.L
+      parentName: Chest
+      position: {x: -0.04865728, y: 0.2100971, z: 0.0024692777}
+      rotation: {x: 0.049534217, y: -0.055597063, z: 0.7504067, w: 0.6567688}
+      scale: {x: 1.0000099, y: 1.000007, z: 0.9999991}
+    - name: ArmUpper.L
+      parentName: Shoulder.L
+      position: {x: 0.00000016488048, y: 0.17181146, z: -0.0000000016298145}
+      rotation: {x: -0.006677667, y: -0.049850732, z: -0.042269964, w: 0.9978395}
+      scale: {x: 0.99999696, y: 0.9999904, z: 1.0000001}
+    - name: ArmLower.L
+      parentName: ArmUpper.L
+      position: {x: -0.000000004656613, y: 0.24626185, z: -0.000000007450581}
+      rotation: {x: 0.033329714, y: 0.067608826, z: -0.024760451, w: 0.99684757}
+      scale: {x: 0.9999996, y: 1.0000095, z: 1.0000031}
+    - name: Hand.L
+      parentName: ArmLower.L
+      position: {x: -0.000000018626451, y: 0.28026226, z: 0.000000033527613}
+      rotation: {x: -0.022906104, y: -0.0072617102, z: -0.040749956, w: 0.99888045}
+      scale: {x: 1.0000094, y: 1.0000111, z: 1.0000029}
+    - name: Pinky1.L
+      parentName: Hand.L
+      position: {x: -0.003394395, y: 0.08386629, z: -0.044084936}
+      rotation: {x: -0.044184607, y: 0.13215409, z: -0.01211719, w: 0.99016976}
+      scale: {x: 0.99999386, y: 0.9999946, z: 1.0000068}
+    - name: Pinky2.L
+      parentName: Pinky1.L
+      position: {x: -0.0000000027939677, y: 0.028116524, z: 0.0000000060535967}
+      rotation: {x: 0.001202523, y: -0.022017384, z: 0.036821373, w: 0.99907863}
+      scale: {x: 1.0000215, y: 0.9999884, z: 1.0000033}
+    - name: Pinky3.L
+      parentName: Pinky2.L
+      position: {x: -0.0000000057625584, y: 0.017736826, z: 0.0000000030267984}
+      rotation: {x: 0.0054370956, y: -0.009765161, z: -0.022358047, w: 0.9996876}
+      scale: {x: 1.0000091, y: 1.0000137, z: 1.0000035}
+    - name: Ring1.L
+      parentName: Hand.L
+      position: {x: 0.0013476242, y: 0.09906262, z: -0.023223057}
+      rotation: {x: -0.053984266, y: 0.042978123, z: -0.0010189253, w: 0.997616}
+      scale: {x: 1.000001, y: 0.9999979, z: 1.0000013}
+    - name: Ring2.L
+      parentName: Ring1.L
+      position: {x: -0.000000023283064, y: 0.03250739, z: -0.000000009313226}
+      rotation: {x: -0.0025752317, y: -0.0076791514, z: 0.040278252, w: 0.99915576}
+      scale: {x: 1.000008, y: 0.9999977, z: 0.9999997}
+    - name: Ring3.L
+      parentName: Ring2.L
+      position: {x: 0.000000031199306, y: 0.02046834, z: 0}
+      rotation: {x: -0.0034638008, y: -0.0049027484, z: -0.0007427736, w: 0.9999817}
+      scale: {x: 1, y: 0.9999985, z: 0.9999983}
+    - name: Middle1.L
+      parentName: Hand.L
+      position: {x: 0.0029438715, y: 0.105683155, z: 0.004350029}
+      rotation: {x: -0.05577449, y: -0.105629556, z: 0.019305518, w: 0.9926525}
+      scale: {x: 1.0000033, y: 1.000001, z: 0.9999991}
+    - name: Middle2.L
+      parentName: Middle1.L
+      position: {x: -0.000000016763806, y: 0.034351118, z: -0.000000007450581}
+      rotation: {x: 0.006225939, y: -0.0109049985, z: 0.039521895, w: 0.9991399}
+      scale: {x: 1.0000149, y: 1.0000037, z: 1.0000001}
+    - name: Middle3.L
+      parentName: Middle2.L
+      position: {x: 0.000000031664968, y: 0.026874226, z: -0.0000000074214768}
+      rotation: {x: 0.0049819252, y: -0.0020723944, z: 0.0017989832, w: 0.99998385}
+      scale: {x: 0.9999996, y: 0.9999998, z: 0.99999875}
+    - name: Index1.L
+      parentName: Hand.L
+      position: {x: -0.006110236, y: 0.1056789, z: 0.033182926}
+      rotation: {x: 0.089247644, y: -0.24952349, z: 0.017181026, w: 0.9640943}
+      scale: {x: 1.0000011, y: 1, z: 1.0000031}
+    - name: Index2.L
+      parentName: Index1.L
+      position: {x: 0.0000000037252903, y: 0.028965762, z: 0.000000016763806}
+      rotation: {x: 0.007690344, y: -0.0013227606, z: 0.038969412, w: 0.99921}
+      scale: {x: 1.0000118, y: 0.9999909, z: 0.9999997}
+    - name: Index3.L
+      parentName: Index2.L
+      position: {x: -0.000000033527613, y: 0.022221573, z: 0.0000000037252903}
+      rotation: {x: 0.006430362, y: -0.0015253228, z: 0.04140125, w: 0.9991208}
+      scale: {x: 1.0000086, y: 0.9999998, z: 0.99999994}
+    - name: Thumb1.L
+      parentName: Hand.L
+      position: {x: -0.024593353, y: 0.04085671, z: 0.036201686}
+      rotation: {x: 0.39207616, y: -0.5496863, z: -0.23396817, w: 0.6995571}
+      scale: {x: 0.9999909, y: 1.0000024, z: 1.0000178}
+    - name: Thumb2.L
+      parentName: Thumb1.L
+      position: {x: 0.00000010058284, y: 0.021787666, z: 0.000000024214387}
+      rotation: {x: 0.010709667, y: 0.016527345, z: 0.03600026, w: 0.9991577}
+      scale: {x: 1.0000298, y: 0.9999746, z: 1.0000052}
+    - name: Thumb3.L
+      parentName: Thumb2.L
+      position: {x: 0.000000029802322, y: 0.031231351, z: 0}
+      rotation: {x: 0.04405138, y: -0.005843413, z: -0.047747895, w: 0.99787045}
+      scale: {x: 0.9999897, y: 1.000007, z: 1.0000068}
+    - name: Shoulder.R
+      parentName: Chest
+      position: {x: 0.048603393, y: 0.21009701, z: 0.0033673781}
+      rotation: {x: 0.056461282, y: 0.049530156, z: -0.7499173, w: 0.6572541}
+      scale: {x: 1.0000081, y: 1.0000061, z: 0.99999905}
+    - name: ArmUpper.R
+      parentName: Shoulder.R
+      position: {x: 0.000000029765943, y: 0.17181146, z: 0.0000000062864274}
+      rotation: {x: 0.006677644, y: -0.049850814, z: -0.042269763, w: -0.99783945}
+      scale: {x: 1.000008, y: 0.9999998, z: 0.9999984}
+    - name: ArmLower.R
+      parentName: ArmUpper.R
+      position: {x: -0.000000027939677, y: 0.24626191, z: -0.000000011175871}
+      rotation: {x: 0.033331502, y: -0.06760896, z: 0.024760632, w: 0.99684757}
+      scale: {x: 1.0000038, y: 1.0000075, z: 1.0000049}
+    - name: Hand.R
+      parentName: ArmLower.R
+      position: {x: 0.000000027939677, y: 0.28026235, z: 0.000000014901161}
+      rotation: {x: -0.022906302, y: 0.007261771, z: 0.04074978, w: 0.99888045}
+      scale: {x: 1.0000013, y: 0.9999998, z: 1.0000019}
+    - name: Pinky1.R
+      parentName: Hand.R
+      position: {x: 0.0033944054, y: 0.08386622, z: -0.044084944}
+      rotation: {x: -0.04418189, y: -0.13215324, z: 0.012115156, w: 0.99017}
+      scale: {x: 1.0000105, y: 0.9999782, z: 1.000021}
+    - name: Pinky2.R
+      parentName: Pinky1.R
+      position: {x: -0.000000033673132, y: 0.028116448, z: 0.000000015832484}
+      rotation: {x: 0.0012028994, y: 0.022017676, z: -0.036817312, w: 0.9990787}
+      scale: {x: 1.0000167, y: 0.9999907, z: 1.0000062}
+    - name: Pinky3.R
+      parentName: Pinky2.R
+      position: {x: -0.000000022759195, y: 0.01773678, z: 9.313226e-10}
+      rotation: {x: 0.00543723, y: 0.00976531, z: 0.022357874, w: 0.99968755}
+      scale: {x: 0.99999315, y: 1.0000066, z: 1.0000029}
+    - name: Ring1.R
+      parentName: Hand.R
+      position: {x: -0.0013476163, y: 0.09906262, z: -0.023223076}
+      rotation: {x: -0.05398583, y: -0.04297814, z: 0.001018642, w: 0.9976159}
+      scale: {x: 1.0000082, y: 0.99998707, z: 1.0000163}
+    - name: Ring2.R
+      parentName: Ring1.R
+      position: {x: 0.000000012572855, y: 0.032507416, z: 0.0000000018626451}
+      rotation: {x: -0.0025754666, y: 0.0076791374, z: -0.04026706, w: 0.9991561}
+      scale: {x: 1.0000006, y: 0.99999326, z: 1.0000005}
+    - name: Ring3.R
+      parentName: Ring2.R
+      position: {x: -0.0000000048894435, y: 0.020468337, z: 0.000000007450581}
+      rotation: {x: -0.003463812, y: 0.004902733, z: 0.00074267766, w: 0.9999817}
+      scale: {x: 1.0000048, y: 1.0000026, z: 0.9999985}
+    - name: Middle1.R
+      parentName: Hand.R
+      position: {x: -0.0029438986, y: 0.105683096, z: 0.004350029}
+      rotation: {x: -0.055772845, y: 0.10562953, z: -0.019304942, w: 0.99265254}
+      scale: {x: 1.000009, y: 1.000007, z: 1.0000128}
+    - name: Middle2.R
+      parentName: Middle1.R
+      position: {x: -0.000000007450581, y: 0.034351, z: 0.0000000018626451}
+      rotation: {x: 0.006224637, y: 0.010905089, z: -0.039520044, w: 0.99913996}
+      scale: {x: 1.0000103, y: 1.0000012, z: 0.9999992}
+    - name: Middle3.R
+      parentName: Middle2.R
+      position: {x: -0.00000005029142, y: 0.026874099, z: 0.000000022380846}
+      rotation: {x: 0.0049819485, y: 0.0020722998, z: -0.0017989002, w: 0.99998385}
+      scale: {x: 1.0000027, y: 1.000002, z: 0.99999803}
+    - name: Index1.R
+      parentName: Hand.R
+      position: {x: 0.006110238, y: 0.10567886, z: 0.03318295}
+      rotation: {x: 0.08924974, y: 0.24952349, z: -0.01718102, w: 0.96409404}
+      scale: {x: 0.99998885, y: 1.000011, z: 1.0000007}
+    - name: Index2.R
+      parentName: Index1.R
+      position: {x: -0.0000000037252903, y: 0.028965792, z: -0.000000016763806}
+      rotation: {x: 0.007690223, y: 0.00132282, z: -0.03897357, w: 0.9992099}
+      scale: {x: 1.0000153, y: 0.9999979, z: 1.0000011}
+    - name: Index3.R
+      parentName: Index2.R
+      position: {x: -0.000000037252903, y: 0.022221576, z: -0.000000011175871}
+      rotation: {x: 0.00643027, y: 0.0015252474, z: -0.041401085, w: 0.9991207}
+      scale: {x: 1.000013, y: 1.0000058, z: 0.9999997}
+    - name: Thumb1.R
+      parentName: Hand.R
+      position: {x: 0.02459332, y: 0.04085668, z: 0.036201686}
+      rotation: {x: -0.39208078, y: -0.5496861, z: -0.23396733, w: -0.699555}
+      scale: {x: 0.9999774, y: 1.0000271, z: 1.0000063}
+    - name: Thumb2.R
+      parentName: Thumb1.R
+      position: {x: -0.00000004656613, y: 0.02178768, z: 0.000000007450581}
+      rotation: {x: 0.010711278, y: -0.016527437, z: -0.036004182, w: 0.99915755}
+      scale: {x: 1.0000185, y: 0.9999892, z: 1.0000108}
+    - name: Thumb3.R
+      parentName: Thumb2.R
+      position: {x: -0.000000029802322, y: 0.031231433, z: 0}
+      rotation: {x: 0.044051334, y: 0.0058433353, z: 0.047748115, w: 0.9978705}
+      scale: {x: 1.0000023, y: 0.9999934, z: 1.000002}
+    - name: Weapon
+      parentName: Hand.R
+      position: {x: 0.021198023, y: 0.08052299, z: -0.018036444}
+      rotation: {x: 0.5348724, y: -0.336018, z: -0.25652856, w: 0.73157126}
+      scale: {x: 1.0000086, y: 1.0000173, z: 0.99999195}
+    - name: LegUpper.L
+      parentName: Hip
+      position: {x: -0.098724686, y: -0.059205398, z: -0.0088145705}
+      rotation: {x: 0.9946669, y: -0.09763745, z: 0.017031753, w: -0.028543016}
+      scale: {x: 1.0000157, y: 1.0000011, z: 1.0000067}
+    - name: LegLower.L
+      parentName: LegUpper.L
+      position: {x: -0.0000000081490725, y: 0.40174657, z: 0.0000000060535967}
+      rotation: {x: 0.069199465, y: 0.036704287, z: -0.019910604, w: 0.9967286}
+      scale: {x: 1.0000004, y: 1.0000111, z: 1.0000085}
+    - name: Foot.L
+      parentName: LegLower.L
+      position: {x: -0.0000000018626451, y: 0.436493, z: -0.0000000018626451}
+      rotation: {x: -0.5472452, y: -0.09137059, z: 0.13423593, w: 0.8210693}
+      scale: {x: 0.9999915, y: 0.9999992, z: 1.0000029}
+    - name: Toes.L
+      parentName: Foot.L
+      position: {x: -0.000000008381903, y: 0.15537089, z: -0.000000008381903}
+      rotation: {x: -0.04642281, y: -0.2874562, z: 0.09888178, w: 0.95154417}
+      scale: {x: 1.0000346, y: 0.9999941, z: 0.9999755}
+    - name: LegUpper.R
+      parentName: Hip
+      position: {x: 0.09872467, y: -0.059205398, z: -0.008814617}
+      rotation: {x: 0.9946669, y: 0.09763759, z: -0.017031642, w: -0.028543038}
+      scale: {x: 1.0000192, y: 1.0000039, z: 1.0000056}
+    - name: LegLower.R
+      parentName: LegUpper.R
+      position: {x: 0.000000020256266, y: 0.40174642, z: -0.000000019092113}
+      rotation: {x: 0.06919945, y: -0.03670417, z: 0.019910617, w: 0.99672854}
+      scale: {x: 1, y: 1.0000094, z: 1.0000079}
+    - name: Foot.R
+      parentName: LegLower.R
+      position: {x: -0.0000000433065, y: 0.4364929, z: -0.000000011175871}
+      rotation: {x: -0.547245, y: 0.09137051, z: -0.13423572, w: 0.82106954}
+      scale: {x: 0.9999904, y: 1, z: 1.0000144}
+    - name: Toes.R
+      parentName: Foot.R
+      position: {x: -0.00000036414713, y: 0.15537071, z: 0.00000043865293}
+      rotation: {x: -0.04642355, y: 0.28747243, z: -0.09888579, w: 0.9515388}
+      scale: {x: 1.00005, y: 0.9999928, z: 0.9999642}
+    - name: IKFoot.R
+      parentName: CultistRig
+      position: {x: 0.1683537, y: -0.10777001, z: 0.025134996}
+      rotation: {x: 0.9414026, y: 0.10164416, z: 0.2185129, w: -0.23596972}
+      scale: {x: 1.0000002, y: 1.0000026, z: 1.0000057}
+    - name: IKLegPole.R
+      parentName: IKFoot.R
+      position: {x: 0.19214736, y: -0.07440823, z: -0.46954888}
+      rotation: {x: -0.2087932, y: -0.08502907, z: -0.03331612, w: 0.97368664}
+      scale: {x: 0.9999998, y: 1.0000062, z: 1.0000051}
+    - name: CultistBody_V1_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Head_V1_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Hands_V1
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Feet_V1
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Hood_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Hood_Lowered
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Shoulders_V1
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Head_V2_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Mask_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Shoulders_V2
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Shoulders_V3
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Shoulders_V4
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Feet_V2
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Knife_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: CultistBody_V2_Blendshapes
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    - name: Hands_V2
+      parentName: CultistRig_NoBlendShapes(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 0.01, y: 0.01, z: 0.01}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 1
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: e709a3701a7e4ce42be3d486cb6408d5,
+    type: 3}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 2
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 326499
+  packageName: Cultist - PBR
+  packageVersion: 1.0.1
+  assetPath: Assets/SnoozyRat/Cultist - PBR/Mesh/CultistPBR.fbx
+  uploadId: 869926

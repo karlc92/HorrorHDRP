@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4c4ddd71a3cd23044b6274713f20f06e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 326499
+  packageName: Cultist - PBR
+  packageVersion: 1.0.1
+  assetPath: Assets/SnoozyRat/Cultist - PBR/Mesh/CultistPBR_Animator.controller
+  uploadId: 869926
