@@ -17,6 +17,8 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField, Min(0f)] float moveSpeed = 6f;
     [SerializeField, Min(0f)] float sprintSpeed = 6f;
     [SerializeField, Min(0f)] float jumpHeight = 1f;
+    [SerializeField, Min(0f)] float moveAcceleration = 45f;
+    [SerializeField, Min(0f)] float moveDeceleration = 45f;
 
     [Header("Crouch")]
     [SerializeField, Min(0f)] float crouchCameraDrop = 0.6f;
@@ -64,6 +66,7 @@ public sealed class PlayerController : MonoBehaviour
     Vector3 bobBaseLocalPos;
     float planarSpeed01;
     float outlineUpdateTime = 0f;
+    Vector3 planarVelocity;
 
     InputAction moveAction;   // Vector2
     InputAction lookAction;   // Vector2
@@ -313,7 +316,11 @@ public sealed class PlayerController : MonoBehaviour
         float baseSpeed = (isSprinting && !movingBackwards ? sprintSpeed : moveSpeed);
         if (isCrouched) baseSpeed *= crouchSpeedModifier;
 
-        Vector3 vel = planar * baseSpeed;
+        Vector3 targetPlanarVelocity = planar * baseSpeed;
+        float moveRate = targetPlanarVelocity.sqrMagnitude > 0.0001f ? moveAcceleration : moveDeceleration;
+        planarVelocity = Vector3.MoveTowards(planarVelocity, targetPlanarVelocity, moveRate * Time.deltaTime);
+
+        Vector3 vel = planarVelocity;
         vel.y = yVel;
 
         CollisionFlags flags = cc.Move(vel * Time.deltaTime);

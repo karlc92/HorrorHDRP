@@ -7113,6 +7113,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1837404033}
     - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: moveAcceleration
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: moveDeceleration
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
       propertyPath: DefaultCharacterHeight
       value: 1.7
       objectReference: {fileID: 0}
