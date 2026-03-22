@@ -16,6 +16,7 @@ public sealed class PlayerController : MonoBehaviour
     [Header("Move")]
     [SerializeField, Min(0f)] float moveSpeed = 6f;
     [SerializeField, Min(0f)] float sprintSpeed = 6f;
+    [SerializeField, Min(0f)] float jumpHeight = 1f;
 
     [Header("Crouch")]
     [SerializeField, Min(0f)] float crouchCameraDrop = 0.6f;
@@ -70,6 +71,7 @@ public sealed class PlayerController : MonoBehaviour
     InputAction crouchAction; // Button
     InputAction interactAction; // Button
     InputAction dropAction; // Button
+    InputAction jumpAction; // Button
 
     bool isCrouched;
     Vector3 crouchOffsetLocal;
@@ -111,56 +113,110 @@ public sealed class PlayerController : MonoBehaviour
 
     void OnEnable()
     {
+        Game.Settings.InputBindingsChanged += RefreshInputBindings;
+
         moveAction?.Enable();
         lookAction?.Enable();
         sprintAction?.Enable();
         crouchAction?.Enable();
         interactAction?.Enable();
         dropAction?.Enable();
+        jumpAction?.Enable();
     }
 
     void OnDisable()
     {
+        Game.Settings.InputBindingsChanged -= RefreshInputBindings;
+
         moveAction?.Disable();
         lookAction?.Disable();
         sprintAction?.Disable();
         crouchAction?.Disable();
         interactAction?.Disable();
         dropAction?.Disable();
+        jumpAction?.Disable();
+    }
+
+    void OnDestroy()
+    {
+        DisposeInput();
     }
 
     void SetupInput()
     {
-        // Move: WASD + gamepad left stick
+        DisposeInput();
+
+        PlayerInputSettings settings = Game.Settings.Input;
+
+        // Move: keyboard bindings + gamepad left stick
         moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
         moveAction.AddCompositeBinding("2DVector")
-            .With("Up", "<Keyboard>/w")
-            .With("Down", "<Keyboard>/s")
-            .With("Left", "<Keyboard>/a")
-            .With("Right", "<Keyboard>/d");
-        moveAction.AddBinding("<Gamepad>/leftStick");
+            .With("Up", settings.MoveUp)
+            .With("Down", settings.MoveDown)
+            .With("Left", settings.MoveLeft)
+            .With("Right", settings.MoveRight);
+        moveAction.AddBinding(settings.MoveGamepad);
 
         // Look: mouse/pointer delta + gamepad right stick
         lookAction = new InputAction("Look", InputActionType.Value, expectedControlType: "Vector2");
-        lookAction.AddBinding("<Pointer>/delta");
-        lookAction.AddBinding("<Gamepad>/rightStick");
+        lookAction.AddBinding(settings.LookPointer);
+        lookAction.AddBinding(settings.LookGamepad);
 
-        // Sprint: left shift (optionally gamepad stick press)
+        // Sprint: keyboard + gamepad stick press
         sprintAction = new InputAction("Sprint", InputActionType.Button);
-        sprintAction.AddBinding("<Keyboard>/leftShift");
-        sprintAction.AddBinding("<Gamepad>/leftStickPress");
+        sprintAction.AddBinding(settings.SprintKeyboard);
+        sprintAction.AddBinding(settings.SprintGamepad);
 
-        // Crouch: C
+        // Crouch
         crouchAction = new InputAction("Crouch", InputActionType.Button);
-        crouchAction.AddBinding("<Keyboard>/c");
+        crouchAction.AddBinding(settings.CrouchKeyboard);
 
-        // Interact: E
+        // Interact
         interactAction = new InputAction("Interact", InputActionType.Button);
-        interactAction.AddBinding("<Keyboard>/e");
+        interactAction.AddBinding(settings.InteractKeyboard);
 
-        // Drop carry item: G
+        // Drop carry item
         dropAction = new InputAction("Drop", InputActionType.Button);
-        dropAction.AddBinding("<Keyboard>/g");
+        dropAction.AddBinding(settings.DropKeyboard);
+
+        // Jump
+        jumpAction = new InputAction("Jump", InputActionType.Button);
+        jumpAction.AddBinding(settings.JumpKeyboard);
+
+        if (isActiveAndEnabled)
+        {
+            moveAction.Enable();
+            lookAction.Enable();
+            sprintAction.Enable();
+            crouchAction.Enable();
+            interactAction.Enable();
+            dropAction.Enable();
+            jumpAction.Enable();
+        }
+    }
+
+    void RefreshInputBindings()
+    {
+        SetupInput();
+    }
+
+    void DisposeInput()
+    {
+        moveAction?.Dispose();
+        lookAction?.Dispose();
+        sprintAction?.Dispose();
+        crouchAction?.Dispose();
+        interactAction?.Dispose();
+        dropAction?.Dispose();
+        jumpAction?.Dispose();
+
+        moveAction = null;
+        lookAction = null;
+        sprintAction = null;
+        crouchAction = null;
+        interactAction = null;
+        dropAction = null;
+        jumpAction = null;
     }
 
     void Update()
@@ -233,7 +289,7 @@ public sealed class PlayerController : MonoBehaviour
         float x = move.x;
         float z = move.y;
 
-        bool isSprinting = sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
+        bool isSprinting = grounded && sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
 
         bool movingBackwards = z < 0;
         float backwardsMult = (movingBackwards ? 0.35f : 1);
@@ -245,6 +301,13 @@ public sealed class PlayerController : MonoBehaviour
         planarSpeed01 = Mathf.Clamp01(planarMag);
 
         if (grounded && yVel < 0f) yVel = -2f;
+
+        if (grounded && !isCrouched && jumpAction != null && jumpAction.WasPressedThisFrame())
+        {
+            yVel = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+            grounded = false;
+        }
+
         yVel += Physics.gravity.y * Time.deltaTime;
 
         float baseSpeed = (isSprinting && !movingBackwards ? sprintSpeed : moveSpeed);

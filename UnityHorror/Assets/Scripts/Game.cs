@@ -37,6 +37,7 @@ public static class Game
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        Settings.ApplyVideoSettings();
         LoadGameState();
     }
 
