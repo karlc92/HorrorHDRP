@@ -200,7 +200,9 @@ public static class Console
             parse = parse.Replace("?refreshrate", "");
             if (parse == "")
             {
-                int refreshRate = Game.Settings.Video.RefreshRate > 0 ? Game.Settings.Video.RefreshRate : Screen.currentResolution.refreshRate;
+                int refreshRate = Game.Settings.Video.RefreshRate > 0
+                    ? Game.Settings.Video.RefreshRate
+                    : Mathf.RoundToInt((float)Screen.currentResolution.refreshRateRatio.value);
                 Print("RefreshRate is " + refreshRate.ToString(CultureInfo.InvariantCulture));
             }
             else if (int.TryParse(parse, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))

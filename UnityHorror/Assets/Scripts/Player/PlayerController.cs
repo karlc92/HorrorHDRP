@@ -21,7 +21,6 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField, Min(0f)] float moveDeceleration = 45f;
 
     [Header("Crouch")]
-    [SerializeField, Min(0f)] float crouchCameraDrop = 0.6f;
     [SerializeField, Min(0f)] float crouchCameraSharpness = 12f;
     [SerializeField, Range(0f, 1f)] float crouchSpeedModifier = 0.5f;
     [SerializeField, Min(0f)] float DefaultCharacterHeight = 2f;
@@ -67,6 +66,7 @@ public sealed class PlayerController : MonoBehaviour
     float planarSpeed01;
     float outlineUpdateTime = 0f;
     Vector3 planarVelocity;
+    float airborneMoveSpeed;
 
     InputAction moveAction;   // Vector2
     InputAction lookAction;   // Vector2
@@ -305,16 +305,19 @@ public sealed class PlayerController : MonoBehaviour
 
         if (grounded && yVel < 0f) yVel = -2f;
 
+        float groundedBaseSpeed = (isSprinting && !movingBackwards ? sprintSpeed : moveSpeed);
+        if (isCrouched) groundedBaseSpeed *= crouchSpeedModifier;
+
         if (grounded && !isCrouched && jumpAction != null && jumpAction.WasPressedThisFrame())
         {
+            airborneMoveSpeed = groundedBaseSpeed;
             yVel = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
             grounded = false;
         }
 
         yVel += Physics.gravity.y * Time.deltaTime;
 
-        float baseSpeed = (isSprinting && !movingBackwards ? sprintSpeed : moveSpeed);
-        if (isCrouched) baseSpeed *= crouchSpeedModifier;
+        float baseSpeed = grounded ? groundedBaseSpeed : airborneMoveSpeed;
 
         Vector3 targetPlanarVelocity = planar * baseSpeed;
         float moveRate = targetPlanarVelocity.sqrMagnitude > 0.0001f ? moveAcceleration : moveDeceleration;
@@ -325,6 +328,9 @@ public sealed class PlayerController : MonoBehaviour
 
         CollisionFlags flags = cc.Move(vel * Time.deltaTime);
         grounded = (flags & CollisionFlags.Below) != 0;
+
+        if (grounded)
+            airborneMoveSpeed = groundedBaseSpeed;
     }
 
     void UpdateCrouch()
