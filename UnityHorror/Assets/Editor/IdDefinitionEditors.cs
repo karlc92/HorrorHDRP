@@ -57,39 +57,12 @@ public abstract class IdDefinitionEditorBase : Editor
     }
 }
 
-[CustomEditor(typeof(TaskHook), true)]
-public class TaskHookIdEditor : IdDefinitionEditorBase
-{
-    public override void OnInspectorGUI()
-    {
-        DrawIdDefinitionInspector(nameof(TaskHook.HookId), typeof(TaskHook), IdReferenceScope.SceneObjects, "Hook ID");
-    }
-}
-
-[CustomEditor(typeof(HoldConditionSource), true)]
-public class HoldConditionSourceIdEditor : IdDefinitionEditorBase
-{
-    public override void OnInspectorGUI()
-    {
-        DrawIdDefinitionInspector(nameof(HoldConditionSource.SourceId), typeof(HoldConditionSource), IdReferenceScope.SceneObjects, "Condition Source ID");
-    }
-}
-
 [CustomEditor(typeof(Zone))]
 public class ZoneIdEditor : IdDefinitionEditorBase
 {
     public override void OnInspectorGUI()
     {
         DrawIdDefinitionInspector(nameof(Zone.ZoneId), typeof(Zone), IdReferenceScope.SceneObjects, "Zone ID");
-    }
-}
-
-[CustomEditor(typeof(TaskDefinition), true)]
-public class TaskDefinitionIdEditor : IdDefinitionEditorBase
-{
-    public override void OnInspectorGUI()
-    {
-        DrawIdDefinitionInspector(nameof(TaskDefinition.TaskId), typeof(TaskDefinition), IdReferenceScope.ResourcesAssets, "Task ID");
     }
 }
 

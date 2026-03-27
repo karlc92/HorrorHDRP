@@ -663,7 +663,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aca560fb3fa7cec43bab6987a9d95000, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RunDebugView
+  m_EditorClassIdentifier: Assembly-CSharp::StoryDebugView
 --- !u!1 &428974301
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using TMPro;
 using UnityEngine;
 
@@ -16,10 +14,9 @@ public class MainMenuUI : MonoBehaviour
     {
         ShowMainMenu();
 
-        foreach (var label in SlotButtonLabels)
+        for (int i = 0; i < SlotButtonLabels.Count; i++)
         {
-            var index = SlotButtonLabels.IndexOf(label);
-            label.text = GetSavedDataDisplay(index + 1);
+            SlotButtonLabels[i].text = GetSavedDataDisplay(i + 1);
         }
     }
 
@@ -57,52 +54,22 @@ public class MainMenuUI : MonoBehaviour
 
     public string GetSavedDataDisplay(int slot)
     {
-        if (!Game.HasActiveRun())
+        if (!Game.TryReadSaveState(slot, out var state))
             return $"New Game";
 
-        if (TryReadSaveState(slot, out var state))
-        {
-            string playTime = FormatPlayTimeHHmm(state.TotalPlayTimeSeconds);
-            return $"Continue\nNight {state.Night}\n{playTime}";
-        }
-
-        // Save exists but couldn't be read (corrupt / partial write etc).
-        return $"Continue";
+        string playTime = FormatPlayTimeHHmm(state.TotalPlayTimeSeconds);
+        string objective = state.Story != null && !string.IsNullOrWhiteSpace(state.Story.CurrentObjectiveTitle)
+            ? state.Story.CurrentObjectiveTitle
+            : "Continue";
+        return $"Continue\n{objective}\n{playTime}";
     }
 
     public void SlotButtonClick(int slot)
     {
-        if (Game.HasActiveRun())
-        {
-            Game.ContinueRun();
-        }
+        if (Game.HasSaveFile(slot))
+            Game.LoadGame(slot);
         else
-        {
-            Game.StartNewRun();
-        }
-    }
-
-    bool TryReadSaveState(int slot, out GameState state)
-    {
-        state = null;
-
-        try
-        {
-            string path = Game.GetSavePath();
-            if (!File.Exists(path))
-                return false;
-
-            string json = File.ReadAllText(path);
-            if (string.IsNullOrWhiteSpace(json))
-                return false;
-
-            state = JsonUtility.FromJson<GameState>(json);
-            return state != null && state.Run != null;
-        }
-        catch
-        {
-            return false;
-        }
+            Game.StartNewGame(slot);
     }
 
     string FormatPlayTimeHHmm(float totalSeconds)

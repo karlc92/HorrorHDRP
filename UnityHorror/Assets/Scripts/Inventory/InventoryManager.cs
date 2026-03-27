@@ -10,11 +10,6 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
     private readonly Dictionary<string, HeldItemDefinition> definitionsById =
         new Dictionary<string, HeldItemDefinition>(StringComparer.OrdinalIgnoreCase);
 
-    public string ForcedDeliveryItemId { get; private set; }
-    public string ForcedDeliveryTaskInstanceId { get; private set; }
-    public string ForcedDeliveryStageId { get; private set; }
-    public bool HasForcedDeliveryItem => !string.IsNullOrWhiteSpace(ForcedDeliveryItemId);
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -26,7 +21,6 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
         Instance = this;
         BuildDefinitionCache();
         EnsureInventoryState();
-        ClearForcedDeliveryCarry();
     }
 
     public bool HasItem(string itemId)
@@ -109,9 +103,6 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
 
     public bool SetActiveItem(string itemId)
     {
-        if (HasForcedDeliveryItem && !string.Equals(itemId, ForcedDeliveryItemId, StringComparison.OrdinalIgnoreCase))
-            return false;
-
         if (!HasItem(itemId))
             return false;
 
@@ -148,42 +139,6 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
         var state = EnsureInventoryState();
         state.Items.Clear();
         state.ActiveItemId = null;
-        ClearForcedDeliveryCarry();
-    }
-
-    public bool BeginForcedDeliveryCarry(string itemId, string taskInstanceId, string stageId)
-    {
-        if (string.IsNullOrWhiteSpace(itemId) || string.IsNullOrWhiteSpace(taskInstanceId) || string.IsNullOrWhiteSpace(stageId))
-            return false;
-
-        if (!HasItem(itemId))
-            return false;
-
-        ForcedDeliveryItemId = itemId;
-        ForcedDeliveryTaskInstanceId = taskInstanceId;
-        ForcedDeliveryStageId = stageId;
-        EnsureInventoryState().ActiveItemId = itemId;
-        return true;
-    }
-
-    public bool IsForcedDeliveryStage(string taskInstanceId, string stageId)
-    {
-        return !string.IsNullOrWhiteSpace(taskInstanceId)
-            && !string.IsNullOrWhiteSpace(stageId)
-            && string.Equals(ForcedDeliveryTaskInstanceId, taskInstanceId, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(ForcedDeliveryStageId, stageId, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public bool ClearForcedDeliveryCarry(string expectedTaskInstanceId = null, string expectedStageId = null)
-    {
-        if ((!string.IsNullOrWhiteSpace(expectedTaskInstanceId) || !string.IsNullOrWhiteSpace(expectedStageId))
-            && !IsForcedDeliveryStage(expectedTaskInstanceId, expectedStageId))
-            return false;
-
-        ForcedDeliveryItemId = null;
-        ForcedDeliveryTaskInstanceId = null;
-        ForcedDeliveryStageId = null;
-        return true;
     }
 
     public List<HeldItemConditionState> CopyConditionStates(string itemId, IEnumerable<string> conditionIds = null)
@@ -241,7 +196,6 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
     public void OnAfterGameLoaded(GameState state)
     {
         EnsureInventoryState();
-        ClearForcedDeliveryCarry();
     }
 
     private void BuildDefinitionCache()
@@ -258,17 +212,18 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
 
     private InventoryState EnsureInventoryState()
     {
-        var run = Game.State?.EnsureRunState();
-        if (run == null)
+        if (Game.State == null)
             return new InventoryState();
 
-        if (run.Inventory == null)
-            run.Inventory = new InventoryState();
+        Game.State.EnsureInitialized();
 
-        if (run.Inventory.Items == null)
-            run.Inventory.Items = new List<HeldItemRuntimeState>();
+        if (Game.State.Inventory == null)
+            Game.State.Inventory = new InventoryState();
 
-        return run.Inventory;
+        if (Game.State.Inventory.Items == null)
+            Game.State.Inventory.Items = new List<HeldItemRuntimeState>();
+
+        return Game.State.Inventory;
     }
 
     private HeldItemKind GetItemKind(string itemId)

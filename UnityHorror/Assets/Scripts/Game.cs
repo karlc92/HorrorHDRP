@@ -15,15 +15,17 @@ public interface IGameSaveParticipant
 
 public static class Game
 {
+    public const int MaxSaveSlots = 3;
     public const string GameSceneName = "GameScene";
     public const string MenuSceneName = "MenuScene";
     public const string LoadingSceneName = "LoadingScene";
-    public const string SaveFilePrefix = "save_slot_"; // Legacy compatibility only.
+    public const string SaveFilePrefix = "save_slot_";
     public const string SaveFileName = "game_state.json";
 
     public static GameSettings Settings = new GameSettings();
     public static GameState State = new GameState();
     public static bool Started = false;
+    public static int ActiveSlot { get; private set; } = 1;
 
     private static bool hookedSceneLoaded;
     private static bool pendingApplyLoadedState;
@@ -38,7 +40,8 @@ public static class Game
         }
 
         Settings.ApplyVideoSettings();
-        LoadGameState();
+        if (!LoadGameState(ActiveSlot))
+            State = CreateFreshState(ActiveSlot);
     }
 
     public static void Start()
@@ -48,7 +51,7 @@ public static class Game
 
     public static void Update()
     {
-        if (SceneManager.GetActiveScene().name == GameSceneName && State?.Run != null)
+        if (SceneManager.GetActiveScene().name == GameSceneName && State != null)
         {
             float dt = Mathf.Min(Time.deltaTime, 0.25f);
             State.TotalPlayTimeSeconds += dt;
@@ -64,93 +67,55 @@ public static class Game
         SceneManager.LoadScene(MenuSceneName);
     }
 
-    public static void StartNewRun()
+    public static void StartNewGame(int slot)
     {
-        State ??= new GameState();
-        State.Progression ??= new ProgressionState();
-
-        var seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
-        if (seed == 0)
-            seed = 1;
-
-        State.Run = new RunState
-        {
-            Seed = seed,
-            CurrentNightNumber = 1,
-            PlayerPos = Vector3.zero,
-            PlayerRot = Quaternion.identity,
-            MonsterBrainState = new MonsterBrainState(),
-            CurrentNightState = new NightRuntimeState(),
-            NightStartSnapshot = new NightSnapshot(),
-            Inventory = new InventoryState(),
-            Plan = new RunPlan(),
-            NightStarted = false,
-            CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>(),
-        };
+        ActiveSlot = ClampSlot(slot);
+        State = CreateFreshState(ActiveSlot);
 
         SaveGameState();
         pendingApplyLoadedState = false;
         SceneManager.LoadScene(GameSceneName);
     }
 
-    public static void ContinueRun()
+    public static void ContinueGame()
     {
-        if (State?.Run == null)
+        if (!HasSaveFile(ActiveSlot))
         {
-            Debug.LogWarning("[Game] ContinueRun requested with no active run.");
+            Debug.LogWarning($"[Game] ContinueGame requested with no save in slot {ActiveSlot}.");
             return;
         }
 
+        LoadGameState(ActiveSlot);
         pendingApplyLoadedState = true;
         SceneManager.LoadScene(GameSceneName, LoadSceneMode.Single);
     }
 
-    public static void GiveUpRun()
+    public static void AbandonGame()
     {
-        ClearRunState();
+        ResetCurrentGameState();
         SaveGameState();
         ReturnToMainMenu();
     }
 
-    public static void ClearRunState()
+    public static void ResetCurrentGameState()
     {
-        if (State == null)
-            State = new GameState();
-
-        State.Run = null;
+        State = CreateFreshState(ActiveSlot);
     }
 
     public static bool SaveGameState()
     {
-        if (State == null)
-            State = new GameState();
-
-        if (State.Progression == null)
-            State.Progression = new ProgressionState();
-
-        if (State.Run != null)
-        {
-            if (State.Run.MonsterBrainState == null)
-                State.Run.MonsterBrainState = new MonsterBrainState();
-            if (State.Run.CurrentNightState == null)
-                State.Run.CurrentNightState = new NightRuntimeState();
-            if (State.Run.Plan == null)
-                State.Run.Plan = new RunPlan();
-            if (State.Run.NightStartSnapshot == null)
-                State.Run.NightStartSnapshot = new NightSnapshot();
-            if (State.Run.Inventory == null)
-                State.Run.Inventory = new InventoryState();
-            if (State.Run.CleanseObstructionGroups == null)
-                State.Run.CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>();
-        }
+        State ??= CreateFreshState(ActiveSlot);
+        State.Slot = ActiveSlot;
+        State.EnsureInitialized();
 
         NotifyBeforeSave();
 
-        string path = GetSavePath();
+        string path = GetSavePath(ActiveSlot);
         string json = JsonUtility.ToJson(State, prettyPrint: true);
 
         try
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, json);
             Console.Print("Saved game state");
             return true;
@@ -164,10 +129,16 @@ public static class Game
 
     public static bool LoadGameState()
     {
-        string path = GetSavePath();
+        return LoadGameState(ActiveSlot);
+    }
+
+    public static bool LoadGameState(int slot)
+    {
+        ActiveSlot = ClampSlot(slot);
+        string path = GetSavePath(ActiveSlot);
         if (!File.Exists(path))
         {
-            State = new GameState();
+            State = CreateFreshState(ActiveSlot);
             return false;
         }
 
@@ -175,17 +146,9 @@ public static class Game
         {
             string json = File.ReadAllText(path);
             var loaded = JsonUtility.FromJson<GameState>(json);
-            State = loaded ?? new GameState();
-            State.Progression ??= new ProgressionState();
-            if (State.Run != null)
-            {
-                State.Run.MonsterBrainState ??= new MonsterBrainState();
-                State.Run.CurrentNightState ??= new NightRuntimeState();
-                State.Run.Plan ??= new RunPlan();
-                State.Run.NightStartSnapshot ??= new NightSnapshot();
-                State.Run.Inventory ??= new InventoryState();
-                State.Run.CleanseObstructionGroups ??= new System.Collections.Generic.List<CleanseObstructionGroupState>();
-            }
+            State = loaded ?? CreateFreshState(ActiveSlot);
+            State.Slot = ActiveSlot;
+            State.EnsureInitialized();
 
             Console.Print("Loaded game state");
             return true;
@@ -193,19 +156,20 @@ public static class Game
         catch (Exception e)
         {
             Debug.LogError($"[Game] LoadGameState failed at '{path}'.\n{e}");
-            State = new GameState();
+            State = CreateFreshState(ActiveSlot);
             return false;
         }
     }
 
-    // Legacy wrappers kept temporarily so existing menu/UI code still compiles.
-    public static void StartNewGame(int _slot) => StartNewRun();
-
-    public static bool SaveGame(int _slot) => SaveGameState();
-
-    public static bool LoadGame(int _slot)
+    public static bool SaveGame(int slot)
     {
-        if (!LoadGameState() || State?.Run == null)
+        ActiveSlot = ClampSlot(slot);
+        return SaveGameState();
+    }
+
+    public static bool LoadGame(int slot)
+    {
+        if (!LoadGameState(slot))
             return false;
 
         pendingApplyLoadedState = true;
@@ -213,14 +177,15 @@ public static class Game
         return true;
     }
 
-    public static bool HasSaveFile(int _slot) => HasActiveRun();
-
-    public static bool HasActiveRun()
+    public static bool HasSaveFile(int slot)
     {
-        if (State == null)
-            LoadGameState();
+        string path = GetSavePath(slot);
+        return File.Exists(path);
+    }
 
-        return State?.Run != null;
+    public static bool HasActiveGame()
+    {
+        return HasSaveFile(ActiveSlot);
     }
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -234,7 +199,7 @@ public static class Game
 
     private static void ApplyLoadedStateToScene()
     {
-        if (State?.Run == null)
+        if (State == null)
             return;
 
         var player = UnityEngine.Object.FindFirstObjectByType<PlayerController>();
@@ -289,6 +254,67 @@ public static class Game
 
     public static string GetSavePath()
     {
-        return Path.Combine(Application.persistentDataPath, SaveFileName);
+        return GetSavePath(ActiveSlot);
+    }
+
+    public static string GetSavePath(int slot)
+    {
+        int clampedSlot = ClampSlot(slot);
+        string folder = Path.Combine(Application.persistentDataPath, $"{SaveFilePrefix}{clampedSlot}");
+        return Path.Combine(folder, SaveFileName);
+    }
+
+    public static bool TryReadSaveState(int slot, out GameState state)
+    {
+        state = null;
+        string path = GetSavePath(slot);
+        if (!File.Exists(path))
+            return false;
+
+        try
+        {
+            string json = File.ReadAllText(path);
+            state = JsonUtility.FromJson<GameState>(json);
+            state ??= CreateFreshState(slot);
+            state.Slot = ClampSlot(slot);
+            state.EnsureInitialized();
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[Game] TryReadSaveState failed at '{path}'.\n{e}");
+            state = null;
+            return false;
+        }
+    }
+
+    private static GameState CreateFreshState(int slot)
+    {
+        var state = new GameState
+        {
+            Slot = ClampSlot(slot),
+            Story = new StoryState
+            {
+                Started = true,
+                CurrentBeatIndex = 0,
+                CurrentBeatId = "opening",
+                CurrentObjectiveTitle = "Begin the story",
+                CurrentObjectiveDetail = "Move deeper into the world and uncover what happened here.",
+            },
+            Inventory = new InventoryState(),
+            MonsterBrainState = new MonsterBrainState(),
+            Progression = new ProgressionState(),
+            PlayerPos = Vector3.zero,
+            PlayerRot = Quaternion.identity,
+            TotalPlayTimeSeconds = 0f,
+        };
+
+        state.EnsureInitialized();
+        return state;
+    }
+
+    private static int ClampSlot(int slot)
+    {
+        return Mathf.Clamp(slot, 1, MaxSaveSlots);
     }
 }

@@ -4,67 +4,23 @@ using UnityEngine;
 [Serializable]
 public class GameState
 {
+    public int Slot = 1;
+    public StoryState Story = new StoryState();
+    public InventoryState Inventory = new InventoryState();
+    public Vector3 PlayerPos = Vector3.zero;
+    public Quaternion PlayerRot = Quaternion.identity;
+    public float TotalPlayTimeSeconds = 0f;
+    public MonsterBrainState MonsterBrainState = new MonsterBrainState();
     public ProgressionState Progression = new ProgressionState();
-    public RunState Run = null;
 
-    // Compatibility shims for existing runtime systems while the project transitions
-    // to the nested Progression/Run save model.
-    public Vector3 PlayerPos
+    public void EnsureInitialized()
     {
-        get => Run != null ? Run.PlayerPos : Vector3.zero;
-        set => EnsureRunState().PlayerPos = value;
-    }
-
-    public Quaternion PlayerRot
-    {
-        get => Run != null ? Run.PlayerRot : Quaternion.identity;
-        set => EnsureRunState().PlayerRot = value;
-    }
-
-    public int Night
-    {
-        get => Run != null ? Run.CurrentNightNumber : 1;
-        set => EnsureRunState().CurrentNightNumber = value;
-    }
-
-    public int Slot
-    {
-        get => 1;
-        set { }
-    }
-
-    public float TotalPlayTimeSeconds
-    {
-        get => Run != null ? Run.TotalPlayTimeSeconds : 0f;
-        set => EnsureRunState().TotalPlayTimeSeconds = value;
-    }
-
-    public MonsterBrainState MonsterBrainState
-    {
-        get => Run != null ? Run.MonsterBrainState : null;
-        set => EnsureRunState().MonsterBrainState = value;
-    }
-
-    public RunState EnsureRunState()
-    {
-        if (Run == null)
-            Run = new RunState();
-
-        if (Run.MonsterBrainState == null)
-            Run.MonsterBrainState = new MonsterBrainState();
-
-        if (Run.CurrentNightState == null)
-            Run.CurrentNightState = new NightRuntimeState();
-
-        if (Run.Plan == null)
-            Run.Plan = new RunPlan();
-
-        if (Run.Inventory == null)
-            Run.Inventory = new InventoryState();
-
-        if (Run.CleanseObstructionGroups == null)
-            Run.CleanseObstructionGroups = new System.Collections.Generic.List<CleanseObstructionGroupState>();
-
-        return Run;
+        Story ??= new StoryState();
+        Inventory ??= new InventoryState();
+        Inventory.Items ??= new System.Collections.Generic.List<HeldItemRuntimeState>();
+        MonsterBrainState ??= new MonsterBrainState();
+        Progression ??= new ProgressionState();
+        Progression.DiscoveredLoreIds ??= new System.Collections.Generic.List<string>();
+        Progression.UnlockFlags ??= new System.Collections.Generic.List<string>();
     }
 }

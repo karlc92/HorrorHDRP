@@ -6,22 +6,11 @@ public class SaveBed : Interactable
     {
         var gameUI = FindFirstObjectByType<GameUI>();
 
-        if (RunManager.Instance != null)
-        {
-            bool endedNight = RunManager.Instance.TryEndNight();
-            if (gameUI != null)
-            {
-                gameUI.ShowNotification(endedNight
-                    ? "Night completed."
-                    : "You cannot sleep yet.");
-            }
-            return;
-        }
+        StoryGameManager.Instance?.CaptureCheckpointAtPlayer("save-bed");
 
         if (gameUI != null)
-        {
             gameUI.ShowNotification("Your progress has been saved.");
-        }
+
         Game.SaveGameState();
     }
 }

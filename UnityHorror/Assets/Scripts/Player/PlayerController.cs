@@ -292,7 +292,7 @@ public sealed class PlayerController : MonoBehaviour
         float x = move.x;
         float z = move.y;
 
-        bool isSprinting = grounded && sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
+        bool isSprinting = grounded && sprintAction.IsPressed() && !isCrouched;
 
         bool movingBackwards = z < 0;
         float backwardsMult = (movingBackwards ? 0.35f : 1);
@@ -329,7 +329,7 @@ public sealed class PlayerController : MonoBehaviour
 
     void UpdateCrouch()
     {
-        bool wantsCrouch = crouchAction != null && crouchAction.IsPressed() && CanCrouchCurrentCarry();
+        bool wantsCrouch = crouchAction != null && crouchAction.IsPressed();
 
         // NEW LOGIC:
         // - If holding crouch -> crouch.
@@ -416,7 +416,7 @@ public sealed class PlayerController : MonoBehaviour
         }
 
         bool movingOnGround = grounded && planarSpeed01 > 0.01f;
-        bool isSprinting = sprintAction.IsPressed() && !isCrouched && CanSprintCurrentCarry();
+        bool isSprinting = sprintAction.IsPressed() && !isCrouched;
         bool movingBackwards = moveAction.ReadValue<Vector2>().y < 0f;
         float backwardsMult = (movingBackwards ? 0.75f : 1);
 
@@ -576,7 +576,7 @@ public sealed class PlayerController : MonoBehaviour
         if (interactAction == null)
             return;
 
-        if (TaskListManager.Instance != null && TaskListManager.Instance.IsOpen)
+        if (StoryPanelManager.Instance != null && StoryPanelManager.Instance.IsOpen)
         {
             CancelActiveInteraction();
             return;
@@ -601,9 +601,6 @@ public sealed class PlayerController : MonoBehaviour
 
         if (interactAction.WasPressedThisFrame())
             TryInteract();
-
-        if (dropAction != null && dropAction.WasPressedThisFrame())
-            TaskManager.Instance?.TryDropActiveDelivery(this);
     }
 
     void StartInteraction(Interactable interactable)
@@ -626,13 +623,4 @@ public sealed class PlayerController : MonoBehaviour
         activeInteractable = null;
     }
 
-    bool CanSprintCurrentCarry()
-    {
-        return TaskManager.Instance == null || TaskManager.Instance.CanSprintWithForcedDelivery();
-    }
-
-    bool CanCrouchCurrentCarry()
-    {
-        return TaskManager.Instance == null || TaskManager.Instance.CanCrouchWithForcedDelivery();
-    }
 }
