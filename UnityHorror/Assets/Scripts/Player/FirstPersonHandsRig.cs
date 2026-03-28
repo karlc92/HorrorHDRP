@@ -35,6 +35,8 @@ public sealed class FirstPersonHandPoseDefinition
     public float RingCurl;
     public float PinkyCurl;
     public float FingerSplay;
+    public float PinkyLift;
+    public Vector3 PinkyBaseEuler;
     public Vector3 ItemAnchorLocalPosition = new Vector3(0f, -0.01f, 0.02f);
     public Vector3 ItemAnchorLocalEuler;
 }
@@ -66,12 +68,14 @@ public sealed class FirstPersonSingleHandSettings
             ThumbRoll = 0f,
             IndexCurl = 0f,
             MiddleCurl = 0f,
-            RingCurl = 0f,
-            PinkyCurl = 0f,
-            FingerSplay = 0f,
-            ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
-            ItemAnchorLocalEuler = new Vector3(-8f, 0f, -90f),
-        };
+                RingCurl = 0f,
+                PinkyCurl = 0f,
+                FingerSplay = 0f,
+                PinkyLift = 0f,
+                PinkyBaseEuler = Vector3.zero,
+                ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
+                ItemAnchorLocalEuler = new Vector3(-8f, 0f, -90f),
+            };
 
         return new FirstPersonSingleHandSettings
         {
@@ -95,8 +99,10 @@ public sealed class FirstPersonSingleHandSettings
                 IndexCurl = 0.42f,
                 MiddleCurl = 0.5f,
                 RingCurl = 0.54f,
-                PinkyCurl = 0.48f,
+                PinkyCurl = 0.72f,
                 FingerSplay = 0.04f,
+                PinkyLift = 18f,
+                PinkyBaseEuler = new Vector3(6f, 2f, 0f),
                 ItemAnchorLocalPosition = new Vector3(-0.002f, -0.018f, 0.04f),
                 ItemAnchorLocalEuler = new Vector3(-70f, 0f, 180f),
             },
@@ -117,6 +123,8 @@ public sealed class FirstPersonSingleHandSettings
                 RingCurl = 0.46f,
                 PinkyCurl = 0.5f,
                 FingerSplay = 0.02f,
+                PinkyLift = 0f,
+                PinkyBaseEuler = Vector3.zero,
                 ItemAnchorLocalPosition = new Vector3(0.01f, -0.012f, 0.042f),
                 ItemAnchorLocalEuler = new Vector3(0f, 90f, 90f),
             },
@@ -139,12 +147,14 @@ public sealed class FirstPersonSingleHandSettings
             ThumbRoll = 0f,
             IndexCurl = 0f,
             MiddleCurl = 0f,
-            RingCurl = 0f,
-            PinkyCurl = 0f,
-            FingerSplay = 0f,
-            ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
-            ItemAnchorLocalEuler = new Vector3(-8f, 0f, 90f),
-        };
+                RingCurl = 0f,
+                PinkyCurl = 0f,
+                FingerSplay = 0f,
+                PinkyLift = 0f,
+                PinkyBaseEuler = Vector3.zero,
+                ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
+                ItemAnchorLocalEuler = new Vector3(-8f, 0f, 90f),
+            };
 
         return new FirstPersonSingleHandSettings
         {
@@ -168,20 +178,22 @@ public sealed class FirstPersonSingleHandSettings
                 IndexCurl = 0.42f,
                 MiddleCurl = 0.5f,
                 RingCurl = 0.54f,
-                PinkyCurl = 0.48f,
+                PinkyCurl = 0.72f,
                 FingerSplay = -0.04f,
+                PinkyLift = 18f,
+                PinkyBaseEuler = new Vector3(6f, -2f, 0f),
                 ItemAnchorLocalPosition = new Vector3(0.002f, -0.018f, 0.04f),
                 ItemAnchorLocalEuler = new Vector3(-70f, 0f, 0f),
             },
             TorchSide = new FirstPersonHandPoseDefinition
             {
                 LocalPosition = Vector3.zero,
-                LocalEuler = new Vector3(-1f, 3f, 8f),
+                LocalEuler = new Vector3(-1f, 10f, 8f),
                 UpperArmEuler = new Vector3(-2f, 0f, 3f),
                 LowerArm1Euler = new Vector3(6f, 0f, 3f),
                 LowerArm2Euler = new Vector3(5f, 0f, 2f),
                 LowerArm3Euler = new Vector3(4f, 0f, 1f),
-                HandEuler = new Vector3(9f, 12f, 10f),
+                HandEuler = new Vector3(9f, 24f, 10f),
                 ThumbCurl = 0.3f,
                 ThumbSplay = -0.16f,
                 ThumbRoll = 6f,
@@ -190,8 +202,10 @@ public sealed class FirstPersonSingleHandSettings
                 RingCurl = 0.46f,
                 PinkyCurl = 0.5f,
                 FingerSplay = -0.02f,
+                PinkyLift = 0f,
+                PinkyBaseEuler = Vector3.zero,
                 ItemAnchorLocalPosition = new Vector3(-0.01f, -0.012f, 0.042f),
-                ItemAnchorLocalEuler = new Vector3(0f, -90f, -90f),
+                ItemAnchorLocalEuler = new Vector3(0f, -72f, -90f),
             },
         };
     }
@@ -222,6 +236,8 @@ public sealed class FirstPersonSingleHandSettings
             RingCurl = source.RingCurl,
             PinkyCurl = source.PinkyCurl,
             FingerSplay = source.FingerSplay,
+            PinkyLift = source.PinkyLift,
+            PinkyBaseEuler = source.PinkyBaseEuler,
             ItemAnchorLocalPosition = source.ItemAnchorLocalPosition,
             ItemAnchorLocalEuler = source.ItemAnchorLocalEuler,
         };
@@ -249,6 +265,9 @@ public sealed class FirstPersonHandsSettings
     public float LookRotationSway = 0.06f;
     public float MaxLookRotationSway = 7f;
     public float MaxLookPositionSway = 0.03f;
+    public float AirborneVerticalPositionSway = 0.02f;
+    public float AirborneVerticalRotationSway = 6f;
+    public float MaxAirborneVerticalVelocity = 8f;
     public FirstPersonSingleHandSettings Left = FirstPersonSingleHandSettings.CreateDefaultLeft();
     public FirstPersonSingleHandSettings Right = FirstPersonSingleHandSettings.CreateDefaultRight();
 }
@@ -360,7 +379,7 @@ public sealed class FirstPersonHandsRig
         return hand != null ? hand.ItemAnchor : null;
     }
 
-    public void Tick(float deltaTime, Vector2 moveInput, Vector2 lookInput, float planarSpeed01, bool grounded, bool isSprinting)
+    public void Tick(float deltaTime, Vector2 moveInput, Vector2 lookInput, float planarSpeed01, bool grounded, bool isSprinting, float verticalVelocity)
     {
         if (!initialized || settings == null)
             return;
@@ -374,7 +393,7 @@ public sealed class FirstPersonHandsRig
             hand.RaiseCurrent = Damp(hand.RaiseCurrent, hand.RaiseTarget, settings.RaiseSharpness, deltaTime);
 
             FirstPersonHandPoseDefinition pose = GetPoseDefinition(hand);
-            UpdateSway(hand, moveInput, lookInput, planarSpeed01, grounded, isSprinting, deltaTime);
+            UpdateSway(hand, moveInput, lookInput, planarSpeed01, grounded, isSprinting, verticalVelocity, deltaTime);
             UpdatePoseState(hand, pose, deltaTime);
             ApplyAnchor(hand, hand.AppliedPose);
             ApplyPose(hand, hand.AppliedPose);
@@ -477,7 +496,7 @@ public sealed class FirstPersonHandsRig
         ApplyRendererState(hand);
     }
 
-    private void UpdateSway(RuntimeHand hand, Vector2 moveInput, Vector2 lookInput, float planarSpeed01, bool grounded, bool isSprinting, float deltaTime)
+    private void UpdateSway(RuntimeHand hand, Vector2 moveInput, Vector2 lookInput, float planarSpeed01, bool grounded, bool isSprinting, float verticalVelocity, float deltaTime)
     {
         float strafe = moveInput.x;
         float forward = moveInput.y;
@@ -523,6 +542,14 @@ public sealed class FirstPersonHandsRig
             forward * settings.MoveRotationSway * -0.35f,
             strafe * settings.MoveRotationSway * 0.4f,
             0f);
+
+        if (!grounded)
+        {
+            float airborneVelocity01 = Mathf.Clamp(verticalVelocity / Mathf.Max(0.01f, settings.MaxAirborneVerticalVelocity), -1f, 1f);
+            targetPosition.y += -airborneVelocity01 * settings.AirborneVerticalPositionSway;
+            targetPosition.z += Mathf.Abs(airborneVelocity01) * settings.AirborneVerticalPositionSway * -0.35f;
+            targetEuler.x += airborneVelocity01 * settings.AirborneVerticalRotationSway;
+        }
 
         hand.SwayPositionCurrent = Damp(hand.SwayPositionCurrent, targetPosition, settings.SwaySharpness, deltaTime);
         hand.SwayRotationCurrent = Damp(hand.SwayRotationCurrent, targetEuler, settings.SwaySharpness, deltaTime);
@@ -599,7 +626,7 @@ public sealed class FirstPersonHandsRig
         ApplyFinger(hand, hand.Index1, hand.Index2, hand.Index3, pose.IndexCurl, pose.FingerSplay * 1.0f * sideSign);
         ApplyFinger(hand, hand.Middle1, hand.Middle2, hand.Middle3, pose.MiddleCurl, pose.FingerSplay * 0.25f * sideSign);
         ApplyFinger(hand, hand.Ring1, hand.Ring2, hand.Ring3, pose.RingCurl, pose.FingerSplay * -0.2f * sideSign);
-        ApplyFinger(hand, hand.Pinky1, hand.Pinky2, hand.Pinky3, pose.PinkyCurl, pose.FingerSplay * -0.75f * sideSign);
+        ApplyFinger(hand, hand.Pinky1, hand.Pinky2, hand.Pinky3, pose.PinkyCurl, pose.FingerSplay * -0.75f * sideSign, pose.PinkyLift, pose.PinkyBaseEuler);
         if (hand.Pinky4 != null)
             hand.Pinky4.localRotation = hand.BindRotations[hand.Pinky4] * Quaternion.AngleAxis(Mathf.Lerp(0f, FingerTipCurlAngle * 0.75f, pose.PinkyCurl * hand.RaiseCurrent), Vector3.forward);
     }
@@ -624,13 +651,17 @@ public sealed class FirstPersonHandsRig
             pose.ThumbCurl * 28f * poseWeight);
     }
 
-    private void ApplyFinger(RuntimeHand hand, Transform first, Transform second, Transform third, float curl, float splay)
+    private void ApplyFinger(RuntimeHand hand, Transform first, Transform second, Transform third, float curl, float splay, float lift = 0f, Vector3? baseEulerOverride = null)
     {
         if (first == null || second == null || third == null)
             return;
 
         float poseWeight = hand.RaiseCurrent;
-        first.localRotation = hand.BindRotations[first] * Quaternion.Euler(0f, splay * 16f * poseWeight, curl * FingerBaseCurlAngle * poseWeight);
+        Vector3 baseEuler = new Vector3(lift, splay * 16f, curl * FingerBaseCurlAngle);
+        if (baseEulerOverride.HasValue)
+            baseEuler += baseEulerOverride.Value;
+
+        first.localRotation = hand.BindRotations[first] * Quaternion.Euler(baseEuler * poseWeight);
         second.localRotation = hand.BindRotations[second] * Quaternion.AngleAxis(curl * FingerMidCurlAngle * poseWeight, Vector3.forward);
         third.localRotation = hand.BindRotations[third] * Quaternion.AngleAxis(curl * FingerTipCurlAngle * poseWeight, Vector3.forward);
     }
@@ -694,6 +725,8 @@ public sealed class FirstPersonHandsRig
         currentPose.RingCurl = Damp(currentPose.RingCurl, targetPose.RingCurl, sharpness, deltaTime);
         currentPose.PinkyCurl = Damp(currentPose.PinkyCurl, targetPose.PinkyCurl, sharpness, deltaTime);
         currentPose.FingerSplay = Damp(currentPose.FingerSplay, targetPose.FingerSplay, sharpness, deltaTime);
+        currentPose.PinkyLift = Damp(currentPose.PinkyLift, targetPose.PinkyLift, sharpness, deltaTime);
+        currentPose.PinkyBaseEuler = Damp(currentPose.PinkyBaseEuler, targetPose.PinkyBaseEuler, sharpness, deltaTime);
         currentPose.ItemAnchorLocalPosition = Damp(currentPose.ItemAnchorLocalPosition, targetPose.ItemAnchorLocalPosition, sharpness, deltaTime);
         currentPose.ItemAnchorLocalEuler = Damp(currentPose.ItemAnchorLocalEuler, targetPose.ItemAnchorLocalEuler, sharpness, deltaTime);
     }
@@ -764,6 +797,8 @@ public sealed class FirstPersonHandsRig
             RingCurl = source.RingCurl,
             PinkyCurl = source.PinkyCurl,
             FingerSplay = source.FingerSplay,
+            PinkyLift = source.PinkyLift,
+            PinkyBaseEuler = source.PinkyBaseEuler,
             ItemAnchorLocalPosition = source.ItemAnchorLocalPosition,
             ItemAnchorLocalEuler = source.ItemAnchorLocalEuler,
         };

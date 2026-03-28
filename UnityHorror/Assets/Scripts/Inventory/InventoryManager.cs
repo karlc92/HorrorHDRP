@@ -40,6 +40,19 @@ public class InventoryManager : MonoBehaviour, IGameSaveParticipant
         return EnsureInventoryState().ActiveItemId;
     }
 
+    public HeldItemDefinition GetDefinition(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+            return null;
+
+        return definitionsById.TryGetValue(itemId, out var definition) ? definition : null;
+    }
+
+    public HeldItemDefinition GetActiveDefinition()
+    {
+        return GetDefinition(GetActiveItemId());
+    }
+
     public IReadOnlyList<HeldItemRuntimeState> GetItems()
     {
         return EnsureInventoryState().Items;

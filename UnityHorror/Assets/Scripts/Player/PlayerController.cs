@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class PlayerController : MonoBehaviour
@@ -94,6 +95,11 @@ public sealed class PlayerController : MonoBehaviour
     Interactable hoveredInteractable;
     Interactable activeInteractable;
     FirstPersonHandsRig handsRig;
+    GameObject activeHeldItemInstance;
+    string activeHeldItemId;
+    FirstPersonHandSide activeHeldItemSide;
+    Transform activeHeldItemAnchor;
+    HeldItemDefinition activeHeldItemDefinition;
 
     void Awake()
     {
@@ -159,6 +165,7 @@ public sealed class PlayerController : MonoBehaviour
     void OnDestroy()
     {
         DisposeInput();
+        ClearHeldItemVisual();
         handsRig?.Dispose();
     }
 
@@ -281,6 +288,7 @@ public sealed class PlayerController : MonoBehaviour
         UpdateCrouch();
         MoveAndGravity();
         CameraBob();
+        UpdateHeldItemVisual();
         UpdateFirstPersonHands();
         UpdateInteraction();
 
@@ -673,6 +681,101 @@ public sealed class PlayerController : MonoBehaviour
         return handsRig != null ? handsRig.GetItemAnchor(side) : null;
     }
 
+    void UpdateHeldItemVisual()
+    {
+        activeHeldItemDefinition = null;
+
+        if (handsRig == null || !handsRig.IsInitialized || InventoryManager.Instance == null)
+        {
+            ClearHeldItemVisual();
+            return;
+        }
+
+        string desiredItemId = InventoryManager.Instance.GetActiveItemId();
+        HeldItemDefinition desiredDefinition = InventoryManager.Instance.GetActiveDefinition();
+        if (desiredDefinition == null || desiredDefinition.FirstPersonPrefab == null)
+        {
+            ClearHeldItemVisual();
+            return;
+        }
+
+        Transform desiredAnchor = GetHandItemAnchor(desiredDefinition.FirstPersonHandSide);
+        if (desiredAnchor == null)
+        {
+            ClearHeldItemVisual();
+            return;
+        }
+
+        bool needsRespawn =
+            activeHeldItemInstance == null ||
+            !string.Equals(activeHeldItemId, desiredItemId, System.StringComparison.OrdinalIgnoreCase) ||
+            activeHeldItemSide != desiredDefinition.FirstPersonHandSide ||
+            activeHeldItemAnchor != desiredAnchor;
+
+        if (needsRespawn)
+        {
+            ClearHeldItemVisual();
+
+            activeHeldItemInstance = Instantiate(desiredDefinition.FirstPersonPrefab, desiredAnchor, false);
+            activeHeldItemId = desiredItemId;
+            activeHeldItemSide = desiredDefinition.FirstPersonHandSide;
+            activeHeldItemAnchor = desiredAnchor;
+
+            SetLayerRecursive(activeHeldItemInstance.transform, gameObject.layer);
+            ConfigureHeldItemRenderers(activeHeldItemInstance);
+        }
+
+        activeHeldItemDefinition = desiredDefinition;
+        ApplyHeldItemTransform(activeHeldItemDefinition, activeHeldItemInstance.transform);
+    }
+
+    void ApplyHeldItemTransform(HeldItemDefinition definition, Transform itemTransform)
+    {
+        if (definition == null || itemTransform == null)
+            return;
+
+        itemTransform.localPosition = definition.FirstPersonLocalPosition;
+        itemTransform.localRotation = Quaternion.Euler(definition.FirstPersonLocalEuler);
+        itemTransform.localScale = definition.FirstPersonLocalScale;
+    }
+
+    void ConfigureHeldItemRenderers(GameObject instance)
+    {
+        if (instance == null)
+            return;
+
+        foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
+                skinnedMeshRenderer.updateWhenOffscreen = true;
+
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+        }
+    }
+
+    void ClearHeldItemVisual()
+    {
+        if (activeHeldItemInstance != null)
+            Destroy(activeHeldItemInstance);
+
+        activeHeldItemInstance = null;
+        activeHeldItemId = null;
+        activeHeldItemAnchor = null;
+        activeHeldItemDefinition = null;
+        activeHeldItemSide = default;
+    }
+
+    static void SetLayerRecursive(Transform root, int layer)
+    {
+        if (root == null)
+            return;
+
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            child.gameObject.layer = layer;
+    }
+
     void InitializeFirstPersonHands()
     {
         if (!firstPersonHands.Enabled)
@@ -690,16 +793,25 @@ public sealed class PlayerController : MonoBehaviour
         if (handsRig == null || !handsRig.IsInitialized)
             return;
 
-        bool testLeftPose = !forceLowered && leftHandRaiseAction != null && leftHandRaiseAction.IsPressed();
-        bool testRightPose = !forceLowered && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
-        FirstPersonHandStance leftStance = forceLowered ? FirstPersonHandStance.None : (testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.None);
-        FirstPersonHandStance rightStance = forceLowered ? FirstPersonHandStance.None : (testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.None);
+        bool hasEquippedLeftItem = activeHeldItemDefinition != null && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Left;
+        bool hasEquippedRightItem = activeHeldItemDefinition != null && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Right;
+        bool testLeftPose = !forceLowered && !hasEquippedLeftItem && leftHandRaiseAction != null && leftHandRaiseAction.IsPressed();
+        bool testRightPose = !forceLowered && !hasEquippedRightItem && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+
+        FirstPersonHandStance leftStance = FirstPersonHandStance.None;
+        FirstPersonHandStance rightStance = FirstPersonHandStance.None;
+
+        if (!forceLowered)
+        {
+            leftStance = hasEquippedLeftItem ? activeHeldItemDefinition.FirstPersonHandStance : (testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.None);
+            rightStance = hasEquippedRightItem ? activeHeldItemDefinition.FirstPersonHandStance : (testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.None);
+        }
 
         handsRig.SetStance(FirstPersonHandSide.Left, leftStance);
         handsRig.SetStance(FirstPersonHandSide.Right, rightStance);
         handsRig.SetRaiseInput(FirstPersonHandSide.Left, true);
         handsRig.SetRaiseInput(FirstPersonHandSide.Right, true);
-        handsRig.Tick(Time.deltaTime, currentMoveInput, currentLookInput, planarSpeed01, grounded, currentIsSprinting);
+        handsRig.Tick(Time.deltaTime, currentMoveInput, currentLookInput, planarSpeed01, grounded, currentIsSprinting, yVel);
     }
 
 }
