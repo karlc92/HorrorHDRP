@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0bcab5b1c4e5aa847ae9699198781460
+timeCreated: 1437665206
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 42301
+  packageName: Flashlight 2.0 Tactical
+  packageVersion: 1.1
+  assetPath: Assets/Flashlight/FlashlightTactical_Demo.unity
+  uploadId: 279667

@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 public sealed class PlayerController : MonoBehaviour
 {
     const string PreviewTorchItemId = "default.torch";
+    const float HeldItemReleaseDuration = 0.22f;
 
     [Header("Refs")]
     [SerializeField] Transform headPivot;  // rotates for pitch
@@ -88,6 +89,7 @@ public sealed class PlayerController : MonoBehaviour
     InputAction jumpAction; // Button
     InputAction leftHandRaiseAction; // Button
     InputAction rightHandRaiseAction; // Button
+    InputAction toggleTorchAction; // Button
 
     bool isCrouched;
 
@@ -103,6 +105,8 @@ public sealed class PlayerController : MonoBehaviour
     Transform activeHeldItemAnchor;
     HeldItemDefinition activeHeldItemDefinition;
     bool isPreviewHeldItemActive;
+    float heldItemReleaseTimer;
+    bool isTorchToggledOn;
 
     void Awake()
     {
@@ -148,6 +152,7 @@ public sealed class PlayerController : MonoBehaviour
         jumpAction?.Enable();
         leftHandRaiseAction?.Enable();
         rightHandRaiseAction?.Enable();
+        toggleTorchAction?.Enable();
     }
 
     void OnDisable()
@@ -163,6 +168,7 @@ public sealed class PlayerController : MonoBehaviour
         jumpAction?.Disable();
         leftHandRaiseAction?.Disable();
         rightHandRaiseAction?.Disable();
+        toggleTorchAction?.Disable();
     }
 
     void OnDestroy()
@@ -219,6 +225,9 @@ public sealed class PlayerController : MonoBehaviour
         rightHandRaiseAction = new InputAction("RaiseRightHand", InputActionType.Button);
         rightHandRaiseAction.AddBinding("<Mouse>/rightButton");
 
+        toggleTorchAction = new InputAction("ToggleTorch", InputActionType.Button);
+        toggleTorchAction.AddBinding("<Keyboard>/o");
+
         if (isActiveAndEnabled)
         {
             moveAction.Enable();
@@ -230,6 +239,7 @@ public sealed class PlayerController : MonoBehaviour
             jumpAction.Enable();
             leftHandRaiseAction.Enable();
             rightHandRaiseAction.Enable();
+            toggleTorchAction.Enable();
         }
     }
 
@@ -249,6 +259,7 @@ public sealed class PlayerController : MonoBehaviour
         jumpAction?.Dispose();
         leftHandRaiseAction?.Dispose();
         rightHandRaiseAction?.Dispose();
+        toggleTorchAction?.Dispose();
 
         moveAction = null;
         lookAction = null;
@@ -259,6 +270,7 @@ public sealed class PlayerController : MonoBehaviour
         jumpAction = null;
         leftHandRaiseAction = null;
         rightHandRaiseAction = null;
+        toggleTorchAction = null;
     }
 
     void Update()
@@ -291,6 +303,7 @@ public sealed class PlayerController : MonoBehaviour
         UpdateCrouch();
         MoveAndGravity();
         CameraBob();
+        UpdateTorchToggle();
         UpdateHeldItemVisual();
         UpdateFirstPersonHands();
         UpdateInteraction();
@@ -695,14 +708,23 @@ public sealed class PlayerController : MonoBehaviour
             return;
         }
 
-        bool showPreviewTorch = rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+        bool showPreviewTorch = isTorchToggledOn || (rightHandRaiseAction != null && rightHandRaiseAction.IsPressed());
         string desiredItemId = showPreviewTorch ? PreviewTorchItemId : InventoryManager.Instance.GetActiveItemId();
         HeldItemDefinition desiredDefinition = showPreviewTorch
             ? InventoryManager.Instance.GetDefinition(PreviewTorchItemId)
             : InventoryManager.Instance.GetActiveDefinition();
         if (desiredDefinition == null || desiredDefinition.FirstPersonPrefab == null)
         {
-            ClearHeldItemVisual();
+            if (activeHeldItemInstance != null)
+            {
+                heldItemReleaseTimer -= Time.deltaTime;
+                if (heldItemReleaseTimer <= 0f)
+                    ClearHeldItemVisual();
+            }
+            else
+            {
+                ClearHeldItemVisual();
+            }
             return;
         }
 
@@ -732,6 +754,7 @@ public sealed class PlayerController : MonoBehaviour
             ConfigureHeldItemRenderers(activeHeldItemInstance);
         }
 
+        heldItemReleaseTimer = HeldItemReleaseDuration;
         activeHeldItemDefinition = desiredDefinition;
         isPreviewHeldItemActive = showPreviewTorch;
         ApplyHeldItemTransform(activeHeldItemDefinition, activeHeldItemInstance.transform);
@@ -773,7 +796,14 @@ public sealed class PlayerController : MonoBehaviour
         activeHeldItemAnchor = null;
         activeHeldItemDefinition = null;
         isPreviewHeldItemActive = false;
+        heldItemReleaseTimer = 0f;
         activeHeldItemSide = default;
+    }
+
+    void UpdateTorchToggle()
+    {
+        if (toggleTorchAction != null && toggleTorchAction.WasPressedThisFrame())
+            isTorchToggledOn = !isTorchToggledOn;
     }
 
     static void SetLayerRecursive(Transform root, int layer)
@@ -802,7 +832,7 @@ public sealed class PlayerController : MonoBehaviour
         if (handsRig == null || !handsRig.IsInitialized)
             return;
 
-        HeldItemDefinition previewTorchDefinition = !forceLowered && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed() && InventoryManager.Instance != null
+        HeldItemDefinition previewTorchDefinition = !forceLowered && (isTorchToggledOn || (rightHandRaiseAction != null && rightHandRaiseAction.IsPressed())) && InventoryManager.Instance != null
             ? InventoryManager.Instance.GetDefinition(PreviewTorchItemId)
             : null;
 

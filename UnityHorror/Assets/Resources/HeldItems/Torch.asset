@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HeldItemDefinition
   ItemId: default.torch
   Kind: 0
-  FirstPersonPrefab: {fileID: 8405861155185439499, guid: b2934779cb38036438b133c1964be211, type: 3}
+  FirstPersonPrefab: {fileID: 132238, guid: 6241ef40758dd404b91e848e07dda193, type: 3}
   FirstPersonHandSide: 1
   FirstPersonHandStance: 3
-  FirstPersonLocalPosition: {x: 0.1108, y: 0.0571, z: 0.0095}
-  FirstPersonLocalEuler: {x: 151.008, y: -2.417999, z: 5.716995}
+  FirstPersonLocalPosition: {x: 0.0479851, y: -0.006592002, z: 0.05186097}
+  FirstPersonLocalEuler: {x: 51.309, y: -12.965, z: -11.926}
   FirstPersonLocalScale: {x: 1, y: 1, z: 1}

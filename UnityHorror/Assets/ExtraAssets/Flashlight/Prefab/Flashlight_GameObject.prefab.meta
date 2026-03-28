@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6241ef40758dd404b91e848e07dda193
+timeCreated: 1437665184
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 42301
+  packageName: Flashlight 2.0 Tactical
+  packageVersion: 1.1
+  assetPath: Assets/Flashlight/Prefab/Flashlight_GameObject.prefab
+  uploadId: 279667

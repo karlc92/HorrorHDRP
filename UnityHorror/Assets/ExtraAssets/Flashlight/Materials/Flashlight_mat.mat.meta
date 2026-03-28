@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 71510e2bf70bb7249a8f218251368554
+timeCreated: 1437663017
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 42301
+  packageName: Flashlight 2.0 Tactical
+  packageVersion: 1.1
+  assetPath: Assets/Flashlight/Materials/Flashlight_mat.mat
+  uploadId: 279667
