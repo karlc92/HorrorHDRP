@@ -6175,6 +6175,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1837404033}
     - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: leftHandPrefab
+      value: 
+      objectReference: {fileID: 100026, guid: 61e2e3d8747dafe4cac402d5e024c254, type: 3}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: rightHandPrefab
+      value: 
+      objectReference: {fileID: 100004, guid: f8c271bb3214e7148b5307e63a7630c8, type: 3}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
       propertyPath: moveAcceleration
       value: 45
       objectReference: {fileID: 0}
@@ -6189,6 +6197,14 @@ PrefabInstance:
     - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
       propertyPath: CrouchedCharacterHeight
       value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: firstPersonHands.LeftRaisedStance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6447181288696497043, guid: cce23c004eb1da2449c8ade136f57575, type: 3}
+      propertyPath: firstPersonHands.RightRaisedStance
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

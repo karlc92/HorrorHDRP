@@ -53,6 +53,11 @@ public sealed class PlayerController : MonoBehaviour
     [Tooltip("Optional. If left empty, PlayerController will use OutlineManager.Instance.")]
     [SerializeField] OutlineManager outlineManager;
 
+    [Header("Hands")]
+    [SerializeField] GameObject leftHandPrefab;
+    [SerializeField] GameObject rightHandPrefab;
+    [System.NonSerialized] FirstPersonHandsSettings firstPersonHands = new FirstPersonHandsSettings();
+
     public bool isInDeathSequence = false;
 
     AudioSource footstepsAudioSource;
@@ -67,6 +72,9 @@ public sealed class PlayerController : MonoBehaviour
     float outlineUpdateTime = 0f;
     Vector3 planarVelocity;
     float airborneMoveSpeed;
+    Vector2 currentMoveInput;
+    Vector2 currentLookInput;
+    bool currentIsSprinting;
 
     InputAction moveAction;   // Vector2
     InputAction lookAction;   // Vector2
@@ -75,18 +83,21 @@ public sealed class PlayerController : MonoBehaviour
     InputAction interactAction; // Button
     InputAction dropAction; // Button
     InputAction jumpAction; // Button
+    InputAction leftHandRaiseAction; // Button
+    InputAction rightHandRaiseAction; // Button
 
     bool isCrouched;
-    Vector3 crouchOffsetLocal;
 
     Vector3 ccCenterBase;
     Vector3 headPivotBaseLocalPos;
 
     Interactable hoveredInteractable;
     Interactable activeInteractable;
+    FirstPersonHandsRig handsRig;
 
     void Awake()
     {
+        firstPersonHands = new FirstPersonHandsSettings();
         cc = GetComponent<CharacterController>();
         ccCenterBase = cc.center;
 
@@ -101,6 +112,7 @@ public sealed class PlayerController : MonoBehaviour
         if (!footstepsAudioSource) footstepsAudioSource = GetComponent<AudioSource>();
 
         SetupInput();
+        InitializeFirstPersonHands();
 
         ApplyCharacterHeight(DefaultCharacterHeight);
 
@@ -125,6 +137,8 @@ public sealed class PlayerController : MonoBehaviour
         interactAction?.Enable();
         dropAction?.Enable();
         jumpAction?.Enable();
+        leftHandRaiseAction?.Enable();
+        rightHandRaiseAction?.Enable();
     }
 
     void OnDisable()
@@ -138,11 +152,14 @@ public sealed class PlayerController : MonoBehaviour
         interactAction?.Disable();
         dropAction?.Disable();
         jumpAction?.Disable();
+        leftHandRaiseAction?.Disable();
+        rightHandRaiseAction?.Disable();
     }
 
     void OnDestroy()
     {
         DisposeInput();
+        handsRig?.Dispose();
     }
 
     void SetupInput()
@@ -186,6 +203,12 @@ public sealed class PlayerController : MonoBehaviour
         jumpAction = new InputAction("Jump", InputActionType.Button);
         jumpAction.AddBinding(settings.JumpKeyboard);
 
+        leftHandRaiseAction = new InputAction("RaiseLeftHand", InputActionType.Button);
+        leftHandRaiseAction.AddBinding("<Mouse>/leftButton");
+
+        rightHandRaiseAction = new InputAction("RaiseRightHand", InputActionType.Button);
+        rightHandRaiseAction.AddBinding("<Mouse>/rightButton");
+
         if (isActiveAndEnabled)
         {
             moveAction.Enable();
@@ -195,6 +218,8 @@ public sealed class PlayerController : MonoBehaviour
             interactAction.Enable();
             dropAction.Enable();
             jumpAction.Enable();
+            leftHandRaiseAction.Enable();
+            rightHandRaiseAction.Enable();
         }
     }
 
@@ -212,6 +237,8 @@ public sealed class PlayerController : MonoBehaviour
         interactAction?.Dispose();
         dropAction?.Dispose();
         jumpAction?.Dispose();
+        leftHandRaiseAction?.Dispose();
+        rightHandRaiseAction?.Dispose();
 
         moveAction = null;
         lookAction = null;
@@ -220,6 +247,8 @@ public sealed class PlayerController : MonoBehaviour
         interactAction = null;
         dropAction = null;
         jumpAction = null;
+        leftHandRaiseAction = null;
+        rightHandRaiseAction = null;
     }
 
     void Update()
@@ -243,6 +272,7 @@ public sealed class PlayerController : MonoBehaviour
 
         if (PreventInput())
         {
+            UpdateFirstPersonHands(forceLowered: true);
             CancelActiveInteraction();
             return;
         }
@@ -251,6 +281,7 @@ public sealed class PlayerController : MonoBehaviour
         UpdateCrouch();
         MoveAndGravity();
         CameraBob();
+        UpdateFirstPersonHands();
         UpdateInteraction();
 
     }
@@ -275,6 +306,7 @@ public sealed class PlayerController : MonoBehaviour
     void Look()
     {
         Vector2 look = lookAction.ReadValue<Vector2>();
+        currentLookInput = look;
         float sensScale = 0.022f;
         float mx = look.x * sensScale * Game.Settings.MouseSensitivity;
         float my = look.y * sensScale * Game.Settings.MouseSensitivity;
@@ -289,10 +321,12 @@ public sealed class PlayerController : MonoBehaviour
     void MoveAndGravity()
     {
         Vector2 move = moveAction.ReadValue<Vector2>();
+        currentMoveInput = move;
         float x = move.x;
         float z = move.y;
 
         bool isSprinting = grounded && sprintAction.IsPressed() && !isCrouched;
+        currentIsSprinting = isSprinting;
 
         bool movingBackwards = z < 0;
         float backwardsMult = (movingBackwards ? 0.35f : 1);
@@ -627,6 +661,45 @@ public sealed class PlayerController : MonoBehaviour
 
         activeInteractable.CancelInteraction();
         activeInteractable = null;
+    }
+
+    public void SetHandStance(FirstPersonHandSide side, FirstPersonHandStance stance)
+    {
+        handsRig?.SetStance(side, stance);
+    }
+
+    public Transform GetHandItemAnchor(FirstPersonHandSide side)
+    {
+        return handsRig != null ? handsRig.GetItemAnchor(side) : null;
+    }
+
+    void InitializeFirstPersonHands()
+    {
+        if (!firstPersonHands.Enabled)
+            return;
+
+        if (handsRig == null)
+            handsRig = new FirstPersonHandsRig();
+
+        Transform handParent = bobTarget != null ? bobTarget : (headPivot != null ? headPivot : transform);
+        handsRig.Initialize(handParent, firstPersonHands, leftHandPrefab, rightHandPrefab, gameObject.layer);
+    }
+
+    void UpdateFirstPersonHands(bool forceLowered = false)
+    {
+        if (handsRig == null || !handsRig.IsInitialized)
+            return;
+
+        bool raiseLeft = !forceLowered;
+        bool raiseRight = !forceLowered;
+        bool testLeftPose = !forceLowered && leftHandRaiseAction != null && leftHandRaiseAction.IsPressed();
+        bool testRightPose = !forceLowered && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+
+        handsRig.SetStance(FirstPersonHandSide.Left, testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.Open);
+        handsRig.SetStance(FirstPersonHandSide.Right, testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.Open);
+        handsRig.SetRaiseInput(FirstPersonHandSide.Left, raiseLeft);
+        handsRig.SetRaiseInput(FirstPersonHandSide.Right, raiseRight);
+        handsRig.Tick(Time.deltaTime, currentMoveInput, currentLookInput, planarSpeed01, grounded, currentIsSprinting);
     }
 
 }

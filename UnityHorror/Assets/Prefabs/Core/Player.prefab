@@ -511,10 +511,11 @@ MonoBehaviour:
   bobTarget: {fileID: 4771655290748134335}
   raycastTarget: {fileID: 353369358006834910}
   deathCamera: {fileID: 0}
+  leftHandPrefab: {fileID: 100100000, guid: 61e2e3d8747dafe4cac402d5e024c254, type: 3}
+  rightHandPrefab: {fileID: 100100000, guid: f8c271bb3214e7148b5307e63a7630c8, type: 3}
   pitchLimit: 89
   moveSpeed: 3
   sprintSpeed: 6
-  crouchCameraDrop: 1
   crouchCameraSharpness: 10
   crouchSpeedModifier: 0.75
   DefaultCharacterHeight: 2
