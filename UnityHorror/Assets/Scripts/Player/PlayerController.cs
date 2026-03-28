@@ -690,15 +690,15 @@ public sealed class PlayerController : MonoBehaviour
         if (handsRig == null || !handsRig.IsInitialized)
             return;
 
-        bool raiseLeft = !forceLowered;
-        bool raiseRight = !forceLowered;
         bool testLeftPose = !forceLowered && leftHandRaiseAction != null && leftHandRaiseAction.IsPressed();
         bool testRightPose = !forceLowered && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+        FirstPersonHandStance leftStance = forceLowered ? FirstPersonHandStance.None : (testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.None);
+        FirstPersonHandStance rightStance = forceLowered ? FirstPersonHandStance.None : (testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.None);
 
-        handsRig.SetStance(FirstPersonHandSide.Left, testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.Open);
-        handsRig.SetStance(FirstPersonHandSide.Right, testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.Open);
-        handsRig.SetRaiseInput(FirstPersonHandSide.Left, raiseLeft);
-        handsRig.SetRaiseInput(FirstPersonHandSide.Right, raiseRight);
+        handsRig.SetStance(FirstPersonHandSide.Left, leftStance);
+        handsRig.SetStance(FirstPersonHandSide.Right, rightStance);
+        handsRig.SetRaiseInput(FirstPersonHandSide.Left, true);
+        handsRig.SetRaiseInput(FirstPersonHandSide.Right, true);
         handsRig.Tick(Time.deltaTime, currentMoveInput, currentLookInput, planarSpeed01, grounded, currentIsSprinting);
     }
 

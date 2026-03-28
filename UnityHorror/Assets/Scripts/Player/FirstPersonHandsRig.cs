@@ -11,6 +11,7 @@ public enum FirstPersonHandSide
 
 public enum FirstPersonHandStance
 {
+    None,
     Open,
     LanternTop,
     TorchSide
@@ -44,37 +45,41 @@ public sealed class FirstPersonSingleHandSettings
     public Vector3 HiddenLocalPosition;
     public Vector3 HiddenLocalEuler;
     public float BobPhaseOffset;
+    public FirstPersonHandPoseDefinition None = new FirstPersonHandPoseDefinition();
     public FirstPersonHandPoseDefinition Open = new FirstPersonHandPoseDefinition();
     public FirstPersonHandPoseDefinition LanternTop = new FirstPersonHandPoseDefinition();
     public FirstPersonHandPoseDefinition TorchSide = new FirstPersonHandPoseDefinition();
 
     public static FirstPersonSingleHandSettings CreateDefaultLeft()
     {
+        FirstPersonHandPoseDefinition open = new FirstPersonHandPoseDefinition
+        {
+            LocalPosition = Vector3.zero,
+            LocalEuler = Vector3.zero,
+            UpperArmEuler = Vector3.zero,
+            LowerArm1Euler = Vector3.zero,
+            LowerArm2Euler = Vector3.zero,
+            LowerArm3Euler = Vector3.zero,
+            HandEuler = Vector3.zero,
+            ThumbCurl = 0f,
+            ThumbSplay = 0f,
+            ThumbRoll = 0f,
+            IndexCurl = 0f,
+            MiddleCurl = 0f,
+            RingCurl = 0f,
+            PinkyCurl = 0f,
+            FingerSplay = 0f,
+            ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
+            ItemAnchorLocalEuler = new Vector3(-8f, 0f, -90f),
+        };
+
         return new FirstPersonSingleHandSettings
         {
             HiddenLocalPosition = new Vector3(-0.28f, -0.56f, 0.18f),
             HiddenLocalEuler = new Vector3(38f, 10f, -26f),
             BobPhaseOffset = 0f,
-            Open = new FirstPersonHandPoseDefinition
-            {
-                LocalPosition = Vector3.zero,
-                LocalEuler = Vector3.zero,
-                UpperArmEuler = Vector3.zero,
-                LowerArm1Euler = Vector3.zero,
-                LowerArm2Euler = Vector3.zero,
-                LowerArm3Euler = Vector3.zero,
-                HandEuler = Vector3.zero,
-                ThumbCurl = 0f,
-                ThumbSplay = 0f,
-                ThumbRoll = 0f,
-                IndexCurl = 0f,
-                MiddleCurl = 0f,
-                RingCurl = 0f,
-                PinkyCurl = 0f,
-                FingerSplay = 0f,
-                ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
-                ItemAnchorLocalEuler = new Vector3(-8f, 0f, -90f),
-            },
+            None = CreateNonePose(open),
+            Open = open,
             LanternTop = new FirstPersonHandPoseDefinition
             {
                 LocalPosition = Vector3.zero,
@@ -120,31 +125,34 @@ public sealed class FirstPersonSingleHandSettings
 
     public static FirstPersonSingleHandSettings CreateDefaultRight()
     {
+        FirstPersonHandPoseDefinition open = new FirstPersonHandPoseDefinition
+        {
+            LocalPosition = Vector3.zero,
+            LocalEuler = Vector3.zero,
+            UpperArmEuler = Vector3.zero,
+            LowerArm1Euler = Vector3.zero,
+            LowerArm2Euler = Vector3.zero,
+            LowerArm3Euler = Vector3.zero,
+            HandEuler = Vector3.zero,
+            ThumbCurl = 0f,
+            ThumbSplay = 0f,
+            ThumbRoll = 0f,
+            IndexCurl = 0f,
+            MiddleCurl = 0f,
+            RingCurl = 0f,
+            PinkyCurl = 0f,
+            FingerSplay = 0f,
+            ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
+            ItemAnchorLocalEuler = new Vector3(-8f, 0f, 90f),
+        };
+
         return new FirstPersonSingleHandSettings
         {
             HiddenLocalPosition = new Vector3(0.28f, -0.56f, 0.18f),
             HiddenLocalEuler = new Vector3(38f, -10f, 26f),
             BobPhaseOffset = 0f,
-            Open = new FirstPersonHandPoseDefinition
-            {
-                LocalPosition = Vector3.zero,
-                LocalEuler = Vector3.zero,
-                UpperArmEuler = Vector3.zero,
-                LowerArm1Euler = Vector3.zero,
-                LowerArm2Euler = Vector3.zero,
-                LowerArm3Euler = Vector3.zero,
-                HandEuler = Vector3.zero,
-                ThumbCurl = 0f,
-                ThumbSplay = 0f,
-                ThumbRoll = 0f,
-                IndexCurl = 0f,
-                MiddleCurl = 0f,
-                RingCurl = 0f,
-                PinkyCurl = 0f,
-                FingerSplay = 0f,
-                ItemAnchorLocalPosition = new Vector3(0f, -0.012f, 0.03f),
-                ItemAnchorLocalEuler = new Vector3(-8f, 0f, 90f),
-            },
+            None = CreateNonePose(open),
+            Open = open,
             LanternTop = new FirstPersonHandPoseDefinition
             {
                 LocalPosition = Vector3.zero,
@@ -187,6 +195,37 @@ public sealed class FirstPersonSingleHandSettings
             },
         };
     }
+
+    private static FirstPersonHandPoseDefinition CreateNonePose(FirstPersonHandPoseDefinition open)
+    {
+        FirstPersonHandPoseDefinition none = ClonePose(open);
+        none.LocalPosition += new Vector3(0f, -0.5f, 0f);
+        return none;
+    }
+
+    private static FirstPersonHandPoseDefinition ClonePose(FirstPersonHandPoseDefinition source)
+    {
+        return new FirstPersonHandPoseDefinition
+        {
+            LocalPosition = source.LocalPosition,
+            LocalEuler = source.LocalEuler,
+            UpperArmEuler = source.UpperArmEuler,
+            LowerArm1Euler = source.LowerArm1Euler,
+            LowerArm2Euler = source.LowerArm2Euler,
+            LowerArm3Euler = source.LowerArm3Euler,
+            HandEuler = source.HandEuler,
+            ThumbCurl = source.ThumbCurl,
+            ThumbSplay = source.ThumbSplay,
+            ThumbRoll = source.ThumbRoll,
+            IndexCurl = source.IndexCurl,
+            MiddleCurl = source.MiddleCurl,
+            RingCurl = source.RingCurl,
+            PinkyCurl = source.PinkyCurl,
+            FingerSplay = source.FingerSplay,
+            ItemAnchorLocalPosition = source.ItemAnchorLocalPosition,
+            ItemAnchorLocalEuler = source.ItemAnchorLocalEuler,
+        };
+    }
 }
 
 [Serializable]
@@ -196,6 +235,7 @@ public sealed class FirstPersonHandsSettings
     public FirstPersonHandStance LeftRaisedStance = FirstPersonHandStance.LanternTop;
     public FirstPersonHandStance RightRaisedStance = FirstPersonHandStance.TorchSide;
     public float RaiseSharpness = 14f;
+    public float PoseSharpness = 10f;
     public float SwaySharpness = 14f;
     public float IdleBobAmplitude = 0.0035f;
     public float WalkBobAmplitude = 0.012f;
@@ -253,7 +293,8 @@ public sealed class FirstPersonHandsRig
         public float RaiseTarget;
         public Vector3 SwayPositionCurrent;
         public Vector3 SwayRotationCurrent;
-        public FirstPersonHandStance CurrentStance;
+        public FirstPersonHandStance TargetStance;
+        public FirstPersonHandPoseDefinition AppliedPose;
     }
 
     private readonly List<RuntimeHand> hands = new List<RuntimeHand>();
@@ -310,7 +351,7 @@ public sealed class FirstPersonHandsRig
         if (hand == null)
             return;
 
-        hand.CurrentStance = stance;
+        hand.TargetStance = stance;
     }
 
     public Transform GetItemAnchor(FirstPersonHandSide side)
@@ -334,8 +375,9 @@ public sealed class FirstPersonHandsRig
 
             FirstPersonHandPoseDefinition pose = GetPoseDefinition(hand);
             UpdateSway(hand, moveInput, lookInput, planarSpeed01, grounded, isSprinting, deltaTime);
-            ApplyAnchor(hand, pose);
-            ApplyPose(hand, pose);
+            UpdatePoseState(hand, pose, deltaTime);
+            ApplyAnchor(hand, hand.AppliedPose);
+            ApplyPose(hand, hand.AppliedPose);
             ApplyRendererState(hand);
         }
     }
@@ -364,9 +406,11 @@ public sealed class FirstPersonHandsRig
             Settings = singleHandSettings,
             Anchor = anchor,
             Root = instance.transform,
-            CurrentStance = side == FirstPersonHandSide.Left ? settings.LeftRaisedStance : settings.RightRaisedStance,
+            TargetStance = side == FirstPersonHandSide.Left ? settings.LeftRaisedStance : settings.RightRaisedStance,
             Renderers = instance.GetComponentsInChildren<Renderer>(true),
         };
+
+        hand.AppliedPose = ClonePose(GetPoseDefinition(hand));
 
         foreach (Renderer renderer in hand.Renderers)
         {
@@ -611,8 +655,10 @@ public sealed class FirstPersonHandsRig
 
     private FirstPersonHandPoseDefinition GetPoseDefinition(RuntimeHand hand)
     {
-        switch (hand.CurrentStance)
+        switch (hand.TargetStance)
         {
+            case FirstPersonHandStance.None:
+                return hand.Settings.None;
             case FirstPersonHandStance.LanternTop:
                 return hand.Settings.LanternTop;
             case FirstPersonHandStance.TorchSide:
@@ -620,6 +666,36 @@ public sealed class FirstPersonHandsRig
             default:
                 return hand.Settings.Open;
         }
+    }
+
+    private void UpdatePoseState(RuntimeHand hand, FirstPersonHandPoseDefinition targetPose, float deltaTime)
+    {
+        if (hand.AppliedPose == null)
+        {
+            hand.AppliedPose = ClonePose(targetPose);
+            return;
+        }
+
+        FirstPersonHandPoseDefinition currentPose = hand.AppliedPose;
+        float sharpness = settings.PoseSharpness;
+
+        currentPose.LocalPosition = Damp(currentPose.LocalPosition, targetPose.LocalPosition, sharpness, deltaTime);
+        currentPose.LocalEuler = Damp(currentPose.LocalEuler, targetPose.LocalEuler, sharpness, deltaTime);
+        currentPose.UpperArmEuler = Damp(currentPose.UpperArmEuler, targetPose.UpperArmEuler, sharpness, deltaTime);
+        currentPose.LowerArm1Euler = Damp(currentPose.LowerArm1Euler, targetPose.LowerArm1Euler, sharpness, deltaTime);
+        currentPose.LowerArm2Euler = Damp(currentPose.LowerArm2Euler, targetPose.LowerArm2Euler, sharpness, deltaTime);
+        currentPose.LowerArm3Euler = Damp(currentPose.LowerArm3Euler, targetPose.LowerArm3Euler, sharpness, deltaTime);
+        currentPose.HandEuler = Damp(currentPose.HandEuler, targetPose.HandEuler, sharpness, deltaTime);
+        currentPose.ThumbCurl = Damp(currentPose.ThumbCurl, targetPose.ThumbCurl, sharpness, deltaTime);
+        currentPose.ThumbSplay = Damp(currentPose.ThumbSplay, targetPose.ThumbSplay, sharpness, deltaTime);
+        currentPose.ThumbRoll = Damp(currentPose.ThumbRoll, targetPose.ThumbRoll, sharpness, deltaTime);
+        currentPose.IndexCurl = Damp(currentPose.IndexCurl, targetPose.IndexCurl, sharpness, deltaTime);
+        currentPose.MiddleCurl = Damp(currentPose.MiddleCurl, targetPose.MiddleCurl, sharpness, deltaTime);
+        currentPose.RingCurl = Damp(currentPose.RingCurl, targetPose.RingCurl, sharpness, deltaTime);
+        currentPose.PinkyCurl = Damp(currentPose.PinkyCurl, targetPose.PinkyCurl, sharpness, deltaTime);
+        currentPose.FingerSplay = Damp(currentPose.FingerSplay, targetPose.FingerSplay, sharpness, deltaTime);
+        currentPose.ItemAnchorLocalPosition = Damp(currentPose.ItemAnchorLocalPosition, targetPose.ItemAnchorLocalPosition, sharpness, deltaTime);
+        currentPose.ItemAnchorLocalEuler = Damp(currentPose.ItemAnchorLocalEuler, targetPose.ItemAnchorLocalEuler, sharpness, deltaTime);
     }
 
     private RuntimeHand GetHand(FirstPersonHandSide side)
@@ -667,6 +743,30 @@ public sealed class FirstPersonHandsRig
     private static float Damp(float current, float target, float sharpness, float deltaTime)
     {
         return Mathf.Lerp(current, target, 1f - Mathf.Exp(-sharpness * deltaTime));
+    }
+
+    private static FirstPersonHandPoseDefinition ClonePose(FirstPersonHandPoseDefinition source)
+    {
+        return new FirstPersonHandPoseDefinition
+        {
+            LocalPosition = source.LocalPosition,
+            LocalEuler = source.LocalEuler,
+            UpperArmEuler = source.UpperArmEuler,
+            LowerArm1Euler = source.LowerArm1Euler,
+            LowerArm2Euler = source.LowerArm2Euler,
+            LowerArm3Euler = source.LowerArm3Euler,
+            HandEuler = source.HandEuler,
+            ThumbCurl = source.ThumbCurl,
+            ThumbSplay = source.ThumbSplay,
+            ThumbRoll = source.ThumbRoll,
+            IndexCurl = source.IndexCurl,
+            MiddleCurl = source.MiddleCurl,
+            RingCurl = source.RingCurl,
+            PinkyCurl = source.PinkyCurl,
+            FingerSplay = source.FingerSplay,
+            ItemAnchorLocalPosition = source.ItemAnchorLocalPosition,
+            ItemAnchorLocalEuler = source.ItemAnchorLocalEuler,
+        };
     }
 
     private static Vector3 Damp(Vector3 current, Vector3 target, float sharpness, float deltaTime)
