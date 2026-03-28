@@ -727,8 +727,8 @@ public sealed class FirstPersonHandsRig
         currentPose.FingerSplay = Damp(currentPose.FingerSplay, targetPose.FingerSplay, sharpness, deltaTime);
         currentPose.PinkyLift = Damp(currentPose.PinkyLift, targetPose.PinkyLift, sharpness, deltaTime);
         currentPose.PinkyBaseEuler = Damp(currentPose.PinkyBaseEuler, targetPose.PinkyBaseEuler, sharpness, deltaTime);
-        currentPose.ItemAnchorLocalPosition = Damp(currentPose.ItemAnchorLocalPosition, targetPose.ItemAnchorLocalPosition, sharpness, deltaTime);
-        currentPose.ItemAnchorLocalEuler = Damp(currentPose.ItemAnchorLocalEuler, targetPose.ItemAnchorLocalEuler, sharpness, deltaTime);
+        currentPose.ItemAnchorLocalPosition = targetPose.ItemAnchorLocalPosition;
+        currentPose.ItemAnchorLocalEuler = targetPose.ItemAnchorLocalEuler;
     }
 
     private RuntimeHand GetHand(FirstPersonHandSide side)
