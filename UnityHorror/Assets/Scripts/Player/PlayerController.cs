@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class PlayerController : MonoBehaviour
 {
     const string PreviewTorchItemId = "default.torch";
     const float HeldItemReleaseDuration = 0.22f;
+    const int ViewModelLayer = 11;
 
     [Header("Refs")]
     [SerializeField] Transform headPivot;  // rotates for pitch
@@ -107,6 +109,10 @@ public sealed class PlayerController : MonoBehaviour
     bool isPreviewHeldItemActive;
     float heldItemReleaseTimer;
     bool isTorchToggledOn;
+    Camera firstPersonCamera;
+    CustomPassVolume viewModelPassVolume;
+    DrawRenderersCustomPass viewModelOpaquePass;
+    DrawRenderersCustomPass viewModelTransparentPass;
 
     void Awake()
     {
@@ -119,12 +125,17 @@ public sealed class PlayerController : MonoBehaviour
         if (!bobTarget && headPivot)
             bobTarget = headPivot; // fallback
 
+        firstPersonCamera = bobTarget != null ? bobTarget.GetComponent<Camera>() : null;
+        if (firstPersonCamera == null && bobTarget != null)
+            firstPersonCamera = bobTarget.GetComponentInChildren<Camera>(true);
+
         if (headPivot) headPivotBaseLocalPos = headPivot.localPosition;
         if (bobTarget) bobBaseLocalPos = bobTarget.localPosition;
 
         if (!footstepsAudioSource) footstepsAudioSource = GetComponent<AudioSource>();
 
         SetupInput();
+        SetupViewModelRendering();
         InitializeFirstPersonHands();
 
         ApplyCharacterHeight(DefaultCharacterHeight);
@@ -175,6 +186,7 @@ public sealed class PlayerController : MonoBehaviour
     {
         DisposeInput();
         ClearHeldItemVisual();
+        CleanupViewModelRendering();
         handsRig?.Dispose();
     }
 
@@ -750,7 +762,7 @@ public sealed class PlayerController : MonoBehaviour
             activeHeldItemSide = desiredDefinition.FirstPersonHandSide;
             activeHeldItemAnchor = desiredAnchor;
 
-            SetLayerRecursive(activeHeldItemInstance.transform, gameObject.layer);
+            SetLayerRecursive(activeHeldItemInstance.transform, ViewModelLayer);
             ConfigureHeldItemRenderers(activeHeldItemInstance);
         }
 
@@ -824,7 +836,68 @@ public sealed class PlayerController : MonoBehaviour
             handsRig = new FirstPersonHandsRig();
 
         Transform handParent = bobTarget != null ? bobTarget : (headPivot != null ? headPivot : transform);
-        handsRig.Initialize(handParent, firstPersonHands, leftHandPrefab, rightHandPrefab, gameObject.layer);
+        handsRig.Initialize(handParent, firstPersonHands, leftHandPrefab, rightHandPrefab, ViewModelLayer);
+    }
+
+    void SetupViewModelRendering()
+    {
+        int mask = 1 << ViewModelLayer;
+
+        if (firstPersonCamera != null)
+            firstPersonCamera.cullingMask &= ~mask;
+
+        if (deathCamera != null)
+            deathCamera.cullingMask &= ~mask;
+
+        if (firstPersonCamera == null)
+            return;
+
+        GameObject volumeObject = new GameObject("ViewModel Custom Pass");
+        volumeObject.hideFlags = HideFlags.HideAndDontSave;
+        volumeObject.transform.SetParent(firstPersonCamera.transform, false);
+
+        viewModelPassVolume = volumeObject.AddComponent<CustomPassVolume>();
+        viewModelPassVolume.isGlobal = true;
+        viewModelPassVolume.injectionPoint = CustomPassInjectionPoint.BeforePostProcess;
+        viewModelPassVolume.targetCamera = firstPersonCamera;
+        viewModelPassVolume.hideFlags = HideFlags.HideAndDontSave;
+
+        viewModelOpaquePass = viewModelPassVolume.AddPassOfType(typeof(DrawRenderersCustomPass)) as DrawRenderersCustomPass;
+        viewModelTransparentPass = viewModelPassVolume.AddPassOfType(typeof(DrawRenderersCustomPass)) as DrawRenderersCustomPass;
+        if (viewModelOpaquePass == null || viewModelTransparentPass == null)
+            return;
+
+        viewModelOpaquePass.name = "ViewModel Opaque Pass";
+        viewModelOpaquePass.renderQueueType = CustomPass.RenderQueueType.AllOpaque;
+        viewModelOpaquePass.layerMask = mask;
+        viewModelOpaquePass.sortingCriteria = SortingCriteria.CommonOpaque;
+        viewModelOpaquePass.clearFlags = ClearFlag.Depth;
+        viewModelOpaquePass.overrideDepthState = true;
+        viewModelOpaquePass.depthWrite = true;
+        viewModelOpaquePass.depthCompareFunction = CompareFunction.LessEqual;
+        viewModelOpaquePass.targetColorBuffer = CustomPass.TargetBuffer.Camera;
+        viewModelOpaquePass.targetDepthBuffer = CustomPass.TargetBuffer.Custom;
+
+        viewModelTransparentPass.name = "ViewModel Transparent Pass";
+        viewModelTransparentPass.renderQueueType = CustomPass.RenderQueueType.AllTransparent;
+        viewModelTransparentPass.layerMask = mask;
+        viewModelTransparentPass.sortingCriteria = SortingCriteria.CommonTransparent;
+        viewModelTransparentPass.clearFlags = ClearFlag.None;
+        viewModelTransparentPass.overrideDepthState = true;
+        viewModelTransparentPass.depthWrite = false;
+        viewModelTransparentPass.depthCompareFunction = CompareFunction.LessEqual;
+        viewModelTransparentPass.targetColorBuffer = CustomPass.TargetBuffer.Camera;
+        viewModelTransparentPass.targetDepthBuffer = CustomPass.TargetBuffer.Custom;
+    }
+
+    void CleanupViewModelRendering()
+    {
+        if (viewModelPassVolume != null)
+            Destroy(viewModelPassVolume.gameObject);
+
+        viewModelPassVolume = null;
+        viewModelOpaquePass = null;
+        viewModelTransparentPass = null;
     }
 
     void UpdateFirstPersonHands(bool forceLowered = false)
