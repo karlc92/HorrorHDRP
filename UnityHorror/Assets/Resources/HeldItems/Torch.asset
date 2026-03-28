@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73681820d73a1cc47b2526b362cff85c, type: 3}
+  m_Name: Torch
+  m_EditorClassIdentifier: Assembly-CSharp::HeldItemDefinition
+  ItemId: default.torch
+  Kind: 0
+  FirstPersonPrefab: {fileID: 8405861155185439499, guid: b2934779cb38036438b133c1964be211, type: 3}
+  FirstPersonHandSide: 1
+  FirstPersonHandStance: 3
+  FirstPersonLocalPosition: {x: 0.1108, y: 0.0571, z: 0.0095}
+  FirstPersonLocalEuler: {x: 151.008, y: -2.417999, z: 5.716995}
+  FirstPersonLocalScale: {x: 1, y: 1, z: 1}

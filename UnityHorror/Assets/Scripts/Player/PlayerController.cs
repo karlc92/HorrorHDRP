@@ -5,6 +5,8 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(CharacterController))]
 public sealed class PlayerController : MonoBehaviour
 {
+    const string PreviewTorchItemId = "default.torch";
+
     [Header("Refs")]
     [SerializeField] Transform headPivot;  // rotates for pitch
     [SerializeField] Transform bobTarget;  // moves for bob (usually the Camera)
@@ -100,6 +102,7 @@ public sealed class PlayerController : MonoBehaviour
     FirstPersonHandSide activeHeldItemSide;
     Transform activeHeldItemAnchor;
     HeldItemDefinition activeHeldItemDefinition;
+    bool isPreviewHeldItemActive;
 
     void Awake()
     {
@@ -684,6 +687,7 @@ public sealed class PlayerController : MonoBehaviour
     void UpdateHeldItemVisual()
     {
         activeHeldItemDefinition = null;
+        isPreviewHeldItemActive = false;
 
         if (handsRig == null || !handsRig.IsInitialized || InventoryManager.Instance == null)
         {
@@ -691,8 +695,11 @@ public sealed class PlayerController : MonoBehaviour
             return;
         }
 
-        string desiredItemId = InventoryManager.Instance.GetActiveItemId();
-        HeldItemDefinition desiredDefinition = InventoryManager.Instance.GetActiveDefinition();
+        bool showPreviewTorch = rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+        string desiredItemId = showPreviewTorch ? PreviewTorchItemId : InventoryManager.Instance.GetActiveItemId();
+        HeldItemDefinition desiredDefinition = showPreviewTorch
+            ? InventoryManager.Instance.GetDefinition(PreviewTorchItemId)
+            : InventoryManager.Instance.GetActiveDefinition();
         if (desiredDefinition == null || desiredDefinition.FirstPersonPrefab == null)
         {
             ClearHeldItemVisual();
@@ -726,6 +733,7 @@ public sealed class PlayerController : MonoBehaviour
         }
 
         activeHeldItemDefinition = desiredDefinition;
+        isPreviewHeldItemActive = showPreviewTorch;
         ApplyHeldItemTransform(activeHeldItemDefinition, activeHeldItemInstance.transform);
     }
 
@@ -764,6 +772,7 @@ public sealed class PlayerController : MonoBehaviour
         activeHeldItemId = null;
         activeHeldItemAnchor = null;
         activeHeldItemDefinition = null;
+        isPreviewHeldItemActive = false;
         activeHeldItemSide = default;
     }
 
@@ -793,18 +802,36 @@ public sealed class PlayerController : MonoBehaviour
         if (handsRig == null || !handsRig.IsInitialized)
             return;
 
-        bool hasEquippedLeftItem = activeHeldItemDefinition != null && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Left;
-        bool hasEquippedRightItem = activeHeldItemDefinition != null && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Right;
-        bool testLeftPose = !forceLowered && !hasEquippedLeftItem && leftHandRaiseAction != null && leftHandRaiseAction.IsPressed();
-        bool testRightPose = !forceLowered && !hasEquippedRightItem && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed();
+        HeldItemDefinition previewTorchDefinition = !forceLowered && rightHandRaiseAction != null && rightHandRaiseAction.IsPressed() && InventoryManager.Instance != null
+            ? InventoryManager.Instance.GetDefinition(PreviewTorchItemId)
+            : null;
+
+        bool hasPreviewTorch = previewTorchDefinition != null && previewTorchDefinition.FirstPersonPrefab != null;
+        bool hasEquippedLeftItem = activeHeldItemDefinition != null
+            && !isPreviewHeldItemActive
+            && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Left;
+        bool hasEquippedRightItem = activeHeldItemDefinition != null
+            && !isPreviewHeldItemActive
+            && activeHeldItemDefinition.FirstPersonHandSide == FirstPersonHandSide.Right;
 
         FirstPersonHandStance leftStance = FirstPersonHandStance.None;
         FirstPersonHandStance rightStance = FirstPersonHandStance.None;
 
         if (!forceLowered)
         {
-            leftStance = hasEquippedLeftItem ? activeHeldItemDefinition.FirstPersonHandStance : (testLeftPose ? FirstPersonHandStance.LanternTop : FirstPersonHandStance.None);
-            rightStance = hasEquippedRightItem ? activeHeldItemDefinition.FirstPersonHandStance : (testRightPose ? FirstPersonHandStance.TorchSide : FirstPersonHandStance.None);
+            if (hasPreviewTorch)
+            {
+                if (previewTorchDefinition.FirstPersonHandSide == FirstPersonHandSide.Left)
+                    leftStance = previewTorchDefinition.FirstPersonHandStance;
+                else
+                    rightStance = previewTorchDefinition.FirstPersonHandStance;
+            }
+
+            if (hasEquippedLeftItem)
+                leftStance = activeHeldItemDefinition.FirstPersonHandStance;
+
+            if (hasEquippedRightItem)
+                rightStance = activeHeldItemDefinition.FirstPersonHandStance;
         }
 
         handsRig.SetStance(FirstPersonHandSide.Left, leftStance);

@@ -109,12 +109,12 @@ public sealed class FirstPersonSingleHandSettings
             TorchSide = new FirstPersonHandPoseDefinition
             {
                 LocalPosition = Vector3.zero,
-                LocalEuler = new Vector3(-1f, -3f, -8f),
+                LocalEuler = new Vector3(-1f, -10f, -8f),
                 UpperArmEuler = new Vector3(-2f, 0f, -3f),
                 LowerArm1Euler = new Vector3(6f, 0f, -3f),
                 LowerArm2Euler = new Vector3(5f, 0f, -2f),
                 LowerArm3Euler = new Vector3(4f, 0f, -1f),
-                HandEuler = new Vector3(9f, -12f, -10f),
+                HandEuler = new Vector3(9f, -24f, -10f),
                 ThumbCurl = 0.3f,
                 ThumbSplay = 0.16f,
                 ThumbRoll = -6f,
@@ -126,7 +126,7 @@ public sealed class FirstPersonSingleHandSettings
                 PinkyLift = 0f,
                 PinkyBaseEuler = Vector3.zero,
                 ItemAnchorLocalPosition = new Vector3(0.01f, -0.012f, 0.042f),
-                ItemAnchorLocalEuler = new Vector3(0f, 90f, 90f),
+                ItemAnchorLocalEuler = new Vector3(0f, 72f, 90f),
             },
         };
     }
