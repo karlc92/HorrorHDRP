@@ -173,7 +173,7 @@ namespace PrefabSwapper
             if (_target.transform.parent != null && PrefabUtility.GetOutermostPrefabInstanceRoot(_target.transform) != null)
                 if (PrefabUtility.GetPrefabInstanceStatus(_target.transform.parent) == PrefabInstanceStatus.Connected)
                     if (PrefabUtility.GetOutermostPrefabInstanceRoot(_target.transform).gameObject == _target.transform.parent.gameObject)
-                        PrefabUtility.UnpackPrefabInstance(_target.transform.parent.gameObject, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
+                        PrefabUtility.UnpackPrefabInstance(_target.transform.parent.gameObject, PrefabUnpackMode.OutermostRoot, UnityEditor.InteractionMode.AutomatedAction);
 
             GameObject swapped = (GameObject)PrefabUtility.InstantiatePrefab(FindSwapPrefab(name));
             swapped.transform.position = _target.transform.position;
