@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f876baca97a4cab42b8663885111462b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Scenes/ShowcaseSettings.lighting
+  uploadId: 688263

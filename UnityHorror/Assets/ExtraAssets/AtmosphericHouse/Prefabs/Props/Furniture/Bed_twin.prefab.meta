@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dec3421c6461cd04a8bd9249c6220511
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Furniture/Bed_twin.prefab
+  uploadId: 688263

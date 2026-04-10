@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: edb4af38e35c0fe48a459b982936c920
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_A_3x_broken_C.prefab
+  uploadId: 688263

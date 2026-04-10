@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 64051b4860282a246881c1e4ea057b9e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Basement_props/Wooden_crate.prefab
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 24c29907306238b4f8511b075cebc454
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Shower_curtain_clean.mat
+  uploadId: 688263

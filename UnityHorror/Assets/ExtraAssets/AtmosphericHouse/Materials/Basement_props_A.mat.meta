@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 52975f80c2c530246beb618df3b6d60b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Basement_props_A.mat
+  uploadId: 688263

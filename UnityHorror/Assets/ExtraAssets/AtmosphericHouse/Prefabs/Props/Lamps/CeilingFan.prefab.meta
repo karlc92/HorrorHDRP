@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2b11a3548ec429147ad0ed0c453fb87a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/CeilingFan.prefab
+  uploadId: 688263

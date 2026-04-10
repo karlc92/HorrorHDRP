@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4d6e3f9e68716ae479aaff0320f44485
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Extras/Roof_corner_overlap_fix.prefab
+  uploadId: 688263

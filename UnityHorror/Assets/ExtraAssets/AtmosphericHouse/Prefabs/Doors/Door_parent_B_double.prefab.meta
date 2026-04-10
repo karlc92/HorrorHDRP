@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1a7bdeb3211863643af589da215042d7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Doors/Door_parent_B_double.prefab
+  uploadId: 688263

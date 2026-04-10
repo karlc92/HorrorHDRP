@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 26b446015e7961c4c88f3ebe32681abe
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Extras/Floor_trim_doordouble.prefab
+  uploadId: 688263

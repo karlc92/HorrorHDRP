@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f38c6aad594e1964dab11d0cbe6d1708
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Pillows_clean.mat
+  uploadId: 688263

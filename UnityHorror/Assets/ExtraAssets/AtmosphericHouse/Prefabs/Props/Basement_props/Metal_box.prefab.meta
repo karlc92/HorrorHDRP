@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2f0045eed07385740af34a5fbe360d26
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Basement_props/Metal_box.prefab
+  uploadId: 688263

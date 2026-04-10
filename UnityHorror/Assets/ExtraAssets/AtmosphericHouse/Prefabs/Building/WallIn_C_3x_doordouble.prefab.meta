@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a6931d12b28b8e74c845d88ec6eb4021
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_C_3x_doordouble.prefab
+  uploadId: 688263

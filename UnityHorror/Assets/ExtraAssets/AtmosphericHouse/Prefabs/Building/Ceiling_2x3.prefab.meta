@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f6c5d51acb010b247baf80505085306a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Ceiling_2x3.prefab
+  uploadId: 688263

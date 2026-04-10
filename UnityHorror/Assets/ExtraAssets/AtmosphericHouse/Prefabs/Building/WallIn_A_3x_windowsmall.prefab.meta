@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d69bb9e472ae72c4996eb76e58346930
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_A_3x_windowsmall.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f8127478f2e0bb04080b9599311d4457
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_wall_shade.prefab
+  uploadId: 688263

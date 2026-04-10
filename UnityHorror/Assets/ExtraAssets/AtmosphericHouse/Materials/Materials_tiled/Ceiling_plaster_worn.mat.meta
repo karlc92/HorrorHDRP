@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b4687726a5e7b9a4b9f76feb2cd27068
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Ceiling_plaster_worn.mat
+  uploadId: 688263

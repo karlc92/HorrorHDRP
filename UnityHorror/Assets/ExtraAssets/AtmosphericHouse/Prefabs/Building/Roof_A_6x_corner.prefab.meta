@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 23f79fc64cdeab346b80cf07c006233d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Roof_A_6x_corner.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8627d45b28d98ad4690450febeb6b60d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Ceiling_3x_trim.prefab
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 008af409471df7b409a749e2d6c3c5c6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Wall_B_wallpaper_A_worn.mat
+  uploadId: 688263

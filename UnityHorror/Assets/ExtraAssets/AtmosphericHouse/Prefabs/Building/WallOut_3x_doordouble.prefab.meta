@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bebc08e6982be544b82f3918fc71ab74
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallOut_3x_doordouble.prefab
+  uploadId: 688263

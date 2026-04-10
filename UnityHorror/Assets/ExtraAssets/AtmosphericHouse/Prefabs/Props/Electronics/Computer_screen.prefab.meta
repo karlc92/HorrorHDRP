@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 33d6fd049e3267740825c5c800797efe
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/Computer_screen.prefab
+  uploadId: 688263

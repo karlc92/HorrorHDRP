@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ee20c2c20a48118478a3d3ac7972512f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Office_props/Office_box_A.prefab
+  uploadId: 688263

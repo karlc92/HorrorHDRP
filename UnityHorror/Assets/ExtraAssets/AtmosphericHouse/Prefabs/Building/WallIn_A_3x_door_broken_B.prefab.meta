@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a3cc8b377c938b845ba8bf66d1ecc850
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_A_3x_door_broken_B.prefab
+  uploadId: 688263

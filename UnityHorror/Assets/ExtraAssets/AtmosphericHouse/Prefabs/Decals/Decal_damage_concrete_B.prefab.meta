@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 779d13d63e6fe964cbfb3e5aae43a84a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decal_damage_concrete_B.prefab
+  uploadId: 688263

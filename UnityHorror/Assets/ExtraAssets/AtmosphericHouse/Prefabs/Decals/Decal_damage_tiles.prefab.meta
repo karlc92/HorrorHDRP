@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 70c9cd0f936c53a409536152aa6377ea
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decal_damage_tiles.prefab
+  uploadId: 688263

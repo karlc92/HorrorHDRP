@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b96c5d7e27a687c4bac204a16c67bf12
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/Stove.prefab
+  uploadId: 688263

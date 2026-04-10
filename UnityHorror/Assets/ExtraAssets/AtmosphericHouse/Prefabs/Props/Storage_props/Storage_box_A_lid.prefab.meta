@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8ac5e571a9e22b0489249cacd374f91a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Storage_props/Storage_box_A_lid.prefab
+  uploadId: 688263

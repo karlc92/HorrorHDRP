@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e1633f087bff3ac468b49819d5ad6656
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Exterior_trims_worn.mat
+  uploadId: 688263

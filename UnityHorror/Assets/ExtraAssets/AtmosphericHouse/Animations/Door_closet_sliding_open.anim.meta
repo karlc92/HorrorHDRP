@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d34e417abc08d5d498af50d6a0c2f92a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animations/Door_closet_sliding_open.anim
+  uploadId: 688263

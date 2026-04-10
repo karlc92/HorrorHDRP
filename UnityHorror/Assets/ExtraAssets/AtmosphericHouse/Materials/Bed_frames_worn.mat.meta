@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 52ac76a733f09a54ea0029c078533687
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Bed_frames_worn.mat
+  uploadId: 688263

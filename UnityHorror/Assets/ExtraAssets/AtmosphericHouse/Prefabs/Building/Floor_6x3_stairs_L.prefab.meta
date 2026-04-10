@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d3063e6c53795c649b65d804127b23db
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Floor_6x3_stairs_L.prefab
+  uploadId: 688263

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: aec7dba9569d94c4f8f10e4a0a4a1376
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/BuiltIn_RP/BuiltIn_Shaders/Standard_doublesided_transparent.shader
+  uploadId: 688263

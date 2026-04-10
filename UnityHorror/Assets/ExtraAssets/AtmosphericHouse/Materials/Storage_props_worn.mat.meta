@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 667fadc7c70f1bf42a004c09ecb5e9ca
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Storage_props_worn.mat
+  uploadId: 688263

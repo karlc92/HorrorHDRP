@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b43f678dde1fc4c4aa5ebb73dc147273
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Scenes/House_clean_day.unity
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: edc09a3cca5554b4fa0fe6f076e1f881
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_C_columnhalf_medium.prefab
+  uploadId: 688263

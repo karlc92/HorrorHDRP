@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1a1e874a51a4557498cd8a0a20b833a4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Interior_plants_clean.mat
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1cd40fc1a100cbb45bbc713736e8bc3a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Furniture/Shelf_closet.prefab
+  uploadId: 688263

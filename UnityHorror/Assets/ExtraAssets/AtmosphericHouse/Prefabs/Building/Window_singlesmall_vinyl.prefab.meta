@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e5c2043262541764f82213dffb0bd11b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Window_singlesmall_vinyl.prefab
+  uploadId: 688263

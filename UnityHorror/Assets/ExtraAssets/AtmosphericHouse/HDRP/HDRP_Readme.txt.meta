@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e89d90ea83613e940aabd846eb243993
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/HDRP/HDRP_Readme.txt
+  uploadId: 688263

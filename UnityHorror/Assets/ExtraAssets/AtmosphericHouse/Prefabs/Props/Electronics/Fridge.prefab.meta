@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 68ddc2075150d9d4a8160f07af1e7871
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/Fridge.prefab
+  uploadId: 688263

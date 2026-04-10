@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d94ddfc056882364e87a96786be1fbde
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Window_single_static.prefab
+  uploadId: 688263

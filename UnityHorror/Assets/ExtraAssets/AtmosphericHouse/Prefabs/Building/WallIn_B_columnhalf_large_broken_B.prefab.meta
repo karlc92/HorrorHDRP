@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2771b7035a5457d4d98255f7aa92fd41
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_B_columnhalf_large_broken_B.prefab
+  uploadId: 688263

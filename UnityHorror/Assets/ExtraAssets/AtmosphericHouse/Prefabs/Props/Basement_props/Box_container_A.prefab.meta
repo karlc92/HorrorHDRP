@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ea669fa462d3d164f9865c8c7698d1c9
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Basement_props/Box_container_A.prefab
+  uploadId: 688263

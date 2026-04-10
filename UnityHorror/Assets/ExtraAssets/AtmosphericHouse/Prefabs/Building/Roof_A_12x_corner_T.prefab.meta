@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7b3c9f27e22da944ba6176d421cc1e40
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Roof_A_12x_corner_T.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 89925d53b42432741b6c9de75492ab0f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_table_shade.prefab
+  uploadId: 688263

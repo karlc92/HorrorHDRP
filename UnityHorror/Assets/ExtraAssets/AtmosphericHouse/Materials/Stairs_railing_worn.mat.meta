@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a5f8ca0d546cb8340bcdb471758ebf87
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Stairs_railing_worn.mat
+  uploadId: 688263

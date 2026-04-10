@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b5265bf5fd61fe74e8bf8a145af64bf4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Exterior_gutter_clean.mat
+  uploadId: 688263

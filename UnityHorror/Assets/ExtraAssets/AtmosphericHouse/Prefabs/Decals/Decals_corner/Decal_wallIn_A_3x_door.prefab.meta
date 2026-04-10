@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e1c4495a26c288649aa57d2b1f59fc71
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decals_corner/Decal_wallIn_A_3x_door.prefab
+  uploadId: 688263

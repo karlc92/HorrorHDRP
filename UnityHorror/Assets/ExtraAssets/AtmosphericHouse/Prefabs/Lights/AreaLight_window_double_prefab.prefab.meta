@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ce608ecd35ad9e948bee6e1b60a6ac44
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Lights/AreaLight_window_double_prefab.prefab
+  uploadId: 688263

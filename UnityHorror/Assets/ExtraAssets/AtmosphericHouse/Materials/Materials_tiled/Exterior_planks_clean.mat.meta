@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bcf0d0521ad58ed41acd0a737f14ae4a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Exterior_planks_clean.mat
+  uploadId: 688263

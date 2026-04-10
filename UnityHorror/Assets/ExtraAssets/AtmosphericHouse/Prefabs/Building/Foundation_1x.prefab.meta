@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 31787962ca3059a428841bef1949ba75
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Foundation_1x.prefab
+  uploadId: 688263

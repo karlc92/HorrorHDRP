@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3abc3d2c0688c894193e89e79df6d27e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Extras/Pipe_corner_R.prefab
+  uploadId: 688263

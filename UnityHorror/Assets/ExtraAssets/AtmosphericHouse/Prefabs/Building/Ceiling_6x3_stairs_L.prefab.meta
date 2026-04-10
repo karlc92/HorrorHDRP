@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1313ea09c9f089049b18dccdce4da8e2
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Ceiling_6x3_stairs_L.prefab
+  uploadId: 688263

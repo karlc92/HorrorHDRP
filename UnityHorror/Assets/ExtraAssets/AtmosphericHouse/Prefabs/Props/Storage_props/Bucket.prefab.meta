@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b211ea4913b136f4a928b7b3e9d82b99
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Storage_props/Bucket.prefab
+  uploadId: 688263

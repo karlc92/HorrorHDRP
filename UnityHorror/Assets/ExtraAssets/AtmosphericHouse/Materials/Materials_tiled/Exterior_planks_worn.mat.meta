@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f32f85c53cf97854ebad4e75c383fdfd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Exterior_planks_worn.mat
+  uploadId: 688263

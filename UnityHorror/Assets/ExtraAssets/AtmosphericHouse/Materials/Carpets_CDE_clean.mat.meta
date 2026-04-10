@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c65de39ec43415744bee067f2c39a776
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Carpets_CDE_clean.mat
+  uploadId: 688263

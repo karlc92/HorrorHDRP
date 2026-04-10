@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f70d9393a9629594789a442e47a124d4
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/Computer_mousepad.prefab
+  uploadId: 688263

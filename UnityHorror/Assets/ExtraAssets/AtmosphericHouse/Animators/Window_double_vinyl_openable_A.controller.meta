@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3a91787e48095ec42a381e79535d79ba
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animators/Window_double_vinyl_openable_A.controller
+  uploadId: 688263

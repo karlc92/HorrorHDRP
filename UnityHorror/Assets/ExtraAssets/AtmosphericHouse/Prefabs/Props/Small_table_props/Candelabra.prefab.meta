@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d274fdfbc539ba943b302882e43ca0fb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Small_table_props/Candelabra.prefab
+  uploadId: 688263

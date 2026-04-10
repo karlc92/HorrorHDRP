@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c87ca651f2a04864eaf670b85e2b440f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Ceiling_6x6_broken_A.prefab
+  uploadId: 688263

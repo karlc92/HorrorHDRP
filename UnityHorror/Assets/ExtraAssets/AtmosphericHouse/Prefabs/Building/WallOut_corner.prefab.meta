@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ad2ceae1a36433645a4517e49a4e0cb8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallOut_corner.prefab
+  uploadId: 688263

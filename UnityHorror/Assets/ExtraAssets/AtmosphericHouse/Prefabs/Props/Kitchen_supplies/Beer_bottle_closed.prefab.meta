@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cd3d8155df7ab504ea70bd270a0b4079
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Kitchen_supplies/Beer_bottle_closed.prefab
+  uploadId: 688263

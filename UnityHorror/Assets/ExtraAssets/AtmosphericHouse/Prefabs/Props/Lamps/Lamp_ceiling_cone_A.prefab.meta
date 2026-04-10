@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4da0bc2254e72654e8f4dffbd392b417
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_ceiling_cone_A.prefab
+  uploadId: 688263

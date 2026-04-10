@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e32ece173b222644492b2ec7496fb6fb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Small_table_props_worn.mat
+  uploadId: 688263

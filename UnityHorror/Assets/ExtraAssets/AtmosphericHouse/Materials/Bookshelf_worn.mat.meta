@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 24564f13e29445d49b0433c35feee21c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Bookshelf_worn.mat
+  uploadId: 688263

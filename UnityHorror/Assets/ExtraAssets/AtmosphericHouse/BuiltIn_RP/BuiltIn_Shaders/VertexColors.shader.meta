@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6472f5e5ebe514b409543a77de81dc98
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/BuiltIn_RP/BuiltIn_Shaders/VertexColors.shader
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 24c6c5d56f460d24aaac9d439b02fa22
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Stove_clean.mat
+  uploadId: 688263

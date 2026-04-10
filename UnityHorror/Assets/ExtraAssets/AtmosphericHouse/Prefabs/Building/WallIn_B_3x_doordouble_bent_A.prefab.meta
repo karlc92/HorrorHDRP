@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 910f5e1708a41b84fbd4c383faf5d8b9
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_B_3x_doordouble_bent_A.prefab
+  uploadId: 688263

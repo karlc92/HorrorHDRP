@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 43a9c0d8597074c448e21e8fc9ff6700
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animators/Door_L.controller
+  uploadId: 688263

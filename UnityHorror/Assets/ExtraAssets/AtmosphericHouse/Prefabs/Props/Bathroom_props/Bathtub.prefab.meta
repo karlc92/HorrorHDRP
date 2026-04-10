@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d60e3c6be7ff9e64695642c67dd0ea1a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Bathroom_props/Bathtub.prefab
+  uploadId: 688263

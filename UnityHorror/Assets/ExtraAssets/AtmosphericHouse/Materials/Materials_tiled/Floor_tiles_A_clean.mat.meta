@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2d72cf3e625ed9841b7b4fba93e65ef8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Floor_tiles_A_clean.mat
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cf137d9e15e062d4f878abf0fbf3d32c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_A_6x_windowtriple.prefab
+  uploadId: 688263

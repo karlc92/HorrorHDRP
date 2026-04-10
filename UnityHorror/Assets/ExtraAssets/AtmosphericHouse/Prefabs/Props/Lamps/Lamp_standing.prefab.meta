@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 89d12a63d121f594db4f8d324531f17c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_standing.prefab
+  uploadId: 688263

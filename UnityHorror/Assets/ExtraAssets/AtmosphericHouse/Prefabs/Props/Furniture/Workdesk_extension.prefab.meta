@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 73f65b7a11354234f92177e3193e0e01
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Furniture/Workdesk_extension.prefab
+  uploadId: 688263

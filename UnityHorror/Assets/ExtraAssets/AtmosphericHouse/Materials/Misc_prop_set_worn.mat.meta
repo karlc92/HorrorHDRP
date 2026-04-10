@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1d595413022f91e4e84d9c84268e4a94
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Misc_prop_set_worn.mat
+  uploadId: 688263

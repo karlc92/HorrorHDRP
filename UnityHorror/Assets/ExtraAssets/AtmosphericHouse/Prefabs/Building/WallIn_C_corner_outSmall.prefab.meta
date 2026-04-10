@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 19b4759f7601b8449b8060ff1c15f3d1
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_C_corner_outSmall.prefab
+  uploadId: 688263

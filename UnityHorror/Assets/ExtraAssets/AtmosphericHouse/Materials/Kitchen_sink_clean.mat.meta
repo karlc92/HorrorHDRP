@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fb546a3288ba58c4f8744a504667634e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Kitchen_sink_clean.mat
+  uploadId: 688263

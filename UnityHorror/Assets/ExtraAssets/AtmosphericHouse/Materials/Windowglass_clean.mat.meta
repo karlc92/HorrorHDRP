@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 83383dfb1835db44dbf3c23c471ad132
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Windowglass_clean.mat
+  uploadId: 688263

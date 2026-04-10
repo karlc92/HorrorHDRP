@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 14346fe6681524742bfad5020e8d0b1b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Scripts/PrefabSwapper/SwapPrefab.cs
+  uploadId: 688263

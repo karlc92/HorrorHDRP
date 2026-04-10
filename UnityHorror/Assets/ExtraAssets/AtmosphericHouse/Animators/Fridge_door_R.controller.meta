@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c9e6c792b8a760244bd9dde40b5bbc25
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animators/Fridge_door_R.controller
+  uploadId: 688263

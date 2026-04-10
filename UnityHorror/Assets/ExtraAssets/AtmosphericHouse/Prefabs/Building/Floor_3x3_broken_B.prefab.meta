@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 82332317f96da954f92249f93bf81aeb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Floor_3x3_broken_B.prefab
+  uploadId: 688263

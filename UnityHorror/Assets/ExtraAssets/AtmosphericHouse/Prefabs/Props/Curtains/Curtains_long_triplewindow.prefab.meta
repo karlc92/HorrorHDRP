@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7dd7172a7bcc73841add63a7e13197ce
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Curtains/Curtains_long_triplewindow.prefab
+  uploadId: 688263

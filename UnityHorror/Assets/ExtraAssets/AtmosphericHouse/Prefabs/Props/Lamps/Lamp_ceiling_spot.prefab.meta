@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e847c4c9805c8634287b1bc2edeffaf5
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_ceiling_spot.prefab
+  uploadId: 688263

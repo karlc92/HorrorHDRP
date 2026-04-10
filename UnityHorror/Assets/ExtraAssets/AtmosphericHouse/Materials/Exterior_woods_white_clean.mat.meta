@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2f87a8ab7deec394790be3b571e582f1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Exterior_woods_white_clean.mat
+  uploadId: 688263

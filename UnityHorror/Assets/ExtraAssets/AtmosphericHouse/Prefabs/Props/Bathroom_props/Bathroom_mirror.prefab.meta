@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 04412efa7f9f66346b3abc7171f189cf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Bathroom_props/Bathroom_mirror.prefab
+  uploadId: 688263

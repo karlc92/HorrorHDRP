@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bc684646dd4991241a59dd5e87319b48
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Stairs_basement.prefab
+  uploadId: 688263

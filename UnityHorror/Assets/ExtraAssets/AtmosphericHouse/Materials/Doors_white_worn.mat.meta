@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7554c9c8871f9c5499fa534695419fa6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Doors_white_worn.mat
+  uploadId: 688263

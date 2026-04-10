@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5ca21fe83ef4ee3498bf44669e04fddf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_table_work.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3a88ad105720b2742af33443bb73a52d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decals_corner/Decal_wallIn_A_corner_outPatch.prefab
+  uploadId: 688263

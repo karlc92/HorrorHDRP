@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bdef40d2b9d67af41bab0a7c839b08c0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Extras/Windowblinds_closed.prefab
+  uploadId: 688263

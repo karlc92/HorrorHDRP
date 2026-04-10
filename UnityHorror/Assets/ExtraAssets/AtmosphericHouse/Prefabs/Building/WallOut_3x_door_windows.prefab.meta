@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d4c72334b0fc64443af5dca36ee6218c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallOut_3x_door_windows.prefab
+  uploadId: 688263

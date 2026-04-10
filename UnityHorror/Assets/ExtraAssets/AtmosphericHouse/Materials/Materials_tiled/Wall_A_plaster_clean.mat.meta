@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d20b04f2543e1aa419a8bf958b5bcbc6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Wall_A_plaster_clean.mat
+  uploadId: 688263

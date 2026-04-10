@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 28f8fb4f20b5d8f499fb79f3f7879157
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animations/Window_double_vinyl_openable_B_open.anim
+  uploadId: 688263

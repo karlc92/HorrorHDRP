@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5b279d0191b8d624bb31b44d00728037
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Gutter_pipe_2story.prefab
+  uploadId: 688263

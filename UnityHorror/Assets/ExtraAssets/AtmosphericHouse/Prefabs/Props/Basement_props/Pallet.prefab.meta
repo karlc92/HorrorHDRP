@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 311d54d11a5b8de40ad05c35509dfb34
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Basement_props/Pallet.prefab
+  uploadId: 688263

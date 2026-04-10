@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 818f91dddf395cc478fe244464d14d4f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_B_corner_outLarge_broken_A.prefab
+  uploadId: 688263

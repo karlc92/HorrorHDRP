@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 63b3087548c07a1488536a476c04dcf7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animators/Toilet_Lid.controller
+  uploadId: 688263

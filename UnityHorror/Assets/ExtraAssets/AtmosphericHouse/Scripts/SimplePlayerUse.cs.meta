@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b9aa1671037aac84a80ac1cb6bd01d31
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Scripts/SimplePlayerUse.cs
+  uploadId: 688263

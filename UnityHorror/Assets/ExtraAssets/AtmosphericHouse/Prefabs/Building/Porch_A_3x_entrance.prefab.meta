@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ef616b3708c0690468c4867b57f27704
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Porch_A_3x_entrance.prefab
+  uploadId: 688263

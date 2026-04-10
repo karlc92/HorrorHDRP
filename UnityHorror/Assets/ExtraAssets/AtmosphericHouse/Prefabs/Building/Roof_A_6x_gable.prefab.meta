@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c42ec821134f2ef4aa4f23af7480b234
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Roof_A_6x_gable.prefab
+  uploadId: 688263

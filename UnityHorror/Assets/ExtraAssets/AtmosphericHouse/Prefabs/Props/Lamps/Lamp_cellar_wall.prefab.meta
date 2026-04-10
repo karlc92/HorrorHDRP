@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 97ca9b1d34afc2e4296a12d891a5f136
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_cellar_wall.prefab
+  uploadId: 688263

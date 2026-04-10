@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 8b88f9791d243d34ba7ab739bfb366a2
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/BuiltIn_RP/BuiltIn_Shaders/Standard_doublesided_cutout.shader
+  uploadId: 688263

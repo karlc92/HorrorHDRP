@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7f7d31eee75aefc409f11f3c06cf4044
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Materials_tiled/Floor_concrete_clean.mat
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fa122443149be584789982754f41e897
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Doors/Door_parent_C_R.prefab
+  uploadId: 688263

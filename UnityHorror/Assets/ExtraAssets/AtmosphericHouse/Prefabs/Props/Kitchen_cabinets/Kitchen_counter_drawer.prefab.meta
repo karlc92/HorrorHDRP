@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cecb8e01d367b964e8e8457f9c06d048
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Kitchen_cabinets/Kitchen_counter_drawer.prefab
+  uploadId: 688263

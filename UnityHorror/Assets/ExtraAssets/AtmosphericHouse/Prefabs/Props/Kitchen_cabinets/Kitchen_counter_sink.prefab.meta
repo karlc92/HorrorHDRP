@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d2c5214204d6940439812ca7ef67d50c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Kitchen_cabinets/Kitchen_counter_sink.prefab
+  uploadId: 688263

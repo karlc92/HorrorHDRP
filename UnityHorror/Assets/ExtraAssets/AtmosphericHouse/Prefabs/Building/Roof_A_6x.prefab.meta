@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f9c3dd6a5e574b44eada779629818cdd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Roof_A_6x.prefab
+  uploadId: 688263

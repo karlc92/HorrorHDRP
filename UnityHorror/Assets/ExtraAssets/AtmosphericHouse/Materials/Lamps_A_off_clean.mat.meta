@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 77af3d75c0d3742489c87c7ba03a54c0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Lamps_A_off_clean.mat
+  uploadId: 688263

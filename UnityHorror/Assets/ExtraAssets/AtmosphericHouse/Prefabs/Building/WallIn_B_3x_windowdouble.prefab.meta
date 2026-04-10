@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 38698f3d3dff27b4da3728ab85c4fb4d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_B_3x_windowdouble.prefab
+  uploadId: 688263

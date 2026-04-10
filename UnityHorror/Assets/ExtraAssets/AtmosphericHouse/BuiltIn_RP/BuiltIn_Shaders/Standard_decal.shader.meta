@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 827cb01ec36036641aa59b97c926e5c9
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/BuiltIn_RP/BuiltIn_Shaders/Standard_decal.shader
+  uploadId: 688263

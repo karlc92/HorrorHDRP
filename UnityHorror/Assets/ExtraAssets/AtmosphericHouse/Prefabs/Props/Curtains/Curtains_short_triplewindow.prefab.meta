@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 707f5c363d535f2479ae816ce9590e9d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Curtains/Curtains_short_triplewindow.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bc62bf91319934c479d386fcea9d33f7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decals_corner/Decal_wallIn_C_column_small.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 584d0fb5b6edc2342b7ed053a7ad4c6d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallOut_1x.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 6102059d7e6313c4ca9b694e7178d0c0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/TV_off.prefab
+  uploadId: 688263

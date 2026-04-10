@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5364e38b80cb3c9448f6a4100d0c507e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Electronics/Washing_machine.prefab
+  uploadId: 688263

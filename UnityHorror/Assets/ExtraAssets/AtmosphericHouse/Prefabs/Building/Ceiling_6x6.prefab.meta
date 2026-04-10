@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b2846a3d2d7676e4594f93d119712e08
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Ceiling_6x6.prefab
+  uploadId: 688263

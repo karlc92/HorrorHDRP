@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 63e10215a08772e478d3eceaf85b4bed
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_A_6x_broken_B.prefab
+  uploadId: 688263

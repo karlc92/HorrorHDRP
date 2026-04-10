@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8bd761df576e0af4893f0e5f8e554f46
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Lamps_B_off_worn.mat
+  uploadId: 688263

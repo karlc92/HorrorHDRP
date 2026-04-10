@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 51023a5e301ef9b429d854f2547ef300
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_chandelier.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b1e627609d2d7e24eaa4f272c50cd281
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Decals/Decal_leaking_A.prefab
+  uploadId: 688263

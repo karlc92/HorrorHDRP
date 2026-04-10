@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 130b96000eb0ab2448abd0bd6782d61e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animations/Fridge_door_R_open.anim
+  uploadId: 688263

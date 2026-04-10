@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: efa82b476c83f1940b925d2c4c913c39
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Decals_papers.mat
+  uploadId: 688263

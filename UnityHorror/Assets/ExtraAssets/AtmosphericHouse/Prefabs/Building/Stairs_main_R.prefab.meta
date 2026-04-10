@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0dfcad74471cd3a4d90b5309060e2318
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Stairs_main_R.prefab
+  uploadId: 688263

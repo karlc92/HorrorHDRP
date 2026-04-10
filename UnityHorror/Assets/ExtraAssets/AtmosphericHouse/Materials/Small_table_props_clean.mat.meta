@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c9060ab15dd8b9a40910cb87a7e419b6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Small_table_props_clean.mat
+  uploadId: 688263

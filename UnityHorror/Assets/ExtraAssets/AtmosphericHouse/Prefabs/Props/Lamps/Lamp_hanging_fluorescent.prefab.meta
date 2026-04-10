@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5c461b2ebe068f8488a879a2d8547f50
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Lamps/Lamp_hanging_fluorescent.prefab
+  uploadId: 688263

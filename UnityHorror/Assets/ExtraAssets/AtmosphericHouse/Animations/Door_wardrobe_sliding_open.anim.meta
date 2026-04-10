@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 33d6e307f08d81348a25bf3b90336721
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animations/Door_wardrobe_sliding_open.anim
+  uploadId: 688263

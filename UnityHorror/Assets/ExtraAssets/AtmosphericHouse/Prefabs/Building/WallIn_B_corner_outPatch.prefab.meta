@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7068e27d899890e4587e709740f396dd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_B_corner_outPatch.prefab
+  uploadId: 688263

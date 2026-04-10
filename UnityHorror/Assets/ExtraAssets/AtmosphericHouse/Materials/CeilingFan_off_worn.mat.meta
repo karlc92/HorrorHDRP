@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: df31df28ad8bcae4da28e4dc7e600841
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/CeilingFan_off_worn.mat
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5f22d60beed34e642aeb26f5175fdf30
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Stairs_basement_worn.mat
+  uploadId: 688263

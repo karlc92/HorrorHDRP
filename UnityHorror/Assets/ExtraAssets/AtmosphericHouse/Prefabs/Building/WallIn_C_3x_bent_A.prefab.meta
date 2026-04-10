@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f5921d218252ccc44ad6b236bfced2ff
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/WallIn_C_3x_bent_A.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 268ef665cadbdac4088f23665c0c236a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Furniture/Shelf_metal_single.prefab
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c635ce8283cdeb04a91782eb04c4d802
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Animations/Toilet_Lid.anim
+  uploadId: 688263

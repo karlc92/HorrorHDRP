@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 958a6817c6c3d3c4ba050b4c363948db
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Floor_1x3.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 23027e65e2002e04dae439d1dac9868a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Porch_A_3x_noColumn.prefab
+  uploadId: 688263

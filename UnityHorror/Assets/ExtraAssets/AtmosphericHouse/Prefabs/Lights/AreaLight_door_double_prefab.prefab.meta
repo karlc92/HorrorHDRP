@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8676252144beec24091141f339c8855a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Lights/AreaLight_door_double_prefab.prefab
+  uploadId: 688263

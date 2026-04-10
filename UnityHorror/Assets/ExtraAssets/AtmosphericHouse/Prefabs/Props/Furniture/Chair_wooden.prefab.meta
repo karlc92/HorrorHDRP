@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 482e03448ead48d448b3bad3961323ae
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Props/Furniture/Chair_wooden.prefab
+  uploadId: 688263

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f9d9942eefae3664fb0eb15f24545066
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Materials/Sidetables_worn.mat
+  uploadId: 688263

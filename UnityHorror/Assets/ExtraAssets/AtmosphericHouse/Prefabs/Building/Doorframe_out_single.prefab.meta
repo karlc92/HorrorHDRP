@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3a4221804eecb1e4f8fb00ac065947f7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Doorframe_out_single.prefab
+  uploadId: 688263

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b25db070bb3c3104e86e2c00954ab908
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192712
+  packageName: Atmospheric House (Modular)
+  packageVersion: 1.1.0
+  assetPath: Assets/AtmosphericHouse/Prefabs/Building/Doorframe_in_double.prefab
+  uploadId: 688263
