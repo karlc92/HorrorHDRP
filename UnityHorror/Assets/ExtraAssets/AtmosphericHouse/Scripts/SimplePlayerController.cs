@@ -1,13 +1,11 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace FS_Atmo
 {
     [RequireComponent(typeof(CharacterController))]
-
-
-
     public class SimplePlayerController : MonoBehaviour
     {
         public Camera playerCamera;
@@ -28,33 +26,62 @@ namespace FS_Atmo
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-
         }
 
         void Update()
         {
+            Keyboard keyboard = Keyboard.current;
+            Mouse mouse = Mouse.current;
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
-            bool isRunning = Input.GetKey(KeyCode.LeftShift);
-            float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
-            float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
+            bool isRunning = keyboard != null && keyboard.leftShiftKey.isPressed;
+            float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * GetVerticalInput(keyboard) : 0f;
+            float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * GetHorizontalInput(keyboard) : 0f;
             float movementDirectionY = moveDirection.y;
             moveDirection = (forward * curSpeedX) + (right * curSpeedY);
+            moveDirection.y = movementDirectionY;
 
             if (!characterController.isGrounded)
-            {
                 moveDirection.y -= gravity * Time.deltaTime;
-            }
 
             characterController.Move(moveDirection * Time.deltaTime);
 
-            if (canMove)
-            {
-                rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
-                rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
-                playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
-                transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
-            }
+            if (!canMove)
+                return;
+
+            Vector2 mouseDelta = mouse != null ? mouse.delta.ReadValue() : Vector2.zero;
+            rotationX += -mouseDelta.y * lookSpeed * Time.deltaTime;
+            rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
+            playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+            transform.rotation *= Quaternion.Euler(0, mouseDelta.x * lookSpeed * Time.deltaTime, 0);
+        }
+
+        float GetVerticalInput(Keyboard keyboard)
+        {
+            if (keyboard == null)
+                return 0f;
+
+            float input = 0f;
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+                input += 1f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+                input -= 1f;
+
+            return input;
+        }
+
+        float GetHorizontalInput(Keyboard keyboard)
+        {
+            if (keyboard == null)
+                return 0f;
+
+            float input = 0f;
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+                input += 1f;
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+                input -= 1f;
+
+            return input;
         }
     }
 }
