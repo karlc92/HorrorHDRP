@@ -10,7 +10,7 @@ namespace PrefabSwapper
     public class SwapPrefabList : ScriptableObject
     {
         // Add folders to look the prefabs from: { "Assets/Folder_A", "Assets/Folder_B" },
-        public static string[] prefabsFolders = { "Assets/AtmosphericHouse/Prefabs/Building", "Assets/AtmosphericHouse/Prefabs/Doors", "Assets/AtmosphericHouse/Prefabs/Props", "Assets/AtmosphericHouse/Prefabs/Lights", "Assets/AtmosphericHouse/Prefabs/Decals" };
+        public static string[] prefabsFolders = { "Assets/ExtraAssets/AtmosphericHouse/Prefabs/Building", "Assets/ExtraAssets/AtmosphericHouse/Prefabs/Doors", "Assets/ExtraAssets/AtmosphericHouse/Prefabs/Props", "Assets/ExtraAssets/AtmosphericHouse/Prefabs/Lights", "Assets/ExtraAssets/AtmosphericHouse/Prefabs/Decals" };
 
         [System.Serializable]
         public class SwapPrefabProperties
