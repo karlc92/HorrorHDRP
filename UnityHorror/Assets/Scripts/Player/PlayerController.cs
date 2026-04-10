@@ -544,8 +544,27 @@ public sealed class PlayerController : MonoBehaviour
         {
             Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
             if (interactable != null && interactable.IsValidInteractionTarget())
+            {
                 StartInteraction(interactable);
+                return;
+            }
         }
+
+        TryInteractWithAtmosphericHouseDoor(origin, dir);
+    }
+
+    void TryInteractWithAtmosphericHouseDoor(Vector3 origin, Vector3 direction)
+    {
+        int mask = ~playerLayerToIgnore.value;
+
+        if (!Physics.Raycast(origin, direction, out var hit, interactRange, mask, QueryTriggerInteraction.Ignore))
+            return;
+
+        FS_Atmo.SimpleOpenClose simpleOpenClose = hit.collider.GetComponentInParent<FS_Atmo.SimpleOpenClose>();
+        if (simpleOpenClose == null)
+            return;
+
+        simpleOpenClose.gameObject.SendMessage("ObjectClicked", SendMessageOptions.DontRequireReceiver);
     }
 
     void UpdateInteractOutline()
