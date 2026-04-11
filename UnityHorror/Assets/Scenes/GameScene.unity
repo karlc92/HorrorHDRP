@@ -1134,6 +1134,7 @@ MonoBehaviour:
   m_Script: {fileID: 466722074}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.SceneObjectIDMapSceneAsset
+  m_Entries: []
 --- !u!4 &120422616
 Transform:
   m_ObjectHideFlags: 19
@@ -139154,6 +139155,10 @@ PrefabInstance:
     - target: {fileID: -8357506001488791689, guid: d4c72334b0fc64443af5dca36ee6218c, type: 3}
       propertyPath: quickSwapsBtns.Array.size
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 36438875431184601, guid: d4c72334b0fc64443af5dca36ee6218c, type: 3}
+      propertyPath: placed
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1019975283234839266, guid: d4c72334b0fc64443af5dca36ee6218c, type: 3}
       propertyPath: m_LocalPosition.z

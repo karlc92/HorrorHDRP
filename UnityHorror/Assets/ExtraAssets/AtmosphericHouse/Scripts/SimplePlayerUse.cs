@@ -34,7 +34,7 @@ namespace FS_Atmo
 
             if (Physics.Raycast(mainCamera.transform.position, mainCamera.transform.TransformDirection(Vector3.forward), out hit, 2.3f))
             {
-                if (hit.collider.gameObject.GetComponent<SimpleOpenClose>())
+                if (hit.collider.gameObject.GetComponent<global::SimpleOpenClose>())
                 {
                     // Debug.Log("Object with SimpleOpenClose script found");
                     hit.collider.gameObject.BroadcastMessage("ObjectClicked");
