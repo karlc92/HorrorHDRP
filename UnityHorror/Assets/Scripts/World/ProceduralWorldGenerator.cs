@@ -40,6 +40,14 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
     }
 
     [Serializable]
+    private sealed class WorldScaleSettings
+    {
+        public bool enableLargeWorldScaling = true;
+        [Range(0.5f, 8f)] public float terrainSizeMultiplierXZ = 4f;
+        [Range(0.5f, 4f)] public float terrainHeightMultiplier = 1f;
+    }
+
+    [Serializable]
     private sealed class TerrainShapeSettings
     {
         [Range(0f, 1f)] public float seaLevel01 = 0.31f;
@@ -155,11 +163,77 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         [Range(0.05f, 0.5f)] public float playerSearchRadius01 = 0.24f;
         [Range(0f, 1f)] public float maxSlope01 = 0.32f;
         [Range(0f, 1f)] public float maxRiverMask = 0.09f;
+        [Range(0f, 1f)] public float maxCaveMask = 0.15f;
         [Range(0f, 1f)] public float maxEdgeBarrierMask = 0.2f;
         [Range(0f, 0.2f)] public float minLandHeightAboveSea = 0.03f;
         public int searchAttempts = 96;
         public float monsterMinDistance = 45f;
         public float monsterMaxDistance = 120f;
+    }
+
+    [Serializable]
+    private sealed class SurfaceLayerBindings
+    {
+        public bool useExplicitLayerBindings = true;
+        public bool strictExplicitLayerBindings = true;
+        public TerrainLayer groundLayer;
+        public TerrainLayer rockLayer;
+        public TerrainLayer wetLayer;
+        public TerrainLayer dryLayer;
+        public TerrainLayer foliageLayer;
+    }
+
+    [Serializable]
+    private sealed class GrassPrototypeDefinition
+    {
+        public GameObject prefab;
+        [Range(0.1f, 4f)] public float minWidth = 0.9f;
+        [Range(0.1f, 4f)] public float maxWidth = 1.35f;
+        [Range(0.1f, 4f)] public float minHeight = 0.9f;
+        [Range(0.1f, 4f)] public float maxHeight = 1.35f;
+        [Range(0f, 2f)] public float noiseSpread = 0.2f;
+    }
+
+    [Serializable]
+    private sealed class DetailPrototypeBindings
+    {
+        public bool configureGrassFromPrefabs = true;
+        public bool replaceExistingGrassLikePrototypes = true;
+        public List<GrassPrototypeDefinition> grassPrefabs = new List<GrassPrototypeDefinition>();
+    }
+
+    [Serializable]
+    private sealed class CaveSettings
+    {
+        public bool enableCaves = true;
+        [Range(0f, 1f)] public float cavesChancePerWorld = 0.7f;
+        public int minEntrances = 1;
+        public int maxEntrances = 4;
+        public int attemptsPerEntrance = 28;
+        public float minEntranceSeparation = 70f;
+        public float entranceRadius = 12f;
+        [Range(0.001f, 0.2f)] public float entranceDepth01 = 0.035f;
+        public float tunnelLength = 85f;
+        public float tunnelRadius = 8f;
+        [Range(0f, 1f)] public float maxEntranceSlope01 = 0.36f;
+        [Range(0f, 1f)] public float maxEntranceRiverMask = 0.12f;
+        [Range(0f, 1f)] public float maxEntranceEdgeMask = 0.25f;
+        [Range(0f, 1f)] public float maxEntranceCenterMask = 0.7f;
+        public bool spawnEntrancePrefabs = true;
+        public bool spawnUndergroundPrefabs = true;
+        public List<GameObject> entrancePrefabs = new List<GameObject>();
+        public List<GameObject> undergroundPrefabs = new List<GameObject>();
+        public float undergroundMinDepth = 14f;
+        public float undergroundMaxDepth = 34f;
+        public float undergroundHorizontalJitter = 8f;
+        public string generatedCaveRootName = "__GeneratedCaves";
+    }
+
+    private struct CaveSpawnPoint
+    {
+        public Vector3 entranceWorld;
+        public Vector3 undergroundWorld;
+        public Quaternion rotation;
     }
 
     [Header("References")]
@@ -195,17 +269,25 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
     [SerializeField] private PlayAreaSettings playArea = new PlayAreaSettings();
     [SerializeField] private BoundarySettings boundaries = new BoundarySettings();
     [SerializeField] private SpawnSettings spawn = new SpawnSettings();
+    [SerializeField] private WorldScaleSettings worldScale = new WorldScaleSettings();
+    [SerializeField] private SurfaceLayerBindings surfaceLayers = new SurfaceLayerBindings();
+    [SerializeField] private DetailPrototypeBindings detailBindings = new DetailPrototypeBindings();
+    [SerializeField] private CaveSettings caves = new CaveSettings();
 
     private int lastGeneratedSeed = int.MinValue;
     private bool hasGeneratedAtLeastOnce;
     private bool isGenerating;
+    [SerializeField] private bool hasAuthoringTerrainSize;
+    [SerializeField] private Vector3 authoringTerrainSize = Vector3.zero;
 
     private float[,] generatedHeights;
     private float[,] generatedMoisture;
     private float[,] generatedTemperature;
     private float[,] generatedRiverMask;
+    private float[,] generatedCaveMask;
     private float[,] generatedEdgeBarrierMask;
     private BiomeType[,] generatedBiomes;
+    private readonly List<CaveSpawnPoint> caveSpawnPlan = new List<CaveSpawnPoint>(8);
 
     private void Reset()
     {
@@ -301,17 +383,20 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
     private void GenerateFromSeed(int seed, bool forceNavMeshRebuild)
     {
         TerrainData terrainData = targetTerrain.terrainData;
+        EnsureTerrainSizeScaled(terrainData);
         terrainData.RefreshPrototypes();
 
         BuildHeightAndBiomeMaps(terrainData, seed);
         ApplyHydraulicCarving(seed);
         ApplyThermalRelaxation();
+        BuildCavePlanAndCarve(seed, terrainData.size);
 
         terrainData.SetHeightsDelayLOD(0, 0, generatedHeights);
         terrainData.SyncHeightmap();
 
         ApplyTexturePainting(terrainData);
         ApplyTrees(terrainData, seed);
+        ConfigureDetailPrototypesFromBindings(terrainData);
         ApplyDetails(terrainData, seed);
 
         targetTerrain.Flush();
@@ -319,6 +404,8 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         if (targetTerrainCollider != null)
             targetTerrainCollider.terrainData = terrainData;
 
+        Physics.SyncTransforms();
+        SpawnGeneratedCaves(seed);
         Physics.SyncTransforms();
         SnapRuntimeActorsToGeneratedSurface(seed);
 
@@ -339,6 +426,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         generatedMoisture = new float[resolution, resolution];
         generatedTemperature = new float[resolution, resolution];
         generatedRiverMask = new float[resolution, resolution];
+        generatedCaveMask = new float[resolution, resolution];
         generatedEdgeBarrierMask = new float[resolution, resolution];
         generatedBiomes = new BiomeType[resolution, resolution];
 
@@ -532,6 +620,10 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
             return;
 
         TerrainLayerSemantic[] layerSemantics = BuildTerrainLayerSemantics(terrainData.terrainLayers, layers);
+        int fallbackLayerIndex = ResolveTextureFallbackLayer(terrainData.terrainLayers);
+        bool strictLayerBindings = surfaceLayers.useExplicitLayerBindings
+            && surfaceLayers.strictExplicitLayerBindings
+            && HasAnyExplicitLayerBinding(terrainData.terrainLayers);
         int aw = terrainData.alphamapWidth;
         int ah = terrainData.alphamapHeight;
         float[,,] alpha = new float[aw, ah, layers];
@@ -547,6 +639,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                 float moisture = SampleMap(generatedMoisture, nx, ny);
                 float slope01 = EstimateSlope01(nx, ny, terrainData.size);
                 float river = SampleMap(generatedRiverMask, nx, ny);
+                float cave = SampleMap(generatedCaveMask, nx, ny);
                 float edgeBarrier = SampleMap(generatedEdgeBarrierMask, nx, ny);
                 float curvature = EstimateCurvature01(nx, ny);
                 BiomeType biome = SampleBiome(nx, ny);
@@ -554,7 +647,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                 float rock = Mathf.Clamp01((slope01 - texturePainting.rockSlopeStart) / Mathf.Max(0.001f, 1f - texturePainting.rockSlopeStart));
                 rock = Mathf.Max(rock, Mathf.Clamp01((height01 - texturePainting.highRockStart) / Mathf.Max(0.001f, 1f - texturePainting.highRockStart)));
                 float ridgeRock = Mathf.Clamp01(curvature) * texturePainting.ridgeRockBoost;
-                rock = Mathf.Clamp01(Mathf.Max(rock, ridgeRock + edgeBarrier * 0.65f));
+                rock = Mathf.Clamp01(Mathf.Max(rock, ridgeRock + edgeBarrier * 0.65f + cave * 0.7f));
 
                 float wet = 0f;
                 if (biome == BiomeType.Marsh)
@@ -562,7 +655,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                 wet = Mathf.Max(wet, Mathf.Clamp01((moisture - texturePainting.marshMoistureThreshold) / Mathf.Max(0.001f, 1f - texturePainting.marshMoistureThreshold)) * (1f - slope01));
                 float valleyWet = Mathf.Clamp01(-curvature) * texturePainting.valleyWetBoost;
                 float shore = 1f - Mathf.Clamp01(Mathf.Abs(height01 - terrainShape.seaLevel01) / Mathf.Max(0.0001f, texturePainting.shoreBand));
-                wet = Mathf.Clamp01(wet + river * texturePainting.riverWetBoost + valleyWet + shore * 0.3f);
+                wet = Mathf.Clamp01(wet + river * texturePainting.riverWetBoost + valleyWet + shore * 0.3f + cave * 0.18f);
 
                 float dry = 0f;
                 if (biome == BiomeType.Barren)
@@ -573,8 +666,10 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                 float soil = Mathf.Clamp01(1f - rock);
                 soil *= 1f - (dry * 0.35f);
                 soil *= 1f - (river * 0.25f);
+                soil *= 1f - (cave * 0.4f);
                 float foliage = Mathf.Clamp01(soil * (1f - slope01) * (0.45f + moisture * 0.55f));
                 foliage *= 1f - Mathf.Clamp01(edgeBarrier * 0.6f);
+                foliage *= 1f - Mathf.Clamp01(cave * 0.95f);
                 foliage *= biome == BiomeType.Barren ? 0.35f : 1f;
 
                 Array.Clear(weights, 0, weights.Length);
@@ -597,12 +692,15 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                             _ => (soil * 0.52f) + (rock * 0.23f) + (wet * 0.18f) + (dry * 0.07f)
                         };
 
+                        if (strictLayerBindings && info.semantic == SurfaceSemantic.Unknown)
+                            score = 0f;
+
                         float localVariation = 0.92f + info.variation * (0.16f * DeterministicNoise.Hash01(9137 + i * 131, x, y));
                         weights[i] = Mathf.Max(0f, score * localVariation);
                     }
                 }
 
-                Normalize(weights);
+                Normalize(weights, fallbackLayerIndex);
                 for (int i = 0; i < layers; i++)
                     alpha[x, y, i] = weights[i];
             }
@@ -647,6 +745,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                 float slope01 = EstimateSlope01(nx, nz, size);
                 float moisture = SampleMap(generatedMoisture, nx, nz);
                 float riverMask = SampleMap(generatedRiverMask, nx, nz);
+                float caveMask = SampleMap(generatedCaveMask, nx, nz);
                 float edgeBarrier = SampleMap(generatedEdgeBarrierMask, nx, nz);
                 BiomeType biome = SampleBiome(nx, nz);
 
@@ -655,12 +754,15 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
 
                 if (riverMask >= vegetation.treeRiverExclusionThreshold)
                     continue;
+                if (caveMask > 0.12f)
+                    continue;
 
                 float density = ResolveTreeDensity(biome, moisture, slope01, height01) * vegetation.treeDensityMultiplier;
                 float patch = EvaluateVegetationPatch(seed + 7001, worldX, worldZ, vegetation.treePatchFrequency, vegetation.treePatchContrast);
                 density *= patch;
                 density *= 1f - Mathf.Clamp01(edgeBarrier * vegetation.treeEdgeSuppression);
                 density *= 1f - Mathf.Clamp01(riverMask * 0.75f);
+                density *= 1f - Mathf.Clamp01(caveMask * 1.25f);
                 if (rng.Value01() > density)
                     continue;
 
@@ -716,11 +818,12 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                     float moisture = SampleMap(generatedMoisture, nx, ny);
                     float slope = EstimateSlope01(nx, ny, terrainData.size);
                     float river = SampleMap(generatedRiverMask, nx, ny);
+                    float cave = SampleMap(generatedCaveMask, nx, ny);
                     float edgeBarrier = SampleMap(generatedEdgeBarrierMask, nx, ny);
                     BiomeType biome = SampleBiome(nx, ny);
 
                     float biomeDensity = ResolveDetailDensity(biome, moisture, slope, layer, detailSemantics[layer]) * vegetation.detailDensityMultiplier;
-                    if (slope > vegetation.maxDetailSlope01 || river >= vegetation.detailRiverExclusionThreshold)
+                    if (slope > vegetation.maxDetailSlope01 || river >= vegetation.detailRiverExclusionThreshold || cave > 0.2f)
                     {
                         map[x, y] = 0;
                         continue;
@@ -737,6 +840,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
                     float value = biomeDensity * clump;
                     value *= 1f - Mathf.Clamp01(edgeBarrier * vegetation.detailEdgeSuppression);
                     value *= 1f - Mathf.Clamp01(river * 0.8f);
+                    value *= 1f - Mathf.Clamp01(cave * 1.2f);
                     value = Mathf.Clamp01((value - jitter * 0.65f) * 2.1f) * modulation;
                     map[x, y] = Mathf.RoundToInt(value * maxDensity);
                 }
@@ -744,6 +848,344 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
 
             terrainData.SetDetailLayer(0, 0, layer, map);
         }
+    }
+
+    private void ConfigureDetailPrototypesFromBindings(TerrainData terrainData)
+    {
+        if (terrainData == null || !detailBindings.configureGrassFromPrefabs || detailBindings.grassPrefabs == null || detailBindings.grassPrefabs.Count == 0)
+            return;
+
+        var list = new List<DetailPrototype>(terrainData.detailPrototypes ?? Array.Empty<DetailPrototype>());
+        if (detailBindings.replaceExistingGrassLikePrototypes)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (IsGrassLikeDetailPrototype(list[i]))
+                    list.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < detailBindings.grassPrefabs.Count; i++)
+        {
+            GrassPrototypeDefinition source = detailBindings.grassPrefabs[i];
+            if (source == null || source.prefab == null)
+                continue;
+
+            bool exists = false;
+            for (int p = 0; p < list.Count; p++)
+            {
+                if (list[p] != null && list[p].prototype == source.prefab)
+                {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (exists)
+                continue;
+
+            var detail = new DetailPrototype
+            {
+                usePrototypeMesh = true,
+                prototype = source.prefab,
+                renderMode = DetailRenderMode.VertexLit,
+                minWidth = Mathf.Max(0.05f, source.minWidth),
+                maxWidth = Mathf.Max(0.05f, source.maxWidth),
+                minHeight = Mathf.Max(0.05f, source.minHeight),
+                maxHeight = Mathf.Max(0.05f, source.maxHeight),
+                noiseSpread = Mathf.Max(0f, source.noiseSpread),
+                healthyColor = Color.white,
+                dryColor = new Color(0.88f, 0.88f, 0.88f)
+            };
+
+            list.Add(detail);
+        }
+
+        terrainData.detailPrototypes = list.ToArray();
+        terrainData.RefreshPrototypes();
+    }
+
+    private bool IsGrassLikeDetailPrototype(DetailPrototype detail)
+    {
+        if (!detail.usePrototypeMesh && (detail.renderMode == DetailRenderMode.Grass || detail.renderMode == DetailRenderMode.GrassBillboard))
+            return true;
+
+        string lowered = GetDetailPrototypeLabel(detail);
+        if (ContainsKeyword(lowered, "grass", "fern", "reed", "shrub", "bush", "plant", "weed", "flower"))
+            return true;
+
+        return IsConfiguredGrassPrototype(detail);
+    }
+
+    private bool IsConfiguredGrassPrototype(DetailPrototype detail)
+    {
+        if (detailBindings.grassPrefabs == null || detailBindings.grassPrefabs.Count == 0 || detail.prototype == null)
+            return false;
+
+        for (int i = 0; i < detailBindings.grassPrefabs.Count; i++)
+        {
+            GrassPrototypeDefinition binding = detailBindings.grassPrefabs[i];
+            if (binding != null && binding.prefab != null && ReferenceEquals(binding.prefab, detail.prototype))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void BuildCavePlanAndCarve(int seed, Vector3 terrainSize)
+    {
+        caveSpawnPlan.Clear();
+        if (generatedCaveMask != null)
+            Array.Clear(generatedCaveMask, 0, generatedCaveMask.Length);
+
+        if (!caves.enableCaves || generatedHeights == null)
+            return;
+
+        var rng = new DeterministicRandom(seed ^ unchecked((int)0x4A7C15E6u));
+        if (rng.Value01() > caves.cavesChancePerWorld)
+            return;
+
+        int minEntrances = Mathf.Max(0, caves.minEntrances);
+        int maxEntrances = Mathf.Max(minEntrances, caves.maxEntrances);
+        int plannedEntrances = rng.Range(minEntrances, maxEntrances + 1);
+        if (plannedEntrances <= 0)
+            return;
+
+        int attemptsPerEntrance = Mathf.Max(8, caves.attemptsPerEntrance);
+        for (int i = 0; i < plannedEntrances; i++)
+        {
+            bool placed = false;
+            for (int attempt = 0; attempt < attemptsPerEntrance; attempt++)
+            {
+                if (!TryPickCaveEntrance(ref rng, terrainSize, out float nx, out float ny, out Vector2 tunnelDir))
+                    continue;
+
+                CaveSpawnPoint plan = CarveCaveAndCreateSpawnPoint(seed, i, nx, ny, tunnelDir, terrainSize, ref rng);
+                caveSpawnPlan.Add(plan);
+                placed = true;
+                break;
+            }
+
+            if (!placed)
+                continue;
+        }
+
+        ClampHeightMap();
+    }
+
+    private bool TryPickCaveEntrance(ref DeterministicRandom rng, Vector3 terrainSize, out float nx, out float ny, out Vector2 tunnelDir)
+    {
+        nx = 0.5f;
+        ny = 0.5f;
+        tunnelDir = Vector2.right;
+
+        float angle = rng.Range(0f, Mathf.PI * 2f);
+        float radius01 = Mathf.Lerp(0.25f, 0.93f, Mathf.Sqrt(rng.Value01()));
+        nx = 0.5f + Mathf.Cos(angle) * radius01 * 0.5f;
+        ny = 0.5f + Mathf.Sin(angle) * radius01 * 0.5f;
+        nx = Mathf.Clamp01(nx);
+        ny = Mathf.Clamp01(ny);
+
+        float height01 = SampleMap(generatedHeights, nx, ny);
+        float slope01 = EstimateSlope01(nx, ny, terrainSize);
+        float riverMask = SampleMap(generatedRiverMask, nx, ny);
+        float caveMask = SampleMap(generatedCaveMask, nx, ny);
+        float edgeMask = SampleMap(generatedEdgeBarrierMask, nx, ny);
+        float centerMask = EvaluateCenterPlayAreaMask(nx, ny);
+
+        if (height01 < terrainShape.seaLevel01 + 0.04f)
+            return false;
+        if (slope01 > caves.maxEntranceSlope01)
+            return false;
+        if (riverMask > caves.maxEntranceRiverMask || caveMask > 0.08f || edgeMask > caves.maxEntranceEdgeMask || centerMask > caves.maxEntranceCenterMask)
+            return false;
+
+        Vector2 world = new Vector2(nx * terrainSize.x, ny * terrainSize.z);
+        float minSep = Mathf.Max(0f, caves.minEntranceSeparation);
+        for (int i = 0; i < caveSpawnPlan.Count; i++)
+        {
+            CaveSpawnPoint existing = caveSpawnPlan[i];
+            Vector2 other = new Vector2(existing.entranceWorld.x, existing.entranceWorld.z) - new Vector2(targetTerrain.transform.position.x, targetTerrain.transform.position.z);
+            if ((other - world).sqrMagnitude < minSep * minSep)
+                return false;
+        }
+
+        Vector2 fromCenter = new Vector2(nx - 0.5f, ny - 0.5f);
+        Vector2 outward = fromCenter.sqrMagnitude > 0.0001f ? fromCenter.normalized : new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+        Vector2 randomDir = new Vector2(Mathf.Cos(angle + 0.8f), Mathf.Sin(angle + 0.8f));
+        tunnelDir = (outward * 0.72f + randomDir * 0.28f).normalized;
+        if (tunnelDir.sqrMagnitude < 0.0001f)
+            tunnelDir = Vector2.right;
+
+        return true;
+    }
+
+    private CaveSpawnPoint CarveCaveAndCreateSpawnPoint(int seed, int caveIndex, float nx, float ny, Vector2 tunnelDir, Vector3 terrainSize, ref DeterministicRandom rng)
+    {
+        int width = generatedHeights.GetLength(1);
+        int height = generatedHeights.GetLength(0);
+        float baseScalePx = Mathf.Max(width - 1f, height - 1f) / Mathf.Max(1f, Mathf.Max(terrainSize.x, terrainSize.z));
+
+        float centerX = nx * (width - 1f);
+        float centerY = ny * (height - 1f);
+        float entranceRadiusPx = Mathf.Max(2f, caves.entranceRadius * baseScalePx);
+        float tunnelRadiusPx = Mathf.Max(1.5f, caves.tunnelRadius * baseScalePx);
+        float tunnelLengthPx = Mathf.Max(4f, caves.tunnelLength * baseScalePx);
+        float entranceDepth = caves.entranceDepth01 * rng.Range(0.85f, 1.2f);
+
+        StampCaveCarve(seed + caveIndex * 301, centerX, centerY, entranceRadiusPx, entranceDepth, 0.95f);
+
+        int steps = Mathf.Max(8, Mathf.CeilToInt(tunnelLengthPx / Mathf.Max(1f, tunnelRadiusPx * 0.6f)));
+        Vector2 perp = new Vector2(-tunnelDir.y, tunnelDir.x);
+        for (int step = 1; step <= steps; step++)
+        {
+            float t = step / (float)steps;
+            float jitter = (DeterministicNoise.Noise2D(seed + caveIndex * 911, centerX + step * 0.37f, centerY + step * 0.53f) * 0.5f)
+                * Mathf.Lerp(0.5f, 2.4f, t);
+            float px = centerX + tunnelDir.x * tunnelLengthPx * t + perp.x * jitter;
+            float py = centerY + tunnelDir.y * tunnelLengthPx * t + perp.y * jitter;
+            float radius = Mathf.Lerp(entranceRadiusPx * 0.78f, tunnelRadiusPx, t);
+            float depth = entranceDepth * Mathf.Lerp(0.45f, 1.4f, t);
+            StampCaveCarve(seed + caveIndex * 301 + step * 23, px, py, radius, depth, Mathf.Lerp(0.82f, 1f, t));
+        }
+
+        ClampHeightMap();
+
+        Vector3 terrainPos = targetTerrain != null ? targetTerrain.transform.position : Vector3.zero;
+        float entranceWorldY = terrainPos.y + SampleMap(generatedHeights, nx, ny) * terrainSize.y;
+        Vector3 entranceWorld = new Vector3(terrainPos.x + nx * terrainSize.x, entranceWorldY, terrainPos.z + ny * terrainSize.z);
+
+        Vector3 forward = new Vector3(tunnelDir.x, 0f, tunnelDir.y).normalized;
+        if (forward.sqrMagnitude < 0.0001f)
+            forward = Vector3.forward;
+
+        float undergroundForward = caves.tunnelLength * rng.Range(0.35f, 0.72f) + rng.Range(-caves.undergroundHorizontalJitter, caves.undergroundHorizontalJitter);
+        float undergroundDepth = rng.Range(caves.undergroundMinDepth, caves.undergroundMaxDepth);
+        Vector3 undergroundWorld = entranceWorld + forward * undergroundForward;
+        undergroundWorld.y = entranceWorld.y - Mathf.Max(2f, undergroundDepth);
+
+        return new CaveSpawnPoint
+        {
+            entranceWorld = entranceWorld,
+            undergroundWorld = undergroundWorld,
+            rotation = Quaternion.LookRotation(forward, Vector3.up)
+        };
+    }
+
+    private void StampCaveCarve(int seed, float centerX, float centerY, float radiusPx, float depth01, float maskStrength)
+    {
+        int width = generatedHeights.GetLength(1);
+        int height = generatedHeights.GetLength(0);
+        int minX = Mathf.Max(0, Mathf.FloorToInt(centerX - radiusPx - 1f));
+        int maxX = Mathf.Min(width - 1, Mathf.CeilToInt(centerX + radiusPx + 1f));
+        int minY = Mathf.Max(0, Mathf.FloorToInt(centerY - radiusPx - 1f));
+        int maxY = Mathf.Min(height - 1, Mathf.CeilToInt(centerY + radiusPx + 1f));
+        float invR = 1f / Mathf.Max(0.0001f, radiusPx);
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                float dx = (x - centerX) * invR;
+                float dy = (y - centerY) * invR;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                if (dist > 1f)
+                    continue;
+
+                float falloff = 1f - dist;
+                falloff = falloff * falloff * (3f - 2f * falloff);
+                float micro = 0.82f + 0.36f * DeterministicNoise.Hash01(seed, x, y);
+                float carve = depth01 * falloff * micro;
+                generatedHeights[y, x] = Mathf.Clamp01(generatedHeights[y, x] - carve);
+                generatedCaveMask[y, x] = Mathf.Max(generatedCaveMask[y, x], Mathf.Clamp01(falloff * Mathf.Max(0f, maskStrength)));
+            }
+        }
+    }
+
+    private void SpawnGeneratedCaves(int seed)
+    {
+        ClearGeneratedCaveObjects();
+        if (!caves.enableCaves || caveSpawnPlan.Count == 0)
+            return;
+
+        bool canSpawnEntrances = caves.spawnEntrancePrefabs && ContainsSpawnablePrefabs(caves.entrancePrefabs);
+        bool canSpawnUnderground = caves.spawnUndergroundPrefabs && ContainsSpawnablePrefabs(caves.undergroundPrefabs);
+        if (!canSpawnEntrances && !canSpawnUnderground)
+            return;
+
+        Transform root = GetOrCreateGeneratedCaveRoot();
+        var rng = new DeterministicRandom(seed ^ unchecked((int)0x9E3779B9u));
+
+        for (int i = 0; i < caveSpawnPlan.Count; i++)
+        {
+            CaveSpawnPoint cave = caveSpawnPlan[i];
+            if (canSpawnEntrances)
+            {
+                GameObject entrancePrefab = PickDeterministicPrefab(caves.entrancePrefabs, ref rng);
+                if (entrancePrefab != null)
+                    Instantiate(entrancePrefab, cave.entranceWorld, cave.rotation, root);
+            }
+
+            if (canSpawnUnderground)
+            {
+                GameObject undergroundPrefab = PickDeterministicPrefab(caves.undergroundPrefabs, ref rng);
+                if (undergroundPrefab != null)
+                    Instantiate(undergroundPrefab, cave.undergroundWorld, cave.rotation, root);
+            }
+        }
+    }
+
+    private void ClearGeneratedCaveObjects()
+    {
+        Transform root = transform.Find(caves.generatedCaveRootName);
+        if (root == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(root.gameObject);
+        else
+            DestroyImmediate(root.gameObject);
+    }
+
+    private Transform GetOrCreateGeneratedCaveRoot()
+    {
+        Transform existing = transform.Find(caves.generatedCaveRootName);
+        if (existing != null)
+            return existing;
+
+        var go = new GameObject(caves.generatedCaveRootName);
+        go.transform.SetParent(transform, worldPositionStays: false);
+        return go.transform;
+    }
+
+    private static bool ContainsSpawnablePrefabs(List<GameObject> prefabs)
+    {
+        if (prefabs == null || prefabs.Count == 0)
+            return false;
+
+        for (int i = 0; i < prefabs.Count; i++)
+        {
+            if (prefabs[i] != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static GameObject PickDeterministicPrefab(List<GameObject> prefabs, ref DeterministicRandom rng)
+    {
+        if (prefabs == null || prefabs.Count == 0)
+            return null;
+
+        int start = rng.Range(0, prefabs.Count);
+        for (int i = 0; i < prefabs.Count; i++)
+        {
+            GameObject candidate = prefabs[(start + i) % prefabs.Count];
+            if (candidate != null)
+                return candidate;
+        }
+
+        return null;
     }
 
     private BiomeType ResolveBiome(float elevation01, float moisture, float temperature, float erosion)
@@ -869,15 +1311,63 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
     {
         int count = Mathf.Max(0, requiredCount);
         var result = new TerrainLayerSemantic[count];
+
+        int explicitGround = GetTerrainLayerIndex(layers, surfaceLayers.groundLayer);
+        int explicitRock = GetTerrainLayerIndex(layers, surfaceLayers.rockLayer);
+        int explicitWet = GetTerrainLayerIndex(layers, surfaceLayers.wetLayer);
+        int explicitDry = GetTerrainLayerIndex(layers, surfaceLayers.dryLayer);
+        int explicitFoliage = GetTerrainLayerIndex(layers, surfaceLayers.foliageLayer);
+        bool strictExplicit = surfaceLayers.useExplicitLayerBindings
+            && surfaceLayers.strictExplicitLayerBindings
+            && (explicitGround >= 0 || explicitRock >= 0 || explicitWet >= 0 || explicitDry >= 0 || explicitFoliage >= 0);
+
         for (int i = 0; i < count; i++)
         {
             string name = i < (layers?.Length ?? 0) ? GetTerrainLayerLabel(layers[i]) : string.Empty;
-            SurfaceSemantic semantic = ClassifySurfaceSemantic(name);
+            SurfaceSemantic semantic = SurfaceSemantic.Unknown;
+            if (surfaceLayers.useExplicitLayerBindings)
+            {
+                if (i == explicitGround) semantic = SurfaceSemantic.Soil;
+                else if (i == explicitRock) semantic = SurfaceSemantic.Rock;
+                else if (i == explicitWet) semantic = SurfaceSemantic.Wet;
+                else if (i == explicitDry) semantic = SurfaceSemantic.Dry;
+                else if (i == explicitFoliage) semantic = SurfaceSemantic.Foliage;
+            }
+
+            if (semantic == SurfaceSemantic.Unknown && !strictExplicit)
+                semantic = ClassifySurfaceSemantic(name);
+
             float variation = 0.35f + 0.65f * HashString01(name, i * 163);
             result[i] = new TerrainLayerSemantic { semantic = semantic, variation = variation };
         }
 
         return result;
+    }
+
+    private bool HasAnyExplicitLayerBinding(TerrainLayer[] layers)
+    {
+        return GetTerrainLayerIndex(layers, surfaceLayers.groundLayer) >= 0
+            || GetTerrainLayerIndex(layers, surfaceLayers.rockLayer) >= 0
+            || GetTerrainLayerIndex(layers, surfaceLayers.wetLayer) >= 0
+            || GetTerrainLayerIndex(layers, surfaceLayers.dryLayer) >= 0
+            || GetTerrainLayerIndex(layers, surfaceLayers.foliageLayer) >= 0;
+    }
+
+    private int ResolveTextureFallbackLayer(TerrainLayer[] layers)
+    {
+        int idx = GetTerrainLayerIndex(layers, surfaceLayers.groundLayer);
+        if (idx >= 0)
+            return idx;
+
+        idx = GetTerrainLayerIndex(layers, surfaceLayers.foliageLayer);
+        if (idx >= 0)
+            return idx;
+
+        idx = GetTerrainLayerIndex(layers, surfaceLayers.rockLayer);
+        if (idx >= 0)
+            return idx;
+
+        return 0;
     }
 
     private PrototypeSemantic[] BuildTreePrototypeSemantics(TreePrototype[] prototypes)
@@ -902,14 +1392,32 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         for (int i = 0; i < details.Length; i++)
         {
             string name = GetDetailPrototypeLabel(details[i]);
+            SurfaceSemantic semantic = ClassifySurfaceSemantic(name);
+            if (IsConfiguredGrassPrototype(details[i]))
+                semantic = SurfaceSemantic.Foliage;
+
             result[i] = new PrototypeSemantic
             {
-                semantic = ClassifySurfaceSemantic(name),
+                semantic = semantic,
                 loweredName = name
             };
         }
 
         return result;
+    }
+
+    private int GetTerrainLayerIndex(TerrainLayer[] layers, TerrainLayer layer)
+    {
+        if (layers == null || layer == null)
+            return -1;
+
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (ReferenceEquals(layers[i], layer))
+                return i;
+        }
+
+        return -1;
     }
 
     private static string GetTerrainLayerLabel(TerrainLayer layer)
@@ -1113,7 +1621,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         }
     }
 
-    private static void Normalize(float[] weights)
+    private static void Normalize(float[] weights, int fallbackIndex = 0)
     {
         float total = 0f;
         for (int i = 0; i < weights.Length; i++)
@@ -1122,7 +1630,10 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         if (total <= 0.00001f)
         {
             if (weights.Length > 0)
-                weights[0] = 1f;
+            {
+                int idx = Mathf.Clamp(fallbackIndex, 0, weights.Length - 1);
+                weights[idx] = 1f;
+            }
             return;
         }
 
@@ -1273,12 +1784,61 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
     {
         if (boundaries.finalBoundaryScale <= 0f)
             boundaries.finalBoundaryScale = 0.33f;
+        else
+            boundaries.finalBoundaryScale = Mathf.Min(boundaries.finalBoundaryScale, 0.33f);
 
         if (vegetation.treePatchFrequency <= 0f)
             vegetation.treePatchFrequency = 0.0045f;
 
         if (vegetation.detailPatchFrequency <= 0f)
             vegetation.detailPatchFrequency = 0.016f;
+
+        if (worldScale.terrainSizeMultiplierXZ <= 0f)
+            worldScale.terrainSizeMultiplierXZ = 4f;
+
+        if (worldScale.enableLargeWorldScaling && worldScale.terrainSizeMultiplierXZ < 4f)
+            worldScale.terrainSizeMultiplierXZ = 4f;
+
+        if (worldScale.terrainHeightMultiplier <= 0f)
+            worldScale.terrainHeightMultiplier = 1f;
+
+        if (spawn.maxCaveMask <= 0f)
+            spawn.maxCaveMask = 0.15f;
+
+        if (caves.maxEntrances < caves.minEntrances)
+            caves.maxEntrances = caves.minEntrances;
+        if (caves.attemptsPerEntrance < 1)
+            caves.attemptsPerEntrance = 1;
+        if (caves.tunnelLength <= 0f)
+            caves.tunnelLength = 85f;
+        if (caves.tunnelRadius <= 0f)
+            caves.tunnelRadius = 8f;
+        if (string.IsNullOrWhiteSpace(caves.generatedCaveRootName))
+            caves.generatedCaveRootName = "__GeneratedCaves";
+    }
+
+    private void EnsureTerrainSizeScaled(TerrainData terrainData)
+    {
+        if (terrainData == null)
+            return;
+
+        if (!hasAuthoringTerrainSize || authoringTerrainSize.x <= 0f || authoringTerrainSize.z <= 0f)
+        {
+            authoringTerrainSize = terrainData.size;
+            hasAuthoringTerrainSize = true;
+        }
+
+        Vector3 targetSize = authoringTerrainSize;
+        if (worldScale.enableLargeWorldScaling)
+        {
+            float xz = Mathf.Max(0.1f, worldScale.terrainSizeMultiplierXZ);
+            targetSize.x = authoringTerrainSize.x * xz;
+            targetSize.z = authoringTerrainSize.z * xz;
+            targetSize.y = authoringTerrainSize.y * Mathf.Max(0.1f, worldScale.terrainHeightMultiplier);
+        }
+
+        if ((terrainData.size - targetSize).sqrMagnitude > 0.0001f)
+            terrainData.size = targetSize;
     }
 
     private void AutoAssignTerrain()
@@ -1577,6 +2137,7 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
         float height01 = SampleMap(generatedHeights, nx, ny);
         float slope01 = EstimateSlope01(nx, ny, targetTerrain.terrainData.size);
         float riverMask = SampleMap(generatedRiverMask, nx, ny);
+        float caveMask = SampleMap(generatedCaveMask, nx, ny);
         float edgeMask = SampleMap(generatedEdgeBarrierMask, nx, ny);
 
         if (height01 < terrainShape.seaLevel01 + spawn.minLandHeightAboveSea)
@@ -1585,11 +2146,13 @@ public class ProceduralWorldGenerator : MonoBehaviour, IGameSaveParticipant
             return false;
         if (riverMask > spawn.maxRiverMask)
             return false;
+        if (caveMask > spawn.maxCaveMask)
+            return false;
         if (edgeMask > spawn.maxEdgeBarrierMask)
             return false;
 
         float centerPreference = 1f - EvaluateCenterPlayAreaMask(nx, ny);
-        score = slope01 * 1.2f + riverMask * 1.6f + edgeMask * 1.1f + centerPreference * 0.22f;
+        score = slope01 * 1.2f + riverMask * 1.6f + caveMask * 1.3f + edgeMask * 1.1f + centerPreference * 0.22f;
         return true;
     }
 
