@@ -22,26 +22,16 @@ public static class HorrorGameObjectMenu
         go.AddComponent<Zone>();
     }
 
-    [MenuItem("GameObject/Horror/Story Debug View", false, 40)]
-    private static void CreateStoryDebugView(MenuCommand menuCommand)
-    {
-        var go = CreateGameObject("Story Debug View", menuCommand);
-        go.AddComponent<StoryDebugView>();
-    }
-
     [MenuItem("GameObject/Horror/Managers Root", false, 41)]
     private static void CreateManagersRoot(MenuCommand menuCommand)
     {
         var root = CreateGameObject("Managers", menuCommand);
-        root.AddComponent<StoryGameManager>();
         root.AddComponent<LocalizationManager>();
         root.AddComponent<InventoryManager>();
         root.AddComponent<MonsterManager>();
         root.AddComponent<OutlineManager>();
         root.AddComponent<InspectionManager>();
-        root.AddComponent<DialogueManager>();
-        root.AddComponent<StoryPanelManager>();
-        root.AddComponent<StoryDebugView>();
+        root.AddComponent<ProceduralWorldGenerator>();
     }
 
     private static GameObject CreatePrimitiveObject(string name, PrimitiveType primitiveType, MenuCommand menuCommand)

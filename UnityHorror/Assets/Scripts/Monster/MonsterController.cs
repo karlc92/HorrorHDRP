@@ -1084,7 +1084,6 @@ public class MonsterController : MonoBehaviour, IGameSaveParticipant
 
         if (!killingSfxPlayed && killingSfx && t >= killingSfxAt)
         {
-            DialogueManager.Instance.StopDialogueSequence();
             killingSfxPlayed = true;
             PlayOneShot(killingSfx, killingSfxVolume, killingSfxRandomPitch, 0f);
         }
@@ -1259,12 +1258,18 @@ public class MonsterController : MonoBehaviour, IGameSaveParticipant
 
     private void TeleportTo(Vector3 p)
     {
-        if (TryGetNavPoint(p, 12f, out var navPos))
-            agent.Warp(navPos);
-        else
+        bool didWarp = false;
+        if (agent != null && agent.enabled && TryGetNavPoint(p, 12f, out var navPos))
+        {
+            didWarp = agent.Warp(navPos);
+        }
+
+        if (!didWarp)
             transform.position = p;
 
-        agent.ResetPath();
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+            agent.ResetPath();
+
         SetRoamDestination(transform.position);
         nextDestinationUpdateAt = 0f;
     }

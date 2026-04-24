@@ -103,7 +103,6 @@ public sealed class GameSettings
     float masterVolume = 1f;
     bool subtitles = true;
     Languages language = Languages.English;
-    bool useNonEnglishDialogueAudio;
 
     public event Action InputBindingsChanged;
     public event Action VideoSettingsChanged;
@@ -142,12 +141,6 @@ public sealed class GameSettings
     {
         get => language;
         set => language = value;
-    }
-
-    public bool UseNonEnglishDialogueAudio
-    {
-        get => useNonEnglishDialogueAudio;
-        set => useNonEnglishDialogueAudio = value;
     }
 
     public void ApplyVideoSettings()

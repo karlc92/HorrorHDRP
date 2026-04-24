@@ -655,12 +655,6 @@ public sealed class PlayerController : MonoBehaviour
         if (interactAction == null)
             return;
 
-        if (StoryPanelManager.Instance != null && StoryPanelManager.Instance.IsOpen)
-        {
-            CancelActiveInteraction();
-            return;
-        }
-
         if (activeInteractable != null)
         {
             bool stillHolding = interactAction.IsPressed();

@@ -66,29 +66,11 @@ public class ZoneIdEditor : IdDefinitionEditorBase
     }
 }
 
-[CustomEditor(typeof(LoreDefinition))]
-public class LoreDefinitionIdEditor : IdDefinitionEditorBase
-{
-    public override void OnInspectorGUI()
-    {
-        DrawIdDefinitionInspector(nameof(LoreDefinition.LoreId), typeof(LoreDefinition), IdReferenceScope.ResourcesAssets, "Lore ID");
-    }
-}
-
 [CustomEditor(typeof(HeldItemDefinition))]
 public class HeldItemDefinitionIdEditor : IdDefinitionEditorBase
 {
     public override void OnInspectorGUI()
     {
         DrawIdDefinitionInspector(nameof(HeldItemDefinition.ItemId), typeof(HeldItemDefinition), IdReferenceScope.ResourcesAssets, "Item ID");
-    }
-}
-
-[CustomEditor(typeof(NightModifierDefinition), true)]
-public class NightModifierDefinitionIdEditor : IdDefinitionEditorBase
-{
-    public override void OnInspectorGUI()
-    {
-        DrawIdDefinitionInspector(nameof(NightModifierDefinition.ModifierId), typeof(NightModifierDefinition), IdReferenceScope.ResourcesAssets, "Modifier ID");
     }
 }

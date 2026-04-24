@@ -58,10 +58,10 @@ public class MainMenuUI : MonoBehaviour
             return $"New Game";
 
         string playTime = FormatPlayTimeHHmm(state.TotalPlayTimeSeconds);
-        string objective = state.Story != null && !string.IsNullOrWhiteSpace(state.Story.CurrentObjectiveTitle)
-            ? state.Story.CurrentObjectiveTitle
-            : "Continue";
-        return $"Continue\n{objective}\n{playTime}";
+        string seedText = state.World != null && state.World.HasSeed
+            ? $"Seed {state.World.Seed}"
+            : "Seed (new)";
+        return $"Continue\nSurvival Run\n{seedText}\n{playTime}";
     }
 
     public void SlotButtonClick(int slot)

@@ -131,24 +131,6 @@ public static class Console
                 Print("Invalid input for language (usage: language <language>)");
             }
         }
-        else if (input.Contains("?nonenglishaudio"))
-        {
-            var parse = input.Replace(" ", "");
-            parse = parse.Replace("?nonenglishaudio", "");
-            if (parse == "")
-            {
-                Print("NonEnglishAudio is " + Game.Settings.UseNonEnglishDialogueAudio);
-            }
-            else if (bool.TryParse(parse, out bool value))
-            {
-                Game.Settings.UseNonEnglishDialogueAudio = value;
-                Print("Set nonenglishaudio to " + value);
-            }
-            else
-            {
-                Print("Invalid input for nonenglishaudio (usage: nonenglishaudio <true|false>)");
-            }
-        }
         else if (input.Contains("?fps"))
         {
             var parse = input.Replace(" ", "");

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -188,6 +189,34 @@ public static class Game
         return HasSaveFile(ActiveSlot);
     }
 
+    public static int EnsureWorldSeed(bool persistIfNew = false)
+    {
+        State ??= CreateFreshState(ActiveSlot);
+        State.EnsureInitialized();
+
+        if (!State.World.HasSeed)
+        {
+            State.World.Seed = CreateRandomSeed();
+            State.World.HasSeed = true;
+
+            if (persistIfNew)
+                SaveGameState();
+        }
+
+        return State.World.Seed;
+    }
+
+    public static void SetWorldSeed(int seed, bool persist = true)
+    {
+        State ??= CreateFreshState(ActiveSlot);
+        State.EnsureInitialized();
+        State.World.Seed = seed;
+        State.World.HasSeed = true;
+
+        if (persist)
+            SaveGameState();
+    }
+
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (!pendingApplyLoadedState) return;
@@ -290,20 +319,19 @@ public static class Game
 
     private static GameState CreateFreshState(int slot)
     {
+        int seed = CreateRandomSeed();
+
         var state = new GameState
         {
             Slot = ClampSlot(slot),
-            Story = new StoryState
-            {
-                Started = true,
-                CurrentBeatIndex = 0,
-                CurrentBeatId = "opening",
-                CurrentObjectiveTitle = "Begin the story",
-                CurrentObjectiveDetail = "Move deeper into the world and uncover what happened here.",
-            },
             Inventory = new InventoryState(),
             MonsterBrainState = new MonsterBrainState(),
-            Progression = new ProgressionState(),
+            World = new WorldState
+            {
+                HasSeed = true,
+                Seed = seed,
+                GeneratorRevision = 1
+            },
             PlayerPos = Vector3.zero,
             PlayerRot = Quaternion.identity,
             TotalPlayTimeSeconds = 0f,
@@ -316,5 +344,14 @@ public static class Game
     private static int ClampSlot(int slot)
     {
         return Mathf.Clamp(slot, 1, MaxSaveSlots);
+    }
+
+    private static int CreateRandomSeed()
+    {
+        int seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
+        if (seed == 0)
+            seed = 1;
+
+        return seed;
     }
 }
